@@ -17,7 +17,7 @@
     /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI POJOK KANAN ATAS (AGAR TIDAK MENUTUPI RUNNING TEXT) */
+    /* TOMBOL KONTROL DI POJOK KANAN ATAS */
     .controls-group {
       position: absolute; top: 15px; right: 15px; z-index: 100;
       display: flex; gap: 8px; align-items: center;
@@ -86,6 +86,13 @@
     .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
     .btn-save:hover { background: #d97706; color: #fff; }
 
+    .btn-install { 
+      background: #10b981; color: #fff; font-weight: 700; padding: 10px; border: none; border-radius: 8px; 
+      cursor: pointer; margin-top: 5px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-install:hover { background: #059669; }
+    .btn-install:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+
     /* HEADER DISPLAY */
     header {
       background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
@@ -117,18 +124,41 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
-    /* HEADER POPUP MODE VIDEO (DIPERLEBAR) */
+    /* HEADER POPUP MODE VIDEO DENGAN SPACING DAN RUNNING TEXT ALAMAT */
     .video-header-popup {
       display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 35;
-      width: 85%; max-width: 800px;
+      width: 85%; max-width: 850px;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px; padding: 12px 32px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      align-items: center; justify-content: space-between; text-align: center;
+      border-radius: 16px; padding: 12px 28px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      align-items: center; justify-content: space-between; text-align: center; gap: 20px;
     }
-    .video-popup-clock { font-size: 3rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
-    .video-popup-title { font-size: 1.4rem; font-weight: 800; color: #f59e0b; white-space: nowrap; }
-    .video-popup-address { font-size: 0.9rem; color: #cbd5e1; font-weight: 500; }
-    .video-popup-divider { width: 1px; height: 40px; background: rgba(255, 255, 255, 0.2); }
+    .video-popup-clock { 
+      font-size: 3rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
+      display: flex; align-items: center; padding-right: 10px;
+    }
+    .video-popup-date {
+      padding-left: 10px; text-align: center; white-space: nowrap;
+    }
+    .video-popup-divider { width: 1px; height: 40px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
+    
+    .video-popup-center {
+      flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+    }
+    .video-popup-title { 
+      font-size: 1.4rem; font-weight: 800; color: #f59e0b; white-space: nowrap; 
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; 
+    }
+    .video-popup-address { 
+      font-size: 0.9rem; color: #cbd5e1; font-weight: 500; width: 100%; 
+      overflow: hidden; white-space: nowrap; position: relative; display: flex; margin-top: 2px;
+    }
+    .video-popup-address-marquee {
+      display: inline-block; padding-left: 100%; animation: videoAddressMarquee 15s linear infinite; white-space: nowrap;
+    }
+    @keyframes videoAddressMarquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
 
     /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
@@ -192,7 +222,7 @@
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR (DISESUAIKAN DENGAN DISPLAY JADWAL SHOLAT DIGITAL) */
+    /* MODE SIDEBAR */
     #mode-sidebar:checked ~ .display-container .prayer-bar {
       display: flex !important;
       flex-direction: column !important;
@@ -300,11 +330,16 @@
           <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive 3">
         </div>
 
-        <div class="section-title">Informasi</div>
+        <div class="section-title">Informasi & Aplikasi</div>
         <div class="form-group">
           <label for="input-running-text">Running Text</label>
           <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
         </div>
+
+        <button class="btn-install" id="btn-install-app" disabled>
+          <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span id="btn-install-text">Instal / Tambah ke Layar TV</span>
+        </button>
 
         <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
       </div>
@@ -341,16 +376,18 @@
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- POPUP HEADER DARI MODE VIDEO -->
+          <!-- POPUP HEADER MODE VIDEO (DI-UPDATE DENGAN MARQUEE & SPACING) -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
-            <div>
+            <div class="video-popup-center">
               <div class="video-popup-title" id="popup-masjid">Nama Masjid</div>
-              <div class="video-popup-address" id="popup-alamat">alamat</div>
+              <div class="video-popup-address" id="popup-alamat">
+                <span class="video-popup-address-marquee">alamat</span>
+              </div>
             </div>
             <div class="video-popup-divider"></div>
-            <div>
+            <div class="video-popup-date">
               <div style="font-size: 1.05rem; font-weight: 800;" id="popup-hijri">-- ---------- ---- H</div>
               <div style="font-size: 0.85rem; color: #94a3b8;" id="popup-gregorian">--</div>
             </div>
@@ -369,7 +406,7 @@
             </div>
           </div>
 
-          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS (DI POJOK KANAN ATAS) -->
+          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS -->
           <div class="controls-group">
             <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
               <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -440,6 +477,32 @@
 
     modalOverlay.addEventListener('click', (e) => {
       if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    });
+
+    /* INTEGRASI PWA / TOMBOL INSTAL APLIKASI DI MENU SETTING */
+    let deferredPrompt;
+    const btnInstallApp = document.getElementById('btn-install-app');
+    const btnInstallText = document.getElementById('btn-install-text');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstallApp.disabled = false;
+      btnInstallText.textContent = "Instal / Tambah ke Layar TV";
+    });
+
+    btnInstallApp.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          btnInstallText.textContent = "Aplikasi Berhasil Diinstal";
+          btnInstallApp.disabled = true;
+        }
+        deferredPrompt = null;
+      } else {
+        alert("Gunakan menu browser TV Anda (titik tiga) lalu pilih 'Tambah ke Layar Utama' / 'Install App'.");
+      }
     });
 
     function toggleFullscreen() {
@@ -582,7 +645,7 @@
       document.getElementById('popup-masjid').textContent = settings.masjid;
 
       document.getElementById('display-alamat').innerHTML = `<span class="address-marquee">${settings.alamat}</span>`;
-      document.getElementById('popup-alamat').textContent = settings.alamat;
+      document.getElementById('popup-alamat').innerHTML = `<span class="video-popup-address-marquee">${settings.alamat}</span>`;
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
