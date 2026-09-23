@@ -124,32 +124,32 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
-    /* HEADER POPUP MODE VIDEO DENGAN SPACING DAN RUNNING TEXT ALAMAT */
+    /* HEADER POPUP MODE VIDEO */
     .video-header-popup {
-      display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 35;
-      width: 85%; max-width: 850px;
+      display: none; position: absolute; top: 15px; left: 20px; z-index: 35;
+      width: calc(100% - 130px); max-width: 750px;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px; padding: 12px 28px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      align-items: center; justify-content: space-between; text-align: center; gap: 20px;
+      border-radius: 16px; padding: 10px 20px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      align-items: center; justify-content: space-between; text-align: center; gap: 15px;
     }
     .video-popup-clock { 
-      font-size: 3rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
-      display: flex; align-items: center; padding-right: 10px;
+      font-size: 2.5rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
+      display: flex; align-items: center; padding-right: 5px;
     }
     .video-popup-date {
-      padding-left: 10px; text-align: center; white-space: nowrap;
+      padding-left: 5px; text-align: center; white-space: nowrap;
     }
-    .video-popup-divider { width: 1px; height: 40px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
+    .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
     
     .video-popup-center {
       flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden;
     }
     .video-popup-title { 
-      font-size: 1.4rem; font-weight: 800; color: #f59e0b; white-space: nowrap; 
+      font-size: 1.25rem; font-weight: 800; color: #f59e0b; white-space: nowrap; 
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; 
     }
     .video-popup-address { 
-      font-size: 0.9rem; color: #cbd5e1; font-weight: 500; width: 100%; 
+      font-size: 0.85rem; color: #cbd5e1; font-weight: 500; width: 100%; 
       overflow: hidden; white-space: nowrap; position: relative; display: flex; margin-top: 2px;
     }
     .video-popup-address-marquee {
@@ -300,34 +300,34 @@
           <div class="city-suggestions" id="city-suggestions"></div>
         </div>
 
-        <div class="section-title">Mode Utama (Banner Statis)</div>
+        <div class="section-title">Mode Utama (Banner Statis / Video)</div>
         <div class="form-group">
-          <label for="input-main-banner">URL Gambar Utama</label>
-          <input type="text" id="input-main-banner" placeholder="URL Gambar Mode Utama / Link Drive">
+          <label for="input-main-banner">URL Gambar Utama atau Link YouTube</label>
+          <input type="text" id="input-main-banner" placeholder="URL Gambar / Link Drive / Link YouTube">
         </div>
 
-        <div class="section-title">Mode Video</div>
+        <div class="section-title">Mode Video Utama</div>
         <div class="form-group">
           <label for="input-youtube-url">URL YouTube / Live Stream</label>
           <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
         </div>
 
-        <div class="section-title">Slide Show Gambar (Sidebar & Full)</div>
+        <div class="section-title">Slide Show Media (Sidebar & Full)</div>
         <div class="form-group">
           <label for="input-slide-timer">Timer Slideshow (Detik)</label>
           <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
         </div>
         <div class="form-group">
-          <label for="input-slide-1">Slide Gambar 1</label>
-          <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive 1">
+          <label for="input-slide-1">Slide Media 1 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive / YouTube 1">
         </div>
         <div class="form-group">
-          <label for="input-slide-2">Slide Gambar 2</label>
-          <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive 2">
+          <label for="input-slide-2">Slide Media 2 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive / YouTube 2">
         </div>
         <div class="form-group">
-          <label for="input-slide-3">Slide Gambar 3</label>
-          <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive 3">
+          <label for="input-slide-3">Slide Media 3 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive / YouTube 3">
         </div>
 
         <div class="section-title">Informasi & Aplikasi</div>
@@ -348,6 +348,16 @@
 
   <!-- DISPLAY CONTAINER -->
   <div class="display-container" id="display-container">
+    
+    <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS (MELAYANG DI ATAS SEGALA ELEMENT) -->
+    <div class="controls-group">
+      <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
+        <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+      </button>
+      <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
+    </div>
+
     <header>
       <div class="header-left">
         <div class="digital-clock" id="clock">00<span class="colon">:</span>00</div>
@@ -372,11 +382,11 @@
           <img src="https://picsum.photos/1200/800?random=1" alt="Blur Background" class="bg-blur" id="bg-blur" />
           <img src="https://picsum.photos/1200/800?random=1" alt="Latar Display" class="bg-image" id="bg-image" />
           
-          <div class="video-container">
+          <div class="video-container" id="video-container">
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- POPUP HEADER MODE VIDEO (DI-UPDATE DENGAN MARQUEE & SPACING) -->
+          <!-- POPUP HEADER MODE VIDEO -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
@@ -388,8 +398,8 @@
             </div>
             <div class="video-popup-divider"></div>
             <div class="video-popup-date">
-              <div style="font-size: 1.05rem; font-weight: 800;" id="popup-hijri">-- ---------- ---- H</div>
-              <div style="font-size: 0.85rem; color: #94a3b8;" id="popup-gregorian">--</div>
+              <div style="font-size: 1rem; font-weight: 800;" id="popup-hijri">-- ---------- ---- H</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;" id="popup-gregorian">--</div>
             </div>
           </div>
 
@@ -406,14 +416,6 @@
             </div>
           </div>
 
-          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS -->
-          <div class="controls-group">
-            <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
-              <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-              <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
-            </button>
-            <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
-          </div>
         </div>
       </section>
     </div>
@@ -444,8 +446,8 @@
 
     let slideShowTimer = null;
     let currentSlideIdx = 0;
-    let slideImages = [];
-    let mainBannerImage = "";
+    let slideMediaList = [];
+    let mainBannerMedia = "";
     let slideTimerSec = 5;
 
     const DEFAULT_SETTINGS = {
@@ -529,6 +531,58 @@
       }
     });
 
+    function isYoutubeUrl(url) {
+      if (!url) return false;
+      return url.includes('youtube.com') || url.includes('youtu.be');
+    }
+
+    function convertGoogleDriveUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com')) {
+        const matches = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (matches && matches[1]) {
+          return `https://lh3.googleusercontent.com/d/${matches[1]}`;
+        }
+      }
+      return url;
+    }
+
+    function convertYoutubeEmbedUrl(url) {
+      if (!url) return '';
+      let videoId = '';
+      
+      try {
+        if (url.includes('youtu.be/')) {
+          videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/watch')) {
+          const urlParams = new URLSearchParams(url.split('?')[1]);
+          videoId = urlParams.get('v');
+        } else if (url.includes('youtube.com/live/')) {
+          videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/shorts/')) {
+          videoId = url.split('youtube.com/shorts/')[1].split('?')[0].split('&')[0];
+        } else if (url.length === 11 && !url.includes('/')) {
+          videoId = url;
+        }
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+        }
+      } catch (e) {
+        console.error("Gagal memproses URL YouTube:", e);
+      }
+
+      return url;
+    }
+
+    function processMediaUrl(url) {
+      if (!url) return '';
+      if (isYoutubeUrl(url)) {
+        return { type: 'youtube', url: convertYoutubeEmbedUrl(url) };
+      }
+      return { type: 'image', url: convertGoogleDriveUrl(url) };
+    }
+
     function handleModeChange() {
       const activeMode = modes[currentModeIdx];
       const prayerBar = document.getElementById('prayer-bar');
@@ -544,7 +598,11 @@
 
       if (activeMode === 'mode-main') {
         if (slideShowTimer) clearInterval(slideShowTimer);
-        updateDisplayImage(mainBannerImage || DEFAULT_SETTINGS.mainBanner);
+        displayMedia(mainBannerMedia || processMediaUrl(DEFAULT_SETTINGS.mainBanner));
+      } else if (activeMode === 'mode-video') {
+        if (slideShowTimer) clearInterval(slideShowTimer);
+        const videoUrl = document.getElementById('input-youtube-url').value || DEFAULT_SETTINGS.youtubeUrl;
+        displayMedia({ type: 'youtube', url: convertYoutubeEmbedUrl(videoUrl) });
       } else if (activeMode === 'mode-sidebar' || activeMode === 'mode-fullscreen') {
         startSlideShow();
       }
@@ -589,45 +647,6 @@
       }
     });
 
-    function convertGoogleDriveUrl(url) {
-      if (!url) return '';
-      if (url.includes('drive.google.com')) {
-        const matches = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (matches && matches[1]) {
-          return `https://lh3.googleusercontent.com/d/${matches[1]}`;
-        }
-      }
-      return url;
-    }
-
-    function convertYoutubeEmbedUrl(url) {
-      if (!url) return '';
-      let videoId = '';
-      
-      try {
-        if (url.includes('youtu.be/')) {
-          videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
-        } else if (url.includes('youtube.com/watch')) {
-          const urlParams = new URLSearchParams(url.split('?')[1]);
-          videoId = urlParams.get('v');
-        } else if (url.includes('youtube.com/live/')) {
-          videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
-        } else if (url.includes('youtube.com/shorts/')) {
-          videoId = url.split('youtube.com/shorts/')[1].split('?')[0].split('&')[0];
-        } else if (url.length === 11 && !url.includes('/')) {
-          videoId = url;
-        }
-
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
-        }
-      } catch (e) {
-        console.error("Gagal memproses URL YouTube:", e);
-      }
-
-      return url;
-    }
-
     function getStoredSettings() {
       const saved = localStorage.getItem('display_masjid_settings');
       if (saved) {
@@ -649,18 +668,15 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
-      const embedYt = convertYoutubeEmbedUrl(settings.youtubeUrl);
-      document.getElementById('youtube-iframe').src = embedYt;
-
-      mainBannerImage = convertGoogleDriveUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
+      mainBannerMedia = processMediaUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
 
       slideTimerSec = parseInt(settings.slideTimer) || 5;
 
       const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
-      slideImages = rawSlides.map(convertGoogleDriveUrl).filter(url => url && url.trim() !== '');
+      slideMediaList = rawSlides.map(processMediaUrl).filter(item => item && item.url && item.url.trim() !== '');
 
-      if (slideImages.length === 0) {
-        slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+      if (slideMediaList.length === 0) {
+        slideMediaList = DEFAULT_SETTINGS.slides.map(processMediaUrl);
       }
 
       handleModeChange();
@@ -681,32 +697,50 @@
     function startSlideShow() {
       if (slideShowTimer) clearInterval(slideShowTimer);
       
-      if (!slideImages || slideImages.length === 0) {
-        slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+      if (!slideMediaList || slideMediaList.length === 0) {
+        slideMediaList = DEFAULT_SETTINGS.slides.map(processMediaUrl);
       }
 
       currentSlideIdx = 0;
-      updateDisplayImage(slideImages[currentSlideIdx]);
+      displayMedia(slideMediaList[currentSlideIdx]);
 
-      if (slideImages.length > 1) {
+      if (slideMediaList.length > 1) {
         slideShowTimer = setInterval(() => {
-          currentSlideIdx = (currentSlideIdx + 1) % slideImages.length;
-          updateDisplayImage(slideImages[currentSlideIdx]);
+          currentSlideIdx = (currentSlideIdx + 1) % slideMediaList.length;
+          displayMedia(slideMediaList[currentSlideIdx]);
         }, slideTimerSec * 1000);
       }
     }
 
-    function updateDisplayImage(url) {
-      if (!url) return;
+    function displayMedia(mediaObj) {
+      if (!mediaObj || !mediaObj.url) return;
+
       const bgImg = document.getElementById('bg-image');
       const bgBlur = document.getElementById('bg-blur');
-      
-      bgImg.style.opacity = '0.3';
-      setTimeout(() => {
-        bgImg.src = url;
-        bgBlur.src = url;
-        bgImg.style.opacity = '1';
-      }, 200);
+      const videoContainer = document.getElementById('video-container');
+      const youtubeIframe = document.getElementById('youtube-iframe');
+
+      if (mediaObj.type === 'youtube') {
+        bgImg.style.opacity = '0';
+        bgBlur.style.opacity = '0';
+        videoContainer.style.display = 'block';
+        if (youtubeIframe.src !== mediaObj.url) {
+          youtubeIframe.src = mediaObj.url;
+        }
+      } else {
+        videoContainer.style.display = 'none';
+        youtubeIframe.src = '';
+
+        bgImg.style.opacity = '0.3';
+        bgBlur.style.opacity = '0.3';
+
+        setTimeout(() => {
+          bgImg.src = mediaObj.url;
+          bgBlur.src = mediaObj.url;
+          bgImg.style.opacity = '1';
+          bgBlur.style.opacity = '1';
+        }, 200);
+      }
     }
 
     function getHijriDate(date) {
