@@ -31,39 +31,40 @@
 
     /* SIDEBAR PENGATURAN KANAN */
     .settings-sidebar {
-      position: fixed; top: 0; right: 0; width: 380px; height: 100%;
-      background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px);
-      border-left: 1px solid rgba(255, 255, 255, 0.15); z-index: 999; padding: 24px;
-      color: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-      display: none; flex-direction: column; gap: 14px; overflow-y: auto;
+      position: absolute; top: 0; right: -380px; width: 360px; height: 100%;
+      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px);
+      border-left: 1px solid rgba(255, 255, 255, 0.15); z-index: 200; padding: 24px;
+      color: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.5); transition: right 0.35s ease-in-out;
+      display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
     }
-    .settings-sidebar.open { display: flex !important; }
-    
-    .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 10px; }
+    .settings-sidebar.open { right: 0; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
     .sidebar-header h3 { font-size: 1.2rem; color: #f59e0b; }
     .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; }
     .close-btn:hover { color: #ef4444; }
 
-    .form-group { display: flex; flex-direction: column; gap: 4px; position: relative; }
-    .form-group label { font-size: 0.82rem; font-weight: 600; color: #cbd5e1; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+    .form-group label { font-size: 0.85rem; font-weight: 600; color: #cbd5e1; }
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.08); color: #fff; font-size: 0.85rem; outline: none;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
     
-    /* AUTOCOMPLETE KOTA */
+    /* STYLE PENCARIAN KOTA (AUTOCOMPLETE) */
     .city-search-container { position: relative; }
     .city-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
       background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 8px 8px;
-      z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 300; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .city-suggestions.show { display: block; }
-    .city-suggestion-item { padding: 8px 12px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .city-suggestion-item {
+      padding: 8px 12px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
     .city-suggestion-item:hover { background: #f59e0b; color: #000; }
 
-    .section-title { font-size: 0.88rem; font-weight: 700; color: #f59e0b; margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #f59e0b; margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
     
     .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 10px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
     .btn-save:hover { background: #d97706; color: #fff; }
@@ -127,20 +128,6 @@
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
 
-    /* OVERLAY KHUSUS WAKTU ADZAN & IQOMAH */
-    .adzan-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-      z-index: 500; display: none; flex-direction: column; justify-content: center;
-      align-items: center; text-align: center; color: #fff; padding: 2rem;
-    }
-    .adzan-overlay.show { display: flex !important; }
-    .adzan-badge { background: #f59e0b; color: #000; font-size: 1.5rem; font-weight: 800; padding: 8px 24px; border-radius: 50px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; box-shadow: 0 0 25px rgba(245, 158, 11, 0.5); }
-    .adzan-title { font-size: 3.5rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .adzan-countdown { font-size: 7rem; font-weight: 900; color: #f59e0b; font-family: monospace; line-height: 1; margin: 20px 0; text-shadow: 0 0 30px rgba(245, 158, 11, 0.3); }
-    .iqomah-message { font-size: 2.8rem; font-weight: 800; color: #38bdf8; animation: pulseText 1.5s infinite alternate; }
-    @keyframes pulseText { 0% { opacity: 0.7; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1.02); } }
-
     /* FOOTER JADWAL SHOLAT & COUNTDOWN */
     .prayer-bar {
       background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: repeat(7, 1fr);
@@ -185,32 +172,78 @@
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR */
+    /* MODE SIDEBAR (PERBAIKAN TAMPILAN BANNER & FULLSCREEN DI TV) */
     #mode-sidebar:checked ~ .display-container .main-wrapper { 
-      flex-direction: row-reverse !important; display: flex !important; width: 100% !important; height: 100% !important; position: relative !important;
+      flex-direction: row-reverse !important;
+      display: flex !important;
+      width: 100% !important;
+      height: 100% !important;
+      position: relative !important;
     }
     #mode-sidebar:checked ~ .display-container .center-banner {
-      flex: 1 1 auto !important; width: 100% !important; height: 100% !important; position: relative !important; display: block !important; background: #000 !important; overflow: hidden !important;
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      position: relative !important;
+      display: block !important;
+      background: #000 !important;
+      overflow: hidden !important;
     }
     #mode-sidebar:checked ~ .display-container .banner-inner {
-      position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-bar {
-      display: flex !important; flex-direction: column !important; width: 290px !important; height: 100% !important; grid-template-columns: none !important;
-      justify-content: space-around !important; border-right: 2px solid #e2e8f0 !important; padding: 0.6rem 0.5rem !important; background: rgba(255, 255, 255, 0.98) !important;
-      position: relative !important; bottom: auto !important; left: auto !important; right: auto !important; flex-shrink: 0 !important;
+      display: flex !important; 
+      flex-direction: column !important; 
+      width: 290px !important; 
+      height: 100% !important; 
+      grid-template-columns: none !important;
+      justify-content: space-around !important; 
+      border-right: 2px solid #e2e8f0 !important; 
+      padding: 0.6rem 0.5rem !important; 
+      background: rgba(255, 255, 255, 0.98) !important;
+      position: relative !important;
+      bottom: auto !important;
+      left: auto !important;
+      right: auto !important;
+      flex-shrink: 0 !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item { 
-      width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0.5rem 0.8rem !important; 
+      width: 100% !important; 
+      display: flex !important; 
+      justify-content: space-between !important; 
+      align-items: center !important; 
+      padding: 0.5rem 0.8rem !important; 
     }
-    #mode-sidebar:checked ~ .display-container .prayer-name { font-size: 1rem !important; margin-bottom: 0 !important; color: #475569 !important; }
-    #mode-sidebar:checked ~ .display-container .prayer-time { font-size: 1.6rem !important; color: #0f172a !important; }
+    #mode-sidebar:checked ~ .display-container .prayer-name { 
+      font-size: 1rem !important; 
+      margin-bottom: 0 !important; 
+      color: #475569 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-time { 
+      font-size: 1.6rem !important; 
+      color: #0f172a !important;
+    }
     #mode-sidebar:checked ~ .display-container .bg-image,
     #mode-sidebar:checked ~ .display-container .bg-blur { 
-      display: block !important; opacity: 1 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; 
+      display: block !important;
+      opacity: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important; 
     }
     #mode-sidebar:checked ~ .display-container .btn-settings-toggle {
-      display: flex !important; position: absolute !important; bottom: 15px !important; right: 15px !important; z-index: 100 !important;
+      display: flex !important;
+      position: absolute !important;
+      bottom: 15px !important;
+      right: 15px !important;
+      z-index: 100 !important;
     }
   </style>
 </head>
@@ -239,31 +272,18 @@
       <input type="text" id="input-alamat" placeholder="Alamat singkat">
     </div>
 
+    <!-- CARI KOTA DENGAN AUTOCOMPLETE / TYPE TO SEARCH -->
     <div class="form-group city-search-container">
       <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
-      <input type="text" id="input-search-kota" placeholder="Ketik nama kota..." autocomplete="off">
+      <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Bandung)" autocomplete="off">
       <input type="hidden" id="select-kota-id">
       <div class="city-suggestions" id="city-suggestions"></div>
     </div>
 
-    <div class="section-title">Waktu Adzan & Iqomah</div>
-    <div class="form-group">
-      <label for="input-adzan-timer">Durasi Countdown Adzan (Menit)</label>
-      <input type="number" id="input-adzan-timer" min="1" max="15" value="3">
-    </div>
-    <div class="form-group">
-      <label for="input-iqomah-timer">Durasi Tampilan Iqomah (Menit)</label>
-      <input type="number" id="input-iqomah-timer" min="1" max="30" value="5">
-    </div>
-
-    <div class="section-title">Mode Utama & Slideshow</div>
-    <div class="form-group">
-      <label for="input-slide-duration">Durasi Per-Slide Gambar (Detik)</label>
-      <input type="number" id="input-slide-duration" min="2" max="60" value="5">
-    </div>
+    <div class="section-title">Mode Utama (Banner Statis)</div>
     <div class="form-group">
       <label for="input-main-banner">URL Gambar Utama</label>
-      <input type="text" id="input-main-banner" placeholder="URL Gambar Utama / Link Drive">
+      <input type="text" id="input-main-banner" placeholder="URL Gambar Mode Utama / Link Drive">
     </div>
 
     <div class="section-title">Mode Video</div>
@@ -272,24 +292,24 @@
       <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
     </div>
 
-    <div class="section-title">Slide Show Gambar</div>
+    <div class="section-title">Slide Show Gambar (Sidebar & Full)</div>
     <div class="form-group">
       <label for="input-slide-1">Slide Gambar 1</label>
-      <input type="text" id="input-slide-1">
+      <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive 1">
     </div>
     <div class="form-group">
       <label for="input-slide-2">Slide Gambar 2</label>
-      <input type="text" id="input-slide-2">
+      <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive 2">
     </div>
     <div class="form-group">
       <label for="input-slide-3">Slide Gambar 3</label>
-      <input type="text" id="input-slide-3">
+      <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive 3">
     </div>
 
     <div class="section-title">Informasi</div>
     <div class="form-group">
       <label for="input-running-text">Running Text</label>
-      <textarea id="input-running-text" rows="2"></textarea>
+      <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
     </div>
 
     <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
@@ -323,16 +343,6 @@
           
           <div class="video-container">
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
-          </div>
-
-          <!-- LAYAR OVERLAY WAKTU ADZAN & IQOMAH -->
-          <div class="adzan-overlay" id="adzan-overlay">
-            <div class="adzan-badge" id="adzan-status-badge">WAKTU SHOLAT</div>
-            <div class="adzan-title" id="adzan-prayer-title">MEMASUKI WAKTU ADZAN SUBUH</div>
-            <div class="adzan-countdown" id="adzan-countdown-timer">00:00</div>
-            <div class="iqomah-message" id="iqomah-message-box" style="display: none;">
-              LURUSKAN DAN RAPATKAN SHAF
-            </div>
           </div>
 
           <!-- POPUP HEADER DARI MODE VIDEO -->
@@ -398,21 +408,11 @@
     let slideImages = [];
     let mainBannerImage = "";
 
-    // STATE UNTUK PENANGANAN ADZAN & IQOMAH
-    let isAdzanActive = false;
-    let adzanEndTime = null;
-    let iqomahEndTime = null;
-    let currentAdzanPrayer = "";
-    let triggeredPrayers = {}; // Menghindari re-trigger sholat yang sama di hari yang sama
-
     const DEFAULT_SETTINGS = {
       masjid: "Masjid Az Zamzam",
       alamat: "Jl. Cisaranten Kulon No. 18 Arcamanik, Kota Bandung",
       cityId: "",
       cityName: "",
-      adzanDuration: 3,    // Menit
-      iqomahDuration: 5,   // Menit
-      slideDuration: 5,    // Detik
       mainBanner: "https://picsum.photos/1200/800?random=99",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
       slides: [
@@ -489,24 +489,39 @@
     function convertYoutubeEmbedUrl(url) {
       if (!url) return '';
       let videoId = '';
+      
       try {
-        if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
-        else if (url.includes('youtube.com/watch')) videoId = new URLSearchParams(url.split('?')[1]).get('v');
-        else if (url.includes('youtube.com/live/')) videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
-        else if (url.includes('youtube.com/shorts/')) videoId = url.split('youtube.com/shorts/')[1].split('?')[0].split('&')[0];
-        else if (url.length === 11 && !url.includes('/')) videoId = url;
+        if (url.includes('youtu.be/')) {
+          videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/watch')) {
+          const urlParams = new URLSearchParams(url.split('?')[1]);
+          videoId = urlParams.get('v');
+        } else if (url.includes('youtube.com/live/')) {
+          videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/shorts/')) {
+          videoId = url.split('youtube.com/shorts/')[1].split('?')[0].split('&')[0];
+        } else if (url.length === 11 && !url.includes('/')) {
+          videoId = url;
+        }
 
-        if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+        }
       } catch (e) {
         console.error("Gagal memproses URL YouTube:", e);
       }
+
       return url;
     }
 
     function getStoredSettings() {
       const saved = localStorage.getItem('display_masjid_settings');
       if (saved) {
-        try { return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }; } catch (e) { return DEFAULT_SETTINGS; }
+        try {
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        } catch (e) {
+          return DEFAULT_SETTINGS;
+        }
       }
       return DEFAULT_SETTINGS;
     }
@@ -520,13 +535,17 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
-      document.getElementById('youtube-iframe').src = convertYoutubeEmbedUrl(settings.youtubeUrl);
+      const embedYt = convertYoutubeEmbedUrl(settings.youtubeUrl);
+      document.getElementById('youtube-iframe').src = embedYt;
 
       mainBannerImage = convertGoogleDriveUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
 
       const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
       slideImages = rawSlides.map(convertGoogleDriveUrl).filter(url => url && url.trim() !== '');
-      if (slideImages.length === 0) slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+
+      if (slideImages.length === 0) {
+        slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+      }
 
       handleModeChange();
 
@@ -534,9 +553,6 @@
       document.getElementById('input-alamat').value = settings.alamat;
       document.getElementById('input-search-kota').value = settings.cityName || '';
       document.getElementById('select-kota-id').value = settings.cityId || '';
-      document.getElementById('input-adzan-timer').value = settings.adzanDuration || 3;
-      document.getElementById('input-iqomah-timer').value = settings.iqomahDuration || 5;
-      document.getElementById('input-slide-duration').value = settings.slideDuration || 5;
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
       document.getElementById('input-slide-1').value = rawSlides[0] || '';
@@ -547,19 +563,19 @@
 
     function startSlideShow() {
       if (slideShowTimer) clearInterval(slideShowTimer);
-      if (!slideImages || slideImages.length === 0) slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+      
+      if (!slideImages || slideImages.length === 0) {
+        slideImages = DEFAULT_SETTINGS.slides.map(convertGoogleDriveUrl);
+      }
 
       currentSlideIdx = 0;
       updateDisplayImage(slideImages[currentSlideIdx]);
-
-      const settings = getStoredSettings();
-      const durationMs = (settings.slideDuration || 5) * 1000;
 
       if (slideImages.length > 1) {
         slideShowTimer = setInterval(() => {
           currentSlideIdx = (currentSlideIdx + 1) % slideImages.length;
           updateDisplayImage(slideImages[currentSlideIdx]);
-        }, durationMs);
+        }, 5000);
       }
     }
 
@@ -576,80 +592,38 @@
       }, 200);
     }
 
-    function getHijriDateFormatted(date) {
-      try {
-        return new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
-          day: 'numeric', month: 'long', year: 'numeric'
-        }).format(date) + ' H';
-      } catch (e) {
-        return '-- ---------- ---- H';
-      }
-    }
-
-    function checkAndTriggerAdzan(now, jadwal) {
-      if (isAdzanActive || !jadwal) return;
-
-      const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      
-      // Daftar sholat wajib yang memicu layar adzan (Syuruq/Imsak diabaikan)
-      const prayers = [
-        { name: 'SUBUH', time: jadwal.subuh },
-        { name: 'DZUHUR', time: jadwal.dzuhur },
-        { name: 'ASHAR', time: jadwal.ashar },
-        { name: 'MAGHRIB', time: jadwal.maghrib },
-        { name: 'ISYA', time: jadwal.isya }
+    // Helper konversi tanggal Hijriyah yang presisi & format nama bulan Indonesia (Sama dengan file Display)
+    function getHijriDate(date) {
+      const months = [
+        'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
+        'Jumadil Ula', 'Jumadil Akhir', 'Rajab', 'Sya\'ban',
+        'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'
       ];
 
-      for (let p of prayers) {
-        if (p.time && p.time === currentTimeStr && !triggeredPrayers[p.name]) {
-          startAdzanMode(p.name);
-          triggeredPrayers[p.name] = true;
-          break;
+      try {
+        const formatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+          day: 'numeric',
+          month: 'numeric',
+          year: 'numeric'
+        });
+
+        const parts = formatter.formatToParts(date);
+        let day = '', monthNum = 0, year = '';
+
+        for (const part of parts) {
+          if (part.type === 'day') day = part.value;
+          if (part.type === 'month') monthNum = parseInt(part.value, 10);
+          if (part.type === 'year') year = part.value;
         }
-      }
-    }
 
-    function startAdzanMode(prayerName) {
-      const settings = getStoredSettings();
-      isAdzanActive = true;
-      currentAdzanPrayer = prayerName;
-
-      const adzanMin = parseInt(settings.adzanDuration) || 3;
-      const iqomahMin = parseInt(settings.iqomahDuration) || 5;
-
-      const now = new Date();
-      adzanEndTime = new Date(now.getTime() + adzanMin * 60000);
-      iqomahEndTime = new Date(adzanEndTime.getTime() + iqomahMin * 60000);
-
-      document.getElementById('adzan-overlay').classList.add('show');
-      document.getElementById('adzan-status-badge').textContent = "WAKTU SHOLAT";
-      document.getElementById('adzan-prayer-title').textContent = `MEMASUKI WAKTU ADZAN ${prayerName}`;
-      document.getElementById('adzan-countdown-timer').style.display = 'block';
-      document.getElementById('iqomah-message-box').style.display = 'none';
-    }
-
-    function updateAdzanOverlay() {
-      if (!isAdzanActive) return;
-
-      const now = new Date();
-
-      if (now < adzanEndTime) {
-        // Tampilan Countdown Adzan
-        const diffMs = adzanEndTime - now;
-        const totalSec = Math.ceil(diffMs / 1000);
-        const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
-        const s = String(totalSec % 60).padStart(2, '0');
-        document.getElementById('adzan-countdown-timer').textContent = `${m}:${s}`;
-      } else if (now >= adzanEndTime && now < iqomahEndTime) {
-        // Tampilan Iqomah & Perapatan Shaf
-        document.getElementById('adzan-status-badge').textContent = "WAKTU IQOMAH";
-        document.getElementById('adzan-prayer-title').textContent = `WAKTU SHOLAT ${currentAdzanPrayer}`;
-        document.getElementById('adzan-countdown-timer').style.display = 'none';
-        document.getElementById('iqomah-message-box').style.display = 'block';
-      } else {
-        // Selesai -> Tutup Overlay
-        isAdzanActive = false;
-        document.getElementById('adzan-overlay').classList.remove('show');
+        if (day && monthNum && year) {
+          const monthName = months[monthNum - 1] || '';
+          return `${day} ${monthName} ${year} H`;
+        }
+        
+        return '-- ---------- ---- H';
+      } catch (e) {
+        return '-- ---------- ---- H';
       }
     }
 
@@ -668,30 +642,27 @@
       document.getElementById('gregorian-date').textContent = dateStr;
       document.getElementById('popup-gregorian').textContent = dateStr;
 
+      // Update Tanggal Hijriyah secara teratur memakai helper getHijriDate
+      const hijriString = getHijriDate(now);
+      document.getElementById('hijri-date').textContent = hijriString;
+      document.getElementById('popup-hijri').textContent = hijriString;
+
       const currentDateString = now.toDateString();
       if (lastFetchedDate !== currentDateString) {
-        triggeredPrayers = {}; // Reset pemicu harian
         const settings = getStoredSettings();
-        if (settings.cityId) fetchPrayerTimes(settings.cityId);
-        else {
-          const fallbackHijri = getHijriDateFormatted(now);
-          document.getElementById('hijri-date').textContent = fallbackHijri;
-          document.getElementById('popup-hijri').textContent = fallbackHijri;
+        if (settings.cityId) {
+          fetchPrayerTimes(settings.cityId);
         }
       }
 
       if (currentSchedule) {
         updatePrayerCountdown(currentSchedule);
-        checkAndTriggerAdzan(now, currentSchedule);
-      }
-
-      if (isAdzanActive) {
-        updateAdzanOverlay();
       }
     }
     setInterval(updateClock, 1000);
     updateClock();
 
+    /* LOGIK PENCARIAN KOTA (AUTOCOMPLETE) */
     async function loadCityList() {
       const searchInput = document.getElementById('input-search-kota');
       const cityIdInput = document.getElementById('select-kota-id');
@@ -705,8 +676,12 @@
           allCities = data.data;
 
           let defaultCity = null;
-          if (settings.cityId) defaultCity = allCities.find(c => c.id === settings.cityId);
-          if (!defaultCity) defaultCity = allCities.find(c => c.lokasi.includes('BANDUNG')) || allCities[0];
+          if (settings.cityId) {
+            defaultCity = allCities.find(c => c.id === settings.cityId);
+          }
+          if (!defaultCity) {
+            defaultCity = allCities.find(c => c.lokasi.includes('BANDUNG')) || allCities[0];
+          }
 
           if (defaultCity) {
             cityIdInput.value = defaultCity.id;
@@ -721,7 +696,11 @@
       searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         suggestionsBox.innerHTML = '';
-        if (!query) { suggestionsBox.classList.remove('show'); return; }
+
+        if (!query) {
+          suggestionsBox.classList.remove('show');
+          return;
+        }
 
         const filtered = allCities.filter(c => c.lokasi.toLowerCase().includes(query));
         if (filtered.length > 0) {
@@ -743,7 +722,9 @@
       });
 
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.city-search-container')) suggestionsBox.classList.remove('show');
+        if (!e.target.closest('.city-search-container')) {
+          suggestionsBox.classList.remove('show');
+        }
       });
     }
 
@@ -770,17 +751,10 @@
           document.getElementById('time-maghrib').textContent = j.maghrib;
           document.getElementById('time-isya').textContent = j.isya;
 
-          const hijriString = j.tanggal || getHijriDateFormatted(today);
-          document.getElementById('hijri-date').textContent = hijriString;
-          document.getElementById('popup-hijri').textContent = hijriString;
-
           updatePrayerCountdown(j);
         }
       } catch (e) {
         console.error('Gagal mengambil jadwal sholat:', e);
-        const fallbackHijri = getHijriDateFormatted(today);
-        document.getElementById('hijri-date').textContent = fallbackHijri;
-        document.getElementById('popup-hijri').textContent = fallbackHijri;
       }
     }
 
@@ -824,6 +798,7 @@
       const s = String(diffSec % 60).padStart(2, '0');
       const countdownFormatted = `-${h}:${m}:${s}`;
 
+      // Update elemen untuk bar jadwal sholat biasa
       const activeEl = document.getElementById(next.id);
       if (activeEl) {
         activeEl.classList.add('active');
@@ -833,6 +808,7 @@
         activeEl.appendChild(cdEl);
       }
 
+      // Update elemen popup khusus Fullscreen
       document.getElementById('fs-next-name').textContent = next.name;
       document.getElementById('fs-next-time').textContent = next.timeStr || '--:--';
       document.getElementById('fs-next-countdown').textContent = countdownFormatted;
@@ -844,9 +820,6 @@
         alamat: document.getElementById('input-alamat').value,
         cityId: document.getElementById('select-kota-id').value,
         cityName: document.getElementById('input-search-kota').value,
-        adzanDuration: document.getElementById('input-adzan-timer').value,
-        iqomahDuration: document.getElementById('input-iqomah-timer').value,
-        slideDuration: document.getElementById('input-slide-duration').value,
         mainBanner: document.getElementById('input-main-banner').value,
         youtubeUrl: document.getElementById('input-youtube-url').value,
         slides: [
