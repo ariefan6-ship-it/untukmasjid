@@ -29,15 +29,16 @@
     }
     .btn-settings-toggle:hover, .btn-settings-toggle:focus { background: #f59e0b; color: #000; transform: scale(1.05); }
 
-    /* SIDEBAR PENGATURAN KANAN */
+    /* SIDEBAR PENGATURAN KANAN (PERBAIKAN: DEFAULT DISPLAY NONE) */
     .settings-sidebar {
-      position: absolute; top: 0; right: -380px; width: 360px; height: 100%;
-      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px);
-      border-left: 1px solid rgba(255, 255, 255, 0.15); z-index: 200; padding: 24px;
-      color: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.5); transition: right 0.35s ease-in-out;
-      display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+      position: fixed; top: 0; right: 0; width: 360px; height: 100%;
+      background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px);
+      border-left: 1px solid rgba(255, 255, 255, 0.15); z-index: 999; padding: 24px;
+      color: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+      display: none; flex-direction: column; gap: 16px; overflow-y: auto;
     }
-    .settings-sidebar.open { right: 0; }
+    .settings-sidebar.open { display: flex !important; }
+    
     .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
     .sidebar-header h3 { font-size: 1.2rem; color: #f59e0b; }
     .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; }
@@ -56,7 +57,7 @@
     .city-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
       background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 8px 8px;
-      z-index: 300; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .city-suggestions.show { display: block; }
     .city-suggestion-item {
@@ -172,7 +173,7 @@
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR (PERBAIKAN TAMPILAN BANNER & FULLSCREEN DI TV) */
+    /* MODE SIDEBAR */
     #mode-sidebar:checked ~ .display-container .main-wrapper { 
       flex-direction: row-reverse !important;
       display: flex !important;
