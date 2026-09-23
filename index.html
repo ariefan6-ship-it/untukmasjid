@@ -17,9 +17,9 @@
     /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI POJOK KANAN BAWAH */
+    /* TOMBOL KONTROL DI POJOK KANAN ATAS (AGAR TIDAK MENUTUPI RUNNING TEXT) */
     .controls-group {
-      position: absolute; bottom: 15px; right: 15px; z-index: 100;
+      position: absolute; top: 15px; right: 15px; z-index: 100;
       display: flex; gap: 8px; align-items: center;
     }
 
@@ -32,7 +32,7 @@
     .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.05); }
     .btn-control svg { width: 20px; height: 20px; fill: currentColor; }
 
-    /* MODAL POPUP PENGATURAN (TENTENGAN / OVERLAY) */
+    /* MODAL POPUP PENGATURAN */
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
@@ -57,7 +57,6 @@
 
     .modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 6px; }
     
-    /* SCROLLBAR MODAL STYLING */
     .modal-body::-webkit-scrollbar { width: 6px; }
     .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
     .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -70,7 +69,6 @@
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
     
-    /* AUTOCOMPLETE KOTA */
     .city-search-container { position: relative; }
     .city-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
@@ -119,15 +117,18 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
+    /* HEADER POPUP MODE VIDEO (DIPERLEBAR) */
     .video-header-popup {
       display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 35;
+      width: 85%; max-width: 800px;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px; padding: 10px 24px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6); align-items: center; gap: 20px; text-align: center;
+      border-radius: 16px; padding: 12px 32px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      align-items: center; justify-content: space-between; text-align: center;
     }
-    .video-popup-clock { font-size: 2.8rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
-    .video-popup-title { font-size: 1.25rem; font-weight: 800; color: #f59e0b; white-space: nowrap; }
-    .video-popup-address { font-size: 0.85rem; color: #cbd5e1; font-weight: 500; }
-    .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.2); }
+    .video-popup-clock { font-size: 3rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
+    .video-popup-title { font-size: 1.4rem; font-weight: 800; color: #f59e0b; white-space: nowrap; }
+    .video-popup-address { font-size: 0.9rem; color: #cbd5e1; font-weight: 500; }
+    .video-popup-divider { width: 1px; height: 40px; background: rgba(255, 255, 255, 0.2); }
 
     /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
@@ -191,71 +192,46 @@
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR */
-    #mode-sidebar:checked ~ .display-container .main-wrapper { 
-      flex-direction: row-reverse !important;
-      display: flex !important;
-      width: 100% !important;
-      height: 100% !important;
-      position: relative !important;
-    }
-    #mode-sidebar:checked ~ .display-container .center-banner {
-      flex: 1 1 auto !important;
-      width: 100% !important;
-      height: 100% !important;
-      position: relative !important;
-      display: block !important;
-      background: #000 !important;
-      overflow: hidden !important;
-    }
-    #mode-sidebar:checked ~ .display-container .banner-inner {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-    }
+    /* MODE SIDEBAR (DISESUAIKAN DENGAN DISPLAY JADWAL SHOLAT DIGITAL) */
     #mode-sidebar:checked ~ .display-container .prayer-bar {
-      display: flex !important; 
-      flex-direction: column !important; 
-      width: 290px !important; 
-      height: 100% !important; 
+      display: flex !important;
+      flex-direction: column !important;
+      width: 280px !important;
+      height: 100% !important;
       grid-template-columns: none !important;
-      justify-content: space-around !important; 
-      border-right: 2px solid #e2e8f0 !important; 
-      padding: 0.6rem 0.5rem !important; 
+      justify-content: space-around !important;
+      border-right: 2px solid #e2e8f0 !important;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.05) !important;
+      padding: 0.6rem 0.5rem !important;
       background: rgba(255, 255, 255, 0.98) !important;
-      position: relative !important;
-      bottom: auto !important;
-      left: auto !important;
-      right: auto !important;
       flex-shrink: 0 !important;
     }
-    #mode-sidebar:checked ~ .display-container .prayer-item { 
-      width: 100% !important; 
-      display: flex !important; 
-      justify-content: space-between !important; 
-      align-items: center !important; 
-      padding: 0.5rem 0.8rem !important; 
+    #mode-sidebar:checked ~ .display-container .prayer-item {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding: 0.5rem 0.8rem !important;
     }
-    #mode-sidebar:checked ~ .display-container .prayer-name { 
-      font-size: 1rem !important; 
-      margin-bottom: 0 !important; 
+    #mode-sidebar:checked ~ .display-container .prayer-item.active {
+      transform: translateX(4px) !important;
+      padding: 0.6rem 0.8rem !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-name {
+      font-size: 1rem !important;
+      margin-bottom: 0 !important;
       color: #475569 !important;
     }
-    #mode-sidebar:checked ~ .display-container .prayer-time { 
-      font-size: 1.6rem !important; 
+    #mode-sidebar:checked ~ .display-container .prayer-time {
+      font-size: 1.6rem !important;
       color: #0f172a !important;
     }
-    #mode-sidebar:checked ~ .display-container .bg-image,
-    #mode-sidebar:checked ~ .display-container .bg-blur { 
-      display: block !important;
+    #mode-sidebar:checked ~ .display-container .bg-blur,
+    #mode-sidebar:checked ~ .display-container .bg-image {
       opacity: 1 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important; 
+    }
+    #mode-sidebar:checked ~ .display-container .bg-image {
+      object-fit: contain !important;
     }
   </style>
 </head>
@@ -308,6 +284,10 @@
 
         <div class="section-title">Slide Show Gambar (Sidebar & Full)</div>
         <div class="form-group">
+          <label for="input-slide-timer">Timer Slideshow (Detik)</label>
+          <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
+        </div>
+        <div class="form-group">
           <label for="input-slide-1">Slide Gambar 1</label>
           <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive 1">
         </div>
@@ -339,9 +319,9 @@
       </div>
       <div class="header-divider"></div>
       <div class="header-center">
-        <div class="masjid-title" id="display-masjid">Masjid Az Zamzam</div>
+        <div class="masjid-title" id="display-masjid">Nama Masjid</div>
         <div class="masjid-address" id="display-alamat">
-          <span class="address-marquee">Jl. Cisaranten Kulon No. 18 Arcamanik, Kota Bandung</span>
+          <span class="address-marquee">alamat</span>
         </div>
       </div>
       <div class="header-divider"></div>
@@ -351,7 +331,7 @@
       </div>
     </header>
 
-    <div class="main-wrapper">
+    <div class="main-wrapper" id="main-wrapper">
       <section class="center-banner">
         <div class="banner-inner">
           <img src="https://picsum.photos/1200/800?random=1" alt="Blur Background" class="bg-blur" id="bg-blur" />
@@ -366,8 +346,8 @@
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
             <div>
-              <div class="video-popup-title" id="popup-masjid">Masjid Az Zamzam</div>
-              <div class="video-popup-address" id="popup-alamat">Jl. Cisaranten Kulon No. 18 Arcamanik</div>
+              <div class="video-popup-title" id="popup-masjid">Nama Masjid</div>
+              <div class="video-popup-address" id="popup-alamat">alamat</div>
             </div>
             <div class="video-popup-divider"></div>
             <div>
@@ -389,7 +369,7 @@
             </div>
           </div>
 
-          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS -->
+          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS (DI POJOK KANAN ATAS) -->
           <div class="controls-group">
             <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
               <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -402,7 +382,7 @@
     </div>
 
     <!-- BAR JADWAL SHOLAT -->
-    <footer class="prayer-bar">
+    <footer class="prayer-bar" id="prayer-bar">
       <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
       <div class="prayer-item" id="card-subuh"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
       <div class="prayer-item" id="card-terbit"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
@@ -413,8 +393,8 @@
     </footer>
 
     <!-- RUNNING TEXT -->
-    <div class="running-text-bar">
-      <div class="marquee-content" id="display-running-text">Selamat datang di Masjid Az Zamzam. Harap menonaktifkan nada dering handphone selama berada di area masjid.</div>
+    <div class="running-text-bar" id="running-bar">
+      <div class="marquee-content" id="display-running-text">Masukkan Running Text</div>
     </div>
   </div>
 
@@ -429,20 +409,22 @@
     let currentSlideIdx = 0;
     let slideImages = [];
     let mainBannerImage = "";
+    let slideTimerSec = 5;
 
     const DEFAULT_SETTINGS = {
-      masjid: "Masjid Az Zamzam",
-      alamat: "Jl. Cisaranten Kulon No. 18 Arcamanik, Kota Bandung",
+      masjid: "Nama Masjid",
+      alamat: "alamat",
       cityId: "",
       cityName: "",
       mainBanner: "https://picsum.photos/1200/800?random=99",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
+      slideTimer: 5,
       slides: [
         "https://picsum.photos/1200/800?random=1",
         "https://picsum.photos/1200/800?random=2",
         "https://picsum.photos/1200/800?random=3"
       ],
-      runningText: "Selamat datang di Masjid Az Zamzam. Harap menonaktifkan nada dering handphone selama berada di area masjid."
+      runningText: "Masukkan Running Text"
     };
 
     const toggleBtn = document.getElementById('btn-toggle-settings');
@@ -456,12 +438,10 @@
     toggleBtn.addEventListener('click', () => modalOverlay.classList.add('open'));
     closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
 
-    // Tutup modal jika klik di luar box modal
     modalOverlay.addEventListener('click', (e) => {
       if (e.target === modalOverlay) modalOverlay.classList.remove('open');
     });
 
-    /* LOGIK FULLSCREEN TOGGLE */
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {
@@ -488,6 +468,17 @@
 
     function handleModeChange() {
       const activeMode = modes[currentModeIdx];
+      const prayerBar = document.getElementById('prayer-bar');
+      const runningBar = document.getElementById('running-bar');
+      const displayContainer = document.getElementById('display-container');
+      const mainWrapper = document.getElementById('main-wrapper');
+
+      if (activeMode === 'mode-sidebar') {
+        mainWrapper.insertBefore(prayerBar, mainWrapper.firstChild);
+      } else {
+        displayContainer.insertBefore(prayerBar, runningBar);
+      }
+
       if (activeMode === 'mode-main') {
         if (slideShowTimer) clearInterval(slideShowTimer);
         updateDisplayImage(mainBannerImage || DEFAULT_SETTINGS.mainBanner);
@@ -565,7 +556,7 @@
         }
 
         if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
         }
       } catch (e) {
         console.error("Gagal memproses URL YouTube:", e);
@@ -600,6 +591,8 @@
 
       mainBannerImage = convertGoogleDriveUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
 
+      slideTimerSec = parseInt(settings.slideTimer) || 5;
+
       const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
       slideImages = rawSlides.map(convertGoogleDriveUrl).filter(url => url && url.trim() !== '');
 
@@ -615,6 +608,7 @@
       document.getElementById('select-kota-id').value = settings.cityId || '';
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
+      document.getElementById('input-slide-timer').value = slideTimerSec;
       document.getElementById('input-slide-1').value = rawSlides[0] || '';
       document.getElementById('input-slide-2').value = rawSlides[1] || '';
       document.getElementById('input-slide-3').value = rawSlides[2] || '';
@@ -635,7 +629,7 @@
         slideShowTimer = setInterval(() => {
           currentSlideIdx = (currentSlideIdx + 1) % slideImages.length;
           updateDisplayImage(slideImages[currentSlideIdx]);
-        }, 5000);
+        }, slideTimerSec * 1000);
       }
     }
 
@@ -652,7 +646,6 @@
       }, 200);
     }
 
-    /* KONVERSI MATEMATIS MASEHI KE HIJRIYAH */
     function getHijriDate(date) {
       const months = [
         'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
@@ -728,7 +721,6 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    /* LOGIK PENCARIAN KOTA (AUTOCOMPLETE) */
     async function loadCityList() {
       const searchInput = document.getElementById('input-search-kota');
       const cityIdInput = document.getElementById('select-kota-id');
@@ -886,6 +878,7 @@
         cityName: document.getElementById('input-search-kota').value,
         mainBanner: document.getElementById('input-main-banner').value,
         youtubeUrl: document.getElementById('input-youtube-url').value,
+        slideTimer: document.getElementById('input-slide-timer').value,
         slides: [
           document.getElementById('input-slide-1').value,
           document.getElementById('input-slide-2').value,
