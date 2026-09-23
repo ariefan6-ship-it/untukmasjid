@@ -17,31 +17,50 @@
     /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* MENU CONTROL/REMOTE TV DISEMBUNYIKAN */
-    .tv-menu-bar { display: none !important; }
+    /* TOMBOL KONTROL DI POJOK KANAN BAWAH */
+    .controls-group {
+      position: absolute; bottom: 15px; right: 15px; z-index: 100;
+      display: flex; gap: 8px; align-items: center;
+    }
 
-    /* TOMBOL SETTINGS TITIK TIGA */
-    .btn-settings-toggle {
-      position: absolute; bottom: 15px; right: 15px; z-index: 100; width: 38px; height: 38px;
-      background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 8px; color: #fff; font-size: 1.3rem; display: flex;
+    .btn-control {
+      width: 38px; height: 38px;
+      background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px; color: #fff; font-size: 1.2rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
     }
-    .btn-settings-toggle:hover, .btn-settings-toggle:focus { background: #f59e0b; color: #000; transform: scale(1.05); }
+    .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.05); }
+    .btn-control svg { width: 20px; height: 20px; fill: currentColor; }
 
-    /* SIDEBAR PENGATURAN KANAN */
-    .settings-sidebar {
-      position: absolute; top: 0; right: -380px; width: 360px; height: 100%;
-      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px);
-      border-left: 1px solid rgba(255, 255, 255, 0.15); z-index: 200; padding: 24px;
-      color: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.5); transition: right 0.35s ease-in-out;
-      display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+    /* MODAL POPUP PENGATURAN (TENTENGAN / OVERLAY) */
+    .settings-modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+      z-index: 500; display: flex; justify-content: center; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
-    .settings-sidebar.open { right: 0; }
-    .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
-    .sidebar-header h3 { font-size: 1.2rem; color: #f59e0b; }
-    .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; }
+    .settings-modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .settings-modal {
+      width: 90%; max-width: 520px; max-height: 85vh;
+      background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px; padding: 24px; color: #fff;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
+      transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .settings-modal-overlay.open .settings-modal { transform: translateY(0); }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
+    .modal-header h3 { font-size: 1.25rem; color: #f59e0b; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.6rem; cursor: pointer; line-height: 1; }
     .close-btn:hover { color: #ef4444; }
+
+    .modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 6px; }
+    
+    /* SCROLLBAR MODAL STYLING */
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
     .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
     .form-group label { font-size: 0.85rem; font-weight: 600; color: #cbd5e1; }
@@ -51,12 +70,12 @@
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
     
-    /* STYLE PENCARIAN KOTA (AUTOCOMPLETE) */
+    /* AUTOCOMPLETE KOTA */
     .city-search-container { position: relative; }
     .city-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
-      background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 8px 8px;
-      z-index: 300; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 8px 8px;
+      z-index: 600; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.6);
     }
     .city-suggestions.show { display: block; }
     .city-suggestion-item {
@@ -66,7 +85,7 @@
 
     .section-title { font-size: 0.9rem; font-weight: 700; color: #f59e0b; margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
     
-    .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 10px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
+    .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
     .btn-save:hover { background: #d97706; color: #fff; }
 
     /* HEADER DISPLAY */
@@ -110,7 +129,7 @@
     .video-popup-address { font-size: 0.85rem; color: #cbd5e1; font-weight: 500; }
     .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.2); }
 
-    /* POPUP FOOTER UNTUK MODE FULLSCREEN */
+    /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
       display: none; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 35;
       background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -238,13 +257,6 @@
       height: 100% !important;
       object-fit: cover !important; 
     }
-    #mode-sidebar:checked ~ .display-container .btn-settings-toggle {
-      display: flex !important;
-      position: absolute !important;
-      bottom: 15px !important;
-      right: 15px !important;
-      z-index: 100 !important;
-    }
   </style>
 </head>
 <body>
@@ -255,68 +267,72 @@
   <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
   <input type="radio" id="mode-sidebar" name="display-mode" class="mode-switch">
 
-  <!-- SIDEBAR PENGATURAN KANAN -->
-  <aside class="settings-sidebar" id="settings-sidebar">
-    <div class="sidebar-header">
-      <h3>Pengaturan Display</h3>
-      <button class="close-btn" id="btn-close-settings">&times;</button>
-    </div>
+  <!-- MODAL POPUP PENGATURAN -->
+  <div class="settings-modal-overlay" id="settings-modal-overlay">
+    <div class="settings-modal">
+      <div class="modal-header">
+        <h3>Pengaturan Display</h3>
+        <button class="close-btn" id="btn-close-settings">&times;</button>
+      </div>
 
-    <div class="form-group">
-      <label for="input-masjid">Nama Masjid</label>
-      <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
-    </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-masjid">Nama Masjid</label>
+          <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
+        </div>
 
-    <div class="form-group">
-      <label for="input-alamat">Alamat Masjid</label>
-      <input type="text" id="input-alamat" placeholder="Alamat singkat">
-    </div>
+        <div class="form-group">
+          <label for="input-alamat">Alamat Masjid</label>
+          <input type="text" id="input-alamat" placeholder="Alamat singkat">
+        </div>
 
-    <!-- CARI KOTA DENGAN AUTOCOMPLETE / TYPE TO SEARCH -->
-    <div class="form-group city-search-container">
-      <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
-      <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Bandung)" autocomplete="off">
-      <input type="hidden" id="select-kota-id">
-      <div class="city-suggestions" id="city-suggestions"></div>
-    </div>
+        <!-- CARI KOTA DENGAN AUTOCOMPLETE -->
+        <div class="form-group city-search-container">
+          <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
+          <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Bandung)" autocomplete="off">
+          <input type="hidden" id="select-kota-id">
+          <div class="city-suggestions" id="city-suggestions"></div>
+        </div>
 
-    <div class="section-title">Mode Utama (Banner Statis)</div>
-    <div class="form-group">
-      <label for="input-main-banner">URL Gambar Utama</label>
-      <input type="text" id="input-main-banner" placeholder="URL Gambar Mode Utama / Link Drive">
-    </div>
+        <div class="section-title">Mode Utama (Banner Statis)</div>
+        <div class="form-group">
+          <label for="input-main-banner">URL Gambar Utama</label>
+          <input type="text" id="input-main-banner" placeholder="URL Gambar Mode Utama / Link Drive">
+        </div>
 
-    <div class="section-title">Mode Video</div>
-    <div class="form-group">
-      <label for="input-youtube-url">URL YouTube / Live Stream</label>
-      <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
-    </div>
+        <div class="section-title">Mode Video</div>
+        <div class="form-group">
+          <label for="input-youtube-url">URL YouTube / Live Stream</label>
+          <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
 
-    <div class="section-title">Slide Show Gambar (Sidebar & Full)</div>
-    <div class="form-group">
-      <label for="input-slide-1">Slide Gambar 1</label>
-      <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive 1">
-    </div>
-    <div class="form-group">
-      <label for="input-slide-2">Slide Gambar 2</label>
-      <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive 2">
-    </div>
-    <div class="form-group">
-      <label for="input-slide-3">Slide Gambar 3</label>
-      <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive 3">
-    </div>
+        <div class="section-title">Slide Show Gambar (Sidebar & Full)</div>
+        <div class="form-group">
+          <label for="input-slide-1">Slide Gambar 1</label>
+          <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive 1">
+        </div>
+        <div class="form-group">
+          <label for="input-slide-2">Slide Gambar 2</label>
+          <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive 2">
+        </div>
+        <div class="form-group">
+          <label for="input-slide-3">Slide Gambar 3</label>
+          <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive 3">
+        </div>
 
-    <div class="section-title">Informasi</div>
-    <div class="form-group">
-      <label for="input-running-text">Running Text</label>
-      <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
-    </div>
+        <div class="section-title">Informasi</div>
+        <div class="form-group">
+          <label for="input-running-text">Running Text</label>
+          <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
+        </div>
 
-    <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
-  </aside>
+        <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
+      </div>
+    </div>
+  </div>
 
   <!-- DISPLAY CONTAINER -->
-  <div class="display-container">
+  <div class="display-container" id="display-container">
     <header>
       <div class="header-left">
         <div class="digital-clock" id="clock">00<span class="colon">:</span>00</div>
@@ -360,7 +376,7 @@
             </div>
           </div>
 
-          <!-- POPUP FOOTER MINIMALIS HANYA UNTUK MODE FULLSCREEN -->
+          <!-- POPUP FOOTER FULLSCREEN -->
           <div class="fullscreen-footer-popup">
             <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
             <div class="fs-popup-divider"></div>
@@ -373,8 +389,14 @@
             </div>
           </div>
 
-          <!-- Tombol Pengaturan Titik Tiga -->
-          <button class="btn-settings-toggle" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
+          <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS -->
+          <div class="controls-group">
+            <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
+              <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+              <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+            </button>
+            <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
+          </div>
         </div>
       </section>
     </div>
@@ -425,11 +447,44 @@
 
     const toggleBtn = document.getElementById('btn-toggle-settings');
     const closeBtn = document.getElementById('btn-close-settings');
-    const sidebar = document.getElementById('settings-sidebar');
+    const modalOverlay = document.getElementById('settings-modal-overlay');
     const saveBtn = document.getElementById('btn-save-settings');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const iconFsEnter = document.getElementById('icon-fs-enter');
+    const iconFsExit = document.getElementById('icon-fs-exit');
 
-    toggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
-    closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+    toggleBtn.addEventListener('click', () => modalOverlay.classList.add('open'));
+    closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
+
+    // Tutup modal jika klik di luar box modal
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    });
+
+    /* LOGIK FULLSCREEN TOGGLE */
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Gagal mengaktifkan mode Fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        iconFsEnter.style.display = 'none';
+        iconFsExit.style.display = 'block';
+      } else {
+        iconFsEnter.style.display = 'block';
+        iconFsExit.style.display = 'none';
+      }
+    });
 
     function handleModeChange() {
       const activeMode = modes[currentModeIdx];
@@ -452,11 +507,16 @@
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 's' || e.key === 'S') {
-        sidebar.classList.toggle('open');
+        modalOverlay.classList.toggle('open');
         return;
       }
 
-      if (sidebar.classList.contains('open')) return;
+      if (modalOverlay.classList.contains('open')) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+        return;
+      }
 
       if (e.key === 'ChannelUp' || e.key === 'ArrowUp' || e.key === 'PageUp') {
         currentModeIdx = (currentModeIdx + 1) % modes.length;
@@ -592,7 +652,7 @@
       }, 200);
     }
 
-    /* FUNGSI PERBAIKAN: Konversi Matematis Masehi ke Hijriyah secara Murni (Konsisten di GitHub Pages) */
+    /* KONVERSI MATEMATIS MASEHI KE HIJRIYAH */
     function getHijriDate(date) {
       const months = [
         'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
@@ -649,7 +709,6 @@
       document.getElementById('gregorian-date').textContent = dateStr;
       document.getElementById('popup-gregorian').textContent = dateStr;
 
-      // Update Tanggal Hijriyah
       const hijriString = getHijriDate(now);
       document.getElementById('hijri-date').textContent = hijriString;
       document.getElementById('popup-hijri').textContent = hijriString;
@@ -805,7 +864,6 @@
       const s = String(diffSec % 60).padStart(2, '0');
       const countdownFormatted = `-${h}:${m}:${s}`;
 
-      // Update elemen untuk bar jadwal sholat biasa
       const activeEl = document.getElementById(next.id);
       if (activeEl) {
         activeEl.classList.add('active');
@@ -815,7 +873,6 @@
         activeEl.appendChild(cdEl);
       }
 
-      // Update elemen popup khusus Fullscreen
       document.getElementById('fs-next-name').textContent = next.name;
       document.getElementById('fs-next-time').textContent = next.timeStr || '--:--';
       document.getElementById('fs-next-countdown').textContent = countdownFormatted;
@@ -840,7 +897,7 @@
       localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
       applySettings(settings);
       fetchPrayerTimes(settings.cityId);
-      sidebar.classList.remove('open');
+      modalOverlay.classList.remove('open');
     });
 
     const initialSettings = getStoredSettings();
