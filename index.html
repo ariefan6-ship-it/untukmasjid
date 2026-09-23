@@ -172,7 +172,7 @@
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR (PERBAIKAN TAMPILAN BANNER & FULLSCREEN DI TV) */
+    /* MODE SIDEBAR */
     #mode-sidebar:checked ~ .display-container .main-wrapper { 
       flex-direction: row-reverse !important;
       display: flex !important;
@@ -592,7 +592,7 @@
       }, 200);
     }
 
-    // Helper konversi tanggal Hijriyah yang presisi & format nama bulan Indonesia (Sama dengan file Display)
+    /* FUNGSI PERBAIKAN: Konversi Matematis Masehi ke Hijriyah secara Murni (Konsisten di GitHub Pages) */
     function getHijriDate(date) {
       const months = [
         'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
@@ -600,31 +600,38 @@
         'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'
       ];
 
-      try {
-        const formatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
-          day: 'numeric',
-          month: 'numeric',
-          year: 'numeric'
-        });
+      let day = date.getDate();
+      let month = date.getMonth();
+      let year = date.getFullYear();
 
-        const parts = formatter.formatToParts(date);
-        let day = '', monthNum = 0, year = '';
-
-        for (const part of parts) {
-          if (part.type === 'day') day = part.value;
-          if (part.type === 'month') monthNum = parseInt(part.value, 10);
-          if (part.type === 'year') year = part.value;
-        }
-
-        if (day && monthNum && year) {
-          const monthName = months[monthNum - 1] || '';
-          return `${day} ${monthName} ${year} H`;
-        }
-        
-        return '-- ---------- ---- H';
-      } catch (e) {
-        return '-- ---------- ---- H';
+      if (month < 2) {
+        year -= 1;
+        month += 12;
       }
+
+      let a = Math.floor(year / 100);
+      let b = 2 - a + Math.floor(a / 4);
+      let jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
+
+      let z = jd + 0.5;
+      let i = Math.floor((z - 1867216.25) / 36524.25);
+      let aa = z + 1 + i - Math.floor(i / 4);
+      let bb = aa + 1524;
+      let cc = Math.floor((bb - 122.1) / 365.25);
+      let dd = Math.floor(365.25 * cc);
+      let ee = Math.floor((bb - dd) / 30.6001);
+
+      let l = bb - dd - Math.floor(30.6001 * ee);
+      let hYear = Math.floor((jd - 1948439.5) / 354.367068);
+      let hMonth = Math.floor((jd - 1948439.5 - (hYear * 354.367068)) / 29.530589);
+      let hDay = Math.floor(jd - 1948439.5 - (hYear * 354.367068) - (hMonth * 29.530589)) + 1;
+
+      if (hMonth >= 12) {
+        hMonth = 0;
+        hYear++;
+      }
+
+      return `${hDay} ${months[hMonth]} ${hYear + 1} H`;
     }
 
     function updateClock() {
@@ -642,7 +649,7 @@
       document.getElementById('gregorian-date').textContent = dateStr;
       document.getElementById('popup-gregorian').textContent = dateStr;
 
-      // Update Tanggal Hijriyah secara teratur memakai helper getHijriDate
+      // Update Tanggal Hijriyah
       const hijriString = getHijriDate(now);
       document.getElementById('hijri-date').textContent = hijriString;
       document.getElementById('popup-hijri').textContent = hijriString;
