@@ -17,20 +17,20 @@
     /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI POJOK KANAN ATAS */
+    /* TOMBOL KONTROL DI SISI TENGAH SEBELAH KANAN SECARA VERTIKAL */
     .controls-group {
-      position: absolute; top: 15px; right: 15px; z-index: 100;
-      display: flex; gap: 8px; align-items: center;
+      position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 100;
+      display: flex; flex-direction: column; gap: 10px; align-items: center;
     }
 
     .btn-control {
-      width: 38px; height: 38px;
-      background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 8px; color: #fff; font-size: 1.2rem; display: flex;
+      width: 42px; height: 42px;
+      background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px; color: #fff; font-size: 1.2rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
     }
-    .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.05); }
-    .btn-control svg { width: 20px; height: 20px; fill: currentColor; }
+    .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.08); }
+    .btn-control svg { width: 22px; height: 22px; fill: currentColor; }
 
     /* MODAL POPUP PENGATURAN */
     .settings-modal-overlay {
@@ -93,7 +93,7 @@
     .btn-install:hover { background: #059669; }
     .btn-install:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
 
-    /* HEADER DISPLAY */
+    /* HEADER DISPLAY UTAMA */
     header {
       background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
@@ -124,10 +124,10 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
-    /* HEADER POPUP MODE VIDEO */
+    /* HEADER POPUP MODE VIDEO - DIPOSISIKAN DI CENTER */
     .video-header-popup {
-      display: none; position: absolute; top: 15px; left: 20px; z-index: 35;
-      width: calc(100% - 130px); max-width: 750px;
+      display: none; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 35;
+      width: 90%; max-width: 800px;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 16px; padding: 10px 20px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       align-items: center; justify-content: space-between; text-align: center; gap: 15px;
@@ -136,9 +136,7 @@
       font-size: 2.5rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
       display: flex; align-items: center; padding-right: 5px;
     }
-    .video-popup-date {
-      padding-left: 5px; text-align: center; white-space: nowrap;
-    }
+    .video-popup-date { padding-left: 5px; text-align: center; white-space: nowrap; }
     .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
     
     .video-popup-center {
@@ -159,6 +157,17 @@
       0% { transform: translate(0, 0); }
       100% { transform: translate(-100%, 0); }
     }
+
+    /* POPUP OVERLAY AZAN & IQOMAH */
+    .prayer-event-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
+      background: #0f172a; color: #fff; display: none; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; padding: 20px;
+    }
+    .prayer-event-overlay.active { display: flex; }
+    .event-title { font-size: 3rem; font-weight: 900; color: #f59e0b; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    .event-subtitle { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 20px; }
+    .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid rgba(245, 158, 11, 0.4); }
 
     /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
@@ -202,7 +211,7 @@
     .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* MODE RULES */
+    /* MODE VIDEO RULES */
     #mode-video:checked ~ .display-container header { display: none !important; }
     #mode-video:checked ~ .display-container .video-container { display: block !important; }
     #mode-video:checked ~ .display-container .video-header-popup { display: flex !important; }
@@ -215,14 +224,14 @@
     #mode-video:checked ~ .display-container .prayer-time { color: #ffffff !important; }
     #mode-video:checked ~ .display-container .running-text-bar { position: absolute !important; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.92) !important; }
 
-    /* FULLSCREEN MODE ATURAN */
+    /* FULLSCREEN MODE RULES */
     #mode-fullscreen:checked ~ .display-container header,
     #mode-fullscreen:checked ~ .display-container .prayer-bar,
     #mode-fullscreen:checked ~ .display-container .running-text-bar { display: none !important; }
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR */
+    /* MODE SIDEBAR RULES */
     #mode-sidebar:checked ~ .display-container .prayer-bar {
       display: flex !important;
       flex-direction: column !important;
@@ -300,6 +309,12 @@
           <div class="city-suggestions" id="city-suggestions"></div>
         </div>
 
+        <div class="section-title">PENGATURAN IQOMAH</div>
+        <div class="form-group">
+          <label for="input-iqomah-timer">Durasi Jeda Iqomah (Menit)</label>
+          <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
+        </div>
+
         <div class="section-title">Mode Utama (Banner Statis / Video)</div>
         <div class="form-group">
           <label for="input-main-banner">URL Gambar Utama atau Link YouTube</label>
@@ -349,7 +364,7 @@
   <!-- DISPLAY CONTAINER -->
   <div class="display-container" id="display-container">
     
-    <!-- TOMBOL CONTROL: FULLSCREEN & SETTINGS (MELAYANG DI ATAS SEGALA ELEMENT) -->
+    <!-- TOMBOL CONTROL: VERTIKAL DI SISI KANAN TENGAH -->
     <div class="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
         <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -386,7 +401,7 @@
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- POPUP HEADER MODE VIDEO -->
+          <!-- POPUP HEADER MODE VIDEO (CENTERED) -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
@@ -401,6 +416,13 @@
               <div style="font-size: 1rem; font-weight: 800;" id="popup-hijri">-- ---------- ---- H</div>
               <div style="font-size: 0.8rem; color: #94a3b8;" id="popup-gregorian">--</div>
             </div>
+          </div>
+
+          <!-- OVERLAY MODAL WAKTU AZAN DAN IQOMAH -->
+          <div class="prayer-event-overlay" id="prayer-event-overlay">
+            <div class="event-title" id="event-title">WAKTU AZAN</div>
+            <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT SUBUH</div>
+            <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
           <!-- POPUP FOOTER FULLSCREEN -->
@@ -450,11 +472,17 @@
     let mainBannerMedia = "";
     let slideTimerSec = 5;
 
+    /* STATUS EVENT WAKTU AZAN & IQOMAH */
+    let isAzanIqomahActive = false;
+    let currentEventSholat = "";
+    let triggeredToday = {};
+
     const DEFAULT_SETTINGS = {
       masjid: "Nama Masjid",
       alamat: "alamat",
       cityId: "",
       cityName: "",
+      iqomahTimer: 10,
       mainBanner: "https://picsum.photos/1200/800?random=99",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
       slideTimer: 5,
@@ -536,10 +564,11 @@
       return url.includes('youtube.com') || url.includes('youtu.be');
     }
 
+    /* OPSI 1: FUNGSI KONVERSI OTOMATIS LINK GOOGLE DRIVE MENJADI DIRECT IMAGE LINK */
     function convertGoogleDriveUrl(url) {
       if (!url) return '';
-      if (url.includes('drive.google.com')) {
-        const matches = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+        const matches = url.match(/\/(?:file\/)?d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
         if (matches && matches[1]) {
           return `https://lh3.googleusercontent.com/d/${matches[1]}`;
         }
@@ -576,7 +605,7 @@
     }
 
     function processMediaUrl(url) {
-      if (!url) return '';
+      if (!url) return { type: 'image', url: '' };
       if (isYoutubeUrl(url)) {
         return { type: 'youtube', url: convertYoutubeEmbedUrl(url) };
       }
@@ -685,6 +714,7 @@
       document.getElementById('input-alamat').value = settings.alamat;
       document.getElementById('input-search-kota').value = settings.cityName || '';
       document.getElementById('select-kota-id').value = settings.cityId || '';
+      document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
       document.getElementById('input-slide-timer').value = slideTimerSec;
@@ -784,10 +814,62 @@
       return `${hDay} ${months[hMonth]} ${hYear + 1} H`;
     }
 
+    function triggerAzanIqomahFlow(prayerName) {
+      if (isAzanIqomahActive) return;
+      isAzanIqomahActive = true;
+
+      const overlay = document.getElementById('prayer-event-overlay');
+      const titleEl = document.getElementById('event-title');
+      const subtitleEl = document.getElementById('event-subtitle');
+      const timerEl = document.getElementById('event-timer');
+      const settings = getStoredSettings();
+      const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
+
+      titleEl.textContent = "WAKTU AZAN";
+      subtitleEl.textContent = `MEMASUKI WAKTU SHOLAT ${prayerName.toUpperCase()}`;
+      overlay.classList.add('active');
+
+      let azanDurationSec = 60; // Didefinisikan 1 menit penanda azan
+      timerEl.textContent = "01:00";
+
+      let azanInterval = setInterval(() => {
+        azanDurationSec--;
+        let m = String(Math.floor(azanDurationSec / 60)).padStart(2, '0');
+        let s = String(azanDurationSec % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (azanDurationSec <= 0) {
+          clearInterval(azanInterval);
+          startIqomahCountdown();
+        }
+      }, 1000);
+
+      function startIqomahCountdown() {
+        titleEl.textContent = "COUNTDOWN IQOMAH";
+        subtitleEl.textContent = `MENUJU SHOLAT ${prayerName.toUpperCase()}`;
+        let iqomahSec = iqomahMinutes * 60;
+
+        let iqomahInterval = setInterval(() => {
+          iqomahSec--;
+          let m = String(Math.floor(iqomahSec / 60)).padStart(2, '0');
+          let s = String(iqomahSec % 60).padStart(2, '0');
+          timerEl.textContent = `${m}:${s}`;
+
+          if (iqomahSec <= 0) {
+            clearInterval(iqomahInterval);
+            overlay.classList.remove('active');
+            isAzanIqomahActive = false;
+          }
+        }, 1000);
+      }
+    }
+
     function updateClock() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timeNowStr = `${hours}:${minutes}`;
       const clockHtml = `${hours}<span class="colon">:</span>${minutes}`;
       
       document.getElementById('clock').innerHTML = clockHtml;
@@ -805,6 +887,7 @@
 
       const currentDateString = now.toDateString();
       if (lastFetchedDate !== currentDateString) {
+        triggeredToday = {};
         const settings = getStoredSettings();
         if (settings.cityId) {
           fetchPrayerTimes(settings.cityId);
@@ -813,6 +896,17 @@
 
       if (currentSchedule) {
         updatePrayerCountdown(currentSchedule);
+
+        // PENANUSAN WAKTU AZAN SHOLAT FARDHU
+        const mainPrayers = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+        mainPrayers.forEach(prayerKey => {
+          if (currentSchedule[prayerKey] === timeNowStr && seconds === "00") {
+            if (!triggeredToday[prayerKey]) {
+              triggeredToday[prayerKey] = true;
+              triggerAzanIqomahFlow(prayerKey);
+            }
+          }
+        });
       }
     }
     setInterval(updateClock, 1000);
@@ -973,6 +1067,7 @@
         alamat: document.getElementById('input-alamat').value,
         cityId: document.getElementById('select-kota-id').value,
         cityName: document.getElementById('input-search-kota').value,
+        iqomahTimer: document.getElementById('input-iqomah-timer').value,
         mainBanner: document.getElementById('input-main-banner').value,
         youtubeUrl: document.getElementById('input-youtube-url').value,
         slideTimer: document.getElementById('input-slide-timer').value,
