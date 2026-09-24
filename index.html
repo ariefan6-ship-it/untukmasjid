@@ -69,6 +69,16 @@
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
     
+    .form-group-checkbox {
+      display: flex; align-items: center; gap: 10px; margin-top: 4px;
+    }
+    .form-group-checkbox input[type="checkbox"] {
+      width: 18px; height: 18px; cursor: pointer; accent-color: #f59e0b;
+    }
+    .form-group-checkbox label {
+      cursor: pointer; font-size: 0.85rem; color: #cbd5e1;
+    }
+
     .city-search-container { position: relative; }
     .city-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
@@ -309,10 +319,14 @@
           <div class="city-suggestions" id="city-suggestions"></div>
         </div>
 
-        <div class="section-title">PENGATURAN IQOMAH</div>
+        <div class="section-title">PENGATURAN IQOMAH & AUDIO</div>
         <div class="form-group">
           <label for="input-iqomah-timer">Durasi Jeda Iqomah (Menit)</label>
           <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
+        </div>
+        <div class="form-group form-group-checkbox">
+          <input type="checkbox" id="input-mute-video-azan">
+          <label for="input-mute-video-azan">Mute video YouTube secara otomatis saat Azan & Iqomah</label>
         </div>
 
         <div class="section-title">Mode Utama (Banner Statis / Video)</div>
@@ -476,6 +490,7 @@
     let isAzanIqomahActive = false;
     let currentEventSholat = "";
     let triggeredToday = {};
+    let currentVideoOriginalUrl = "";
 
     const DEFAULT_SETTINGS = {
       masjid: "Nama Masjid",
@@ -483,6 +498,7 @@
       cityId: "",
       cityName: "",
       iqomahTimer: 10,
+      muteVideoAzan: true,
       mainBanner: "https://picsum.photos/1200/800?random=99",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
       slideTimer: 5,
@@ -501,6 +517,61 @@
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const iconFsEnter = document.getElementById('icon-fs-enter');
     const iconFsExit = document.getElementById('icon-fs-exit');
+
+    /* SYSTEM AUDIO BEEP DENGAN WEB AUDIO API */
+    let audioCtx = null;
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+    document.addEventListener('click', initAudioContext, { once: true });
+    document.addEventListener('keydown', initAudioContext, { once: true });
+
+    function playBeepSound(frequency = 800, duration = 0.15, count = 1, delay = 0.2) {
+      initAudioContext();
+      if (!audioCtx) return;
+
+      let now = audioCtx.currentTime;
+      for (let i = 0; i < count; i++) {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(frequency, now + (i * delay));
+
+        gain.gain.setValueAtTime(0.3, now + (i * delay));
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (i * delay) + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + (i * delay));
+        osc.stop(now + (i * delay) + duration);
+      }
+    }
+
+    /* FUNGSI CONTROL MUTE / UNMUTE VIDEO YOUTUBE IFRAME */
+    function setYoutubeMuteState(isMuted) {
+      const iframe = document.getElementById('youtube-iframe');
+      if (!iframe || !iframe.src) return;
+
+      try {
+        let url = new URL(iframe.src);
+        let currentMute = url.searchParams.get('mute');
+        let targetMute = isMuted ? '1' : '0';
+
+        if (currentMute !== targetMute) {
+          url.searchParams.set('mute', targetMute);
+          iframe.src = url.toString();
+        }
+      } catch (e) {
+        console.error("Gagal mengubah status mute video YouTube:", e);
+      }
+    }
 
     toggleBtn.addEventListener('click', () => modalOverlay.classList.add('open'));
     closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
@@ -576,7 +647,7 @@
       return url;
     }
 
-    function convertYoutubeEmbedUrl(url) {
+    function convertYoutubeEmbedUrl(url, forceMute = false) {
       if (!url) return '';
       let videoId = '';
       
@@ -595,7 +666,8 @@
         }
 
         if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+          const muteVal = forceMute ? 1 : 0;
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muteVal}&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
         }
       } catch (e) {
         console.error("Gagal memproses URL YouTube:", e);
@@ -715,6 +787,7 @@
       document.getElementById('input-search-kota').value = settings.cityName || '';
       document.getElementById('select-kota-id').value = settings.cityId || '';
       document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
+      document.getElementById('input-mute-video-azan').checked = settings.muteVideoAzan !== undefined ? settings.muteVideoAzan : true;
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
       document.getElementById('input-slide-timer').value = slideTimerSec;
@@ -825,6 +898,14 @@
       const settings = getStoredSettings();
       const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
 
+      // Mute video YouTube jika opsi di setting diaktifkan
+      if (settings.muteVideoAzan) {
+        setYoutubeMuteState(true);
+      }
+
+      // Play Beep awal Azan (3x Beep Panjang)
+      playBeepSound(900, 0.35, 3, 0.45);
+
       titleEl.textContent = "WAKTU AZAN";
       subtitleEl.textContent = `MEMASUKI WAKTU SHOLAT ${prayerName.toUpperCase()}`;
       overlay.classList.add('active');
@@ -855,10 +936,24 @@
           let s = String(iqomahSec % 60).padStart(2, '0');
           timerEl.textContent = `${m}:${s}`;
 
+          // Beep peringatan 10 detik sebelum iqomah
+          if (iqomahSec <= 10 && iqomahSec > 0) {
+            playBeepSound(1000, 0.1, 1, 0);
+          }
+
           if (iqomahSec <= 0) {
             clearInterval(iqomahInterval);
+
+            // Beep saat waktu Iqomah Tiba (5x Beep Cepat)
+            playBeepSound(1200, 0.15, 5, 0.2);
+
             overlay.classList.remove('active');
             isAzanIqomahActive = false;
+
+            // Kembalikan audio video YouTube (unmute) jika diatur demikian
+            if (settings.muteVideoAzan) {
+              setYoutubeMuteState(false);
+            }
           }
         }, 1000);
       }
@@ -1068,6 +1163,7 @@
         cityId: document.getElementById('select-kota-id').value,
         cityName: document.getElementById('input-search-kota').value,
         iqomahTimer: document.getElementById('input-iqomah-timer').value,
+        muteVideoAzan: document.getElementById('input-mute-video-azan').checked,
         mainBanner: document.getElementById('input-main-banner').value,
         youtubeUrl: document.getElementById('input-youtube-url').value,
         slideTimer: document.getElementById('input-slide-timer').value,
