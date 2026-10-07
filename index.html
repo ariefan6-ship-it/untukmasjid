@@ -1,833 +1,1189 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Web CamStream P2P - Clean Fullscreen & HTTPS Ready</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Jadwal Sholat Digital</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
+    body { background-color: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; user-select: none; }
+
+    .display-container {
+      width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.78vh;
+      background-color: #f1f5f9; display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+
+    /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
+    .mode-switch { display: none; }
+
+    /* TOMBOL KONTROL DI SISI TENGAH SEBELAH KANAN SECARA VERTIKAL */
+    .controls-group {
+      position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 100;
+      display: flex; flex-direction: column; gap: 10px; align-items: center;
+    }
+
+    .btn-control {
+      width: 42px; height: 42px;
+      background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px; color: #fff; font-size: 1.2rem; display: flex;
+      justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
+    }
+    .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.08); }
+    .btn-control svg { width: 22px; height: 22px; fill: currentColor; }
+
+    /* MODAL POPUP PENGATURAN */
+    .settings-modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+      z-index: 500; display: flex; justify-content: center; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .settings-modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .settings-modal {
+      width: 90%; max-width: 520px; max-height: 85vh;
+      background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px; padding: 24px; color: #fff;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
+      transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .settings-modal-overlay.open .settings-modal { transform: translateY(0); }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
+    .modal-header h3 { font-size: 1.25rem; color: #f59e0b; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.6rem; cursor: pointer; line-height: 1; }
+    .close-btn:hover { color: #ef4444; }
+
+    .modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 6px; }
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PeerJS CDN -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- QRCode.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .pulse-connected {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-        /* Custom Smooth Fade for Auto-Hide Overlay */
-        .overlay-fade {
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, visibility 0.4s;
-        }
-        .overlay-hidden {
-            opacity: 0 !important;
-            transform: translateY(12px) !important;
-            pointer-events: none !important;
-            visibility: hidden !important;
-        }
-        /* Hide scrollbars for full clean display */
-        ::-webkit-scrollbar { display: none; }
-        * { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
+    .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+    .form-group label { font-size: 0.85rem; font-weight: 600; color: #cbd5e1; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color: #fff; font-size: 0.85rem; outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
+    
+    .form-group-checkbox {
+      display: flex; align-items: center; gap: 10px; margin-top: 4px;
+    }
+    .form-group-checkbox input[type="checkbox"] {
+      width: 18px; height: 18px; cursor: pointer; accent-color: #f59e0b;
+    }
+    .form-group-checkbox label {
+      cursor: pointer; font-size: 0.85rem; color: #cbd5e1;
+    }
+
+    .city-search-container { position: relative; }
+    .city-suggestions {
+      position: absolute; top: 100%; left: 0; right: 0; max-height: 160px; overflow-y: auto;
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 8px 8px;
+      z-index: 600; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+    .city-suggestions.show { display: block; }
+    .city-suggestion-item {
+      padding: 8px 12px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .city-suggestion-item:hover { background: #f59e0b; color: #000; }
+
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #f59e0b; margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    
+    .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
+    .btn-save:hover { background: #d97706; color: #fff; }
+
+    .btn-install { 
+      background: #10b981; color: #fff; font-weight: 700; padding: 10px; border: none; border-radius: 8px; 
+      cursor: pointer; margin-top: 5px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-install:hover { background: #059669; }
+    .btn-install:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+
+    /* HEADER DISPLAY UTAMA */
+    header {
+      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
+    }
+    .digital-clock { font-size: 3.2rem; font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+    .colon { animation: blinkColon 1s infinite; display: inline-block; margin: 0 2px; }
+    @keyframes blinkColon { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .header-center { text-align: center; max-width: 45%; overflow: hidden; }
+    .masjid-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .masjid-address { font-size: 0.95rem; color: #64748b; font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
+    .address-marquee { display: inline-block; padding-left: 100%; animation: addressMarquee 18s linear infinite; white-space: nowrap; }
+    @keyframes addressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+    .header-right { text-align: right; }
+    .hijri-date { font-size: 1.35rem; font-weight: 800; color: #0f172a; }
+    .gregorian-date { font-size: 0.95rem; color: #64748b; margin-top: 0.1rem; font-weight: 500; }
+    .header-divider { width: 2px; height: 35px; background: #e2e8f0; }
+
+    /* MAIN CONTENT & SLIDESHOW */
+    .main-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 0; }
+    .center-banner { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    .banner-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+
+    .bg-blur { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(25px) brightness(0.65); transform: scale(1.15); z-index: 1; opacity: 1; transition: opacity 0.8s ease-in-out; }
+    .bg-image { position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity 0.8s ease-in-out; }
+
+    .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
+    .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
+
+    /* HEADER POPUP MODE VIDEO - DIPOSISIKAN DI CENTER */
+    .video-header-popup {
+      display: none; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 35;
+      width: 90%; max-width: 800px;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px; padding: 10px 20px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      align-items: center; justify-content: space-between; text-align: center; gap: 15px;
+    }
+    .video-popup-clock { 
+      font-size: 2.5rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
+      display: flex; align-items: center; padding-right: 5px;
+    }
+    .video-popup-date { padding-left: 5px; text-align: center; white-space: nowrap; }
+    .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
+    
+    .video-popup-center {
+      flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+    }
+    .video-popup-title { 
+      font-size: 1.25rem; font-weight: 800; color: #f59e0b; white-space: nowrap; 
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; 
+    }
+    .video-popup-address { 
+      font-size: 0.85rem; color: #cbd5e1; font-weight: 500; width: 100%; 
+      overflow: hidden; white-space: nowrap; position: relative; display: flex; margin-top: 2px;
+    }
+    .video-popup-address-marquee {
+      display: inline-block; padding-left: 100%; animation: videoAddressMarquee 15s linear infinite; white-space: nowrap;
+    }
+    @keyframes videoAddressMarquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
+
+    /* POPUP OVERLAY AZAN & IQOMAH */
+    .prayer-event-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
+      background: #0f172a; color: #fff; display: none; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; padding: 20px;
+    }
+    .prayer-event-overlay.active { display: flex; }
+    .event-title { font-size: 3rem; font-weight: 900; color: #f59e0b; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    .event-subtitle { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 20px; }
+    .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid rgba(245, 158, 11, 0.4); }
+
+    /* POPUP FOOTER FULLSCREEN */
+    .fullscreen-footer-popup {
+      display: none; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 35;
+      background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px; padding: 12px 30px; color: #ffffff; box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+      align-items: center; gap: 24px;
+    }
+    .fs-popup-clock { font-size: 2.8rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
+    .fs-popup-divider { width: 2px; height: 38px; background: rgba(255, 255, 255, 0.2); }
+    .fs-prayer-box { display: flex; align-items: center; gap: 16px; }
+    .fs-prayer-details { display: flex; flex-direction: column; justify-content: center; }
+    .fs-prayer-name { font-size: 0.85rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; }
+    .fs-prayer-time { font-size: 1.8rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
+    .fs-prayer-countdown {
+      font-size: 1.1rem; font-weight: 800; color: #000; background: #f59e0b;
+      padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    /* FOOTER JADWAL SHOLAT & COUNTDOWN */
+    .prayer-bar {
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: repeat(7, 1fr);
+      padding: 0.5rem 1rem; gap: 0.5rem; align-items: center; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
+    }
+    .prayer-item { text-align: center; padding: 0.5rem 0.2rem; border-radius: 12px; transition: all 0.3s ease; }
+    .prayer-name { font-size: 1.1rem; font-weight: 700; color: #475569; margin-bottom: 0.1rem; }
+    .prayer-time { font-size: 2.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    
+    .prayer-countdown {
+      font-size: 0.75rem; font-weight: 700; color: #ffffff; margin-top: 0.2rem;
+      background: rgba(0, 0, 0, 0.25); padding: 2px 6px; border-radius: 6px; display: inline-block;
+    }
+
+    .prayer-item.active { background: #f59e0b; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); transform: translateY(-4px); padding: 0.6rem 0.2rem; }
+    .prayer-item.active .prayer-name, .prayer-item.active .prayer-time { color: #ffffff; }
+
+    .running-text-bar {
+      background: #0f172a; color: #fbbf24; font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
+      overflow: hidden; white-space: nowrap; position: relative; z-index: 20; border-top: 2px solid #f59e0b; display: flex; align-items: center; width: 100%; flex-shrink: 0;
+    }
+    .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
+    @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+    /* MODE VIDEO RULES */
+    #mode-video:checked ~ .display-container header { display: none !important; }
+    #mode-video:checked ~ .display-container .video-container { display: block !important; }
+    #mode-video:checked ~ .display-container .video-header-popup { display: flex !important; }
+    #mode-video:checked ~ .display-container .prayer-bar {
+      position: absolute !important; bottom: 45px; left: 2%; right: 2%; width: 96%; border-radius: 16px;
+      background: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15); z-index: 30;
+    }
+    #mode-video:checked ~ .display-container .prayer-name { color: #cbd5e1 !important; }
+    #mode-video:checked ~ .display-container .prayer-time { color: #ffffff !important; }
+    #mode-video:checked ~ .display-container .running-text-bar { position: absolute !important; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.92) !important; }
+
+    /* FULLSCREEN MODE RULES */
+    #mode-fullscreen:checked ~ .display-container header,
+    #mode-fullscreen:checked ~ .display-container .prayer-bar,
+    #mode-fullscreen:checked ~ .display-container .running-text-bar { display: none !important; }
+    #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
+    #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
+
+    /* MODE SIDEBAR RULES */
+    #mode-sidebar:checked ~ .display-container .prayer-bar {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 280px !important;
+      height: 100% !important;
+      grid-template-columns: none !important;
+      justify-content: space-around !important;
+      border-right: 2px solid #e2e8f0 !important;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.05) !important;
+      padding: 0.6rem 0.5rem !important;
+      background: rgba(255, 255, 255, 0.98) !important;
+      flex-shrink: 0 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-item {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding: 0.5rem 0.8rem !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-item.active {
+      transform: translateX(4px) !important;
+      padding: 0.6rem 0.8rem !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-name {
+      font-size: 1rem !important;
+      margin-bottom: 0 !important;
+      color: #475569 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-time {
+      font-size: 1.6rem !important;
+      color: #0f172a !important;
+    }
+    #mode-sidebar:checked ~ .display-container .bg-blur,
+    #mode-sidebar:checked ~ .display-container .bg-image {
+      opacity: 1 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .bg-image {
+      object-fit: contain !important;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+<body>
 
-    <header id="mainHeader" class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md fixed top-0 left-0 right-0 z-50 transition-opacity duration-300">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 p-2 rounded-xl text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <i class="fa-solid fa-video text-base"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-base leading-tight tracking-wide">CamStream<span class="text-indigo-400">P2P</span></h1>
-                    <p class="text-[10px] text-slate-400">Ultra-Clean Camera Monitor</p>
-                </div>
-            </div>
+  <!-- Switch Mode Display -->
+  <input type="radio" id="mode-main" name="display-mode" class="mode-switch" checked>
+  <input type="radio" id="mode-video" name="display-mode" class="mode-switch">
+  <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
+  <input type="radio" id="mode-sidebar" name="display-mode" class="mode-switch">
 
-            <!-- Header Connection Badge & Help Button -->
-            <div class="flex items-center gap-3">
-                <button onclick="openHttpsGuideModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs hover:bg-amber-500/20 transition">
-                    <i class="fa-solid fa-shield-halved text-amber-400"></i>
-                    <span>Panduan HTTPS Lokal</span>
-                </button>
-                <div id="statusBadge" class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs font-medium text-slate-300">
-                    <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-                    <span id="statusText">Belum Terhubung</span>
-                </div>
-            </div>
-        </div>
-    </header>
+  <!-- MODAL POPUP PENGATURAN -->
+  <div class="settings-modal-overlay" id="settings-modal-overlay">
+    <div class="settings-modal">
+      <div class="modal-header">
+        <h3>Pengaturan Display</h3>
+        <button class="close-btn" id="btn-close-settings">&times;</button>
+      </div>
 
-    <main class="w-full min-h-screen flex flex-col justify-center items-center relative">
-
-        <!-- ======================================================== -->
-        <!-- 1. ROLE SELECTOR SCREEN                                 -->
-        <!-- ======================================================== -->
-        <div id="roleSelector" class="space-y-6 max-w-4xl px-4 py-20 w-full my-auto z-10">
-            <div class="text-center max-w-2xl mx-auto space-y-3">
-                <span class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 rounded-full text-xs font-semibold uppercase tracking-wider">
-                    WebRTC Kamera P2P
-                </span>
-                <h2 class="text-3xl font-extrabold text-white sm:text-4xl tracking-tight">Pilih Peran Perangkat Ini</h2>
-                <p class="text-slate-400 text-sm sm:text-base">Streaming langsung dari kamera HP ke Komputer tanpa delay dan tanpa server Node.js tambahan.</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto pt-2">
-                <!-- Option 1: Sender (HP) -->
-                <button onclick="selectRole('sender')" class="glass-card p-6 rounded-2xl hover:border-indigo-500/50 transition-all duration-300 hover:scale-[1.02] text-left group flex flex-col justify-between h-full shadow-2xl relative overflow-hidden">
-                    <div class="absolute -right-6 -bottom-6 text-indigo-500/5 text-8xl font-black group-hover:text-indigo-500/10 transition-colors">HP</div>
-                    <div>
-                        <div class="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                            <i class="fa-solid fa-mobile-screen-button text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Kirim Kamera (HP / Sender)</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Gunakan HP ini sebagai sumber kamera. Menghasilkan ID unik dan QR Code untuk dipindai oleh Komputer.
-                        </p>
-                    </div>
-                    <div class="mt-6 flex items-center text-indigo-400 font-semibold text-sm group-hover:translate-x-1 transition-transform">
-                        <span>Mulai Kamera HP</span>
-                        <i class="fa-solid fa-arrow-right ml-2"></i>
-                    </div>
-                </button>
-
-                <!-- Option 2: Receiver (Komputer) -->
-                <button onclick="selectRole('receiver')" class="glass-card p-6 rounded-2xl hover:border-emerald-500/50 transition-all duration-300 hover:scale-[1.02] text-left group flex flex-col justify-between h-full shadow-2xl relative overflow-hidden">
-                    <div class="absolute -right-6 -bottom-6 text-emerald-500/5 text-8xl font-black group-hover:text-emerald-500/10 transition-colors">PC</div>
-                    <div>
-                        <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                            <i class="fa-solid fa-desktop text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Terima Stream (Komputer / Receiver)</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Layar monitor penerima. Tampilan video **100% Fullscreen, Edge-to-Edge** dengan kontrol melayang auto-hide.
-                        </p>
-                    </div>
-                    <div class="mt-6 flex items-center text-emerald-400 font-semibold text-sm group-hover:translate-x-1 transition-transform">
-                        <span>Buka Fullscreen Monitor</span>
-                        <i class="fa-solid fa-arrow-right ml-2"></i>
-                    </div>
-                </button>
-            </div>
-
-            <div class="text-center pt-4">
-                <button onclick="openHttpsGuideModal()" class="sm:hidden inline-flex items-center gap-2 text-xs text-amber-400 hover:underline">
-                    <i class="fa-solid fa-shield-halved"></i> Mengalami masalah Kamera HP? Baca Panduan HTTPS
-                </button>
-            </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-masjid">Nama Masjid</label>
+          <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
         </div>
 
-        <!-- ======================================================== -->
-        <!-- 2. SENDER VIEW (HP CAPTURE & CONTROLS)                   -->
-        <!-- ======================================================== -->
-        <div id="senderView" class="hidden space-y-6 max-w-4xl px-4 py-20 w-full z-10 my-auto">
-            <div class="flex items-center justify-between">
-                <button onclick="resetRole()" class="text-slate-400 hover:text-white text-sm flex items-center gap-2 transition bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-800">
-                    <i class="fa-solid fa-chevron-left"></i> Ganti Peran
-                </button>
-                <span class="text-xs font-mono bg-indigo-950/80 text-indigo-300 px-3 py-1.5 rounded-full border border-indigo-800/50">MODE: SENDER (HP)</span>
-            </div>
-
-            <!-- HTTPS Insecure Warning Banner (If Not Secure Context) -->
-            <div id="httpsWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex items-start gap-3 text-xs text-amber-200">
-                <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5"></i>
-                <div class="space-y-1">
-                    <strong class="font-semibold block text-amber-300">Peringatan Akses Kamera Browser (Insecure Context)</strong>
-                    <p class="text-amber-200/80">Kamera HP tidak dapat diakses jika web dibuka menggunakan HTTP biasa di IP Lokal. Gunakan HTTPS atau ubah aturan Chrome Flags di HP Anda.</p>
-                    <button onclick="openHttpsGuideModal()" class="text-amber-300 underline font-semibold mt-1 inline-block">
-                        Lihat Cara Mengaktifkan HTTPS / Chrome Flags &rarr;
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid lg:grid-cols-5 gap-6">
-                <!-- Video Monitor (3 cols) -->
-                <div class="lg:col-span-3 glass-card p-4 rounded-2xl flex flex-col justify-between">
-                    <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-video flex items-center justify-center border border-slate-800 shadow-inner">
-                        <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
-                        <div id="cameraOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center gap-3 p-4 text-center">
-                            <i class="fa-solid fa-circle-notch text-3xl text-indigo-500 animate-spin"></i>
-                            <p id="cameraOverlayText" class="text-slate-300 text-xs font-medium">Menyiapkan Kamera HP...</p>
-                        </div>
-                    </div>
-
-                    <!-- Controls -->
-                    <div class="flex items-center justify-center gap-2 sm:gap-3 mt-4 flex-wrap">
-                        <button id="toggleCamBtn" onclick="toggleLocalVideo()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition shadow text-xs flex items-center gap-2">
-                            <i class="fa-solid fa-video"></i> <span>Kamera On</span>
-                        </button>
-                        <button id="toggleMicBtn" onclick="toggleLocalAudio()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition shadow text-xs flex items-center gap-2">
-                            <i class="fa-solid fa-microphone"></i> <span>Mic On</span>
-                        </button>
-                        <button id="switchCamBtn" onclick="switchCamera()" class="px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition shadow text-xs font-medium flex items-center gap-2">
-                            <i class="fa-solid fa-rotate"></i> <span>Ganti Kamera</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Connection Info & QR Code (2 cols) -->
-                <div class="lg:col-span-2 glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4">
-                    <div>
-                        <h3 class="font-bold text-sm text-white mb-1 flex items-center gap-2">
-                            <i class="fa-solid fa-qrcode text-indigo-400"></i> Hubungkan ke Komputer
-                        </h3>
-                        <p class="text-xs text-slate-400 mb-3">Scan QR ini menggunakan Kamera HP lain / Browser Komputer atau salin ID dibawah.</p>
-
-                        <!-- Peer ID Box -->
-                        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 mb-3">
-                            <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">ID Perangkat HP Ini</label>
-                            <div class="flex items-center justify-between gap-2">
-                                <span id="senderPeerId" class="font-mono text-indigo-400 font-bold text-sm tracking-wider truncate">Membuat ID...</span>
-                                <button onclick="copySenderId()" class="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition text-xs flex items-center gap-1">
-                                    <i class="fa-regular fa-copy"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- QR Code Canvas Container -->
-                        <div class="bg-white p-2.5 rounded-xl flex items-center justify-center mx-auto w-36 h-36 shadow-lg border border-slate-700">
-                            <div id="qrcode"></div>
-                        </div>
-                    </div>
-
-                    <p class="text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 text-center">
-                        <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Jangan tutup halaman HP ini saat siaran berlangsung.
-                    </p>
-                </div>
-            </div>
+        <div class="form-group">
+          <label for="input-alamat">Alamat Masjid</label>
+          <input type="text" id="input-alamat" placeholder="Alamat singkat">
         </div>
 
-        <!-- ======================================================== -->
-        <!-- 3. RECEIVER VIEW (100% FULLSCREEN EDGE-TO-EDGE MONITOR)  -->
-        <!-- ======================================================== -->
-        <div id="receiverView" class="hidden fixed inset-0 w-screen h-screen bg-black overflow-hidden z-20">
-
-            <!-- Remote Video Tag (Clean Edge-to-Edge Fill Screen) -->
-            <video id="remoteVideo" autoplay playsinline class="w-full h-full object-contain transition-all duration-300"></video>
-
-            <!-- Waiting Overlay (Shown when not connected) -->
-            <div id="receiverWaitingOverlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-4 z-30">
-                <div class="max-w-md w-full glass-card p-6 rounded-2xl border border-slate-800 space-y-5">
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                        <span class="text-xs font-mono text-emerald-400 font-semibold uppercase">Penerima Stream Video</span>
-                        <button onclick="resetRole()" class="text-xs text-slate-400 hover:text-white">
-                            <i class="fa-solid fa-xmark text-sm"></i>
-                        </button>
-                    </div>
-
-                    <div class="space-y-2">
-                        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/20">
-                            <i class="fa-solid fa-satellite-dish text-2xl animate-pulse"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-white">Sambungkan Kamera HP</h3>
-                        <p class="text-xs text-slate-400">Masukkan ID dari HP untuk mulai menerima tayangan video secara langsung.</p>
-                    </div>
-
-                    <form onsubmit="connectToSender(event)" class="space-y-3 pt-2">
-                        <div class="text-left">
-                            <input type="text" id="remotePeerIdInput" placeholder="Masukkan ID HP (misal: cam-xxxx)" required
-                                class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 font-mono text-sm outline-none transition">
-                        </div>
-                        <button type="submit" id="btnConnect" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 text-sm">
-                            <i class="fa-solid fa-plug"></i> Hubungkan Sekarang
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- AUTO-HIDE FLOATING CONTROLS OVERLAY (Sembunyi setelah 3 detik) -->
-            <div id="receiverOverlayControls" class="overlay-fade absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/85 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center gap-4 z-40 max-w-[92vw]">
-                
-                <!-- Connection Status Indicator -->
-                <div class="flex items-center gap-2.5 pr-2 border-r border-slate-700/80">
-                    <span class="flex h-3 w-3 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    <div class="text-left hidden sm:block">
-                        <p class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 leading-none">LIVE MONITOR</p>
-                        <p id="receiverConnStatusText" class="text-[11px] text-slate-300 font-mono leading-tight truncate max-w-[120px]">Terhubung</p>
-                    </div>
-                </div>
-
-                <!-- Interactive Buttons -->
-                <div class="flex items-center gap-2">
-                    <!-- Toggle Aspect Ratio (Contain vs Cover) -->
-                    <button onclick="toggleVideoFitMode()" id="fitModeBtn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs transition border border-slate-700/80 flex items-center gap-1.5" title="Ubah Mode Layar (Fit / Cover)">
-                        <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i>
-                        <span class="hidden md:inline text-[11px]">Mode Layar</span>
-                    </button>
-
-                    <!-- Mute / Unmute Audio -->
-                    <button onclick="toggleAudioMute()" id="muteReceiverAudioBtn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs transition border border-slate-700/80 flex items-center gap-1.5" title="Mute/Unmute Audio">
-                        <i class="fa-solid fa-volume-high text-xs"></i>
-                    </button>
-
-                    <!-- Fullscreen Toggle -->
-                    <button onclick="toggleFullscreen()" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs transition border border-slate-700/80 flex items-center gap-1.5" title="Layar Penuh Browser">
-                        <i class="fa-solid fa-expand text-xs"></i>
-                        <span class="hidden md:inline text-[11px]">Fullscreen</span>
-                    </button>
-
-                    <!-- Disconnect Button -->
-                    <button onclick="disconnectReceiver()" class="p-2.5 bg-red-600/80 hover:bg-red-600 text-white rounded-xl text-xs transition ml-1" title="Putuskan Koneksi">
-                        <i class="fa-solid fa-power-off text-xs"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Auto-hide Floating Top Bar Notice -->
-            <div id="receiverTopNotice" class="overlay-fade absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none z-40">
-                <span class="bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 font-medium pointer-events-auto">
-                    <i class="fa-solid fa-hand-pointer mr-1.5 text-indigo-400"></i> Gerakkan mouse untuk menampilkan kontrol
-                </span>
-                <button onclick="resetRole()" class="bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-300 hover:text-white pointer-events-auto transition">
-                    <i class="fa-solid fa-arrow-left mr-1"></i> Keluar Receiver
-                </button>
-            </div>
-
+        <!-- CARI KOTA DENGAN AUTOCOMPLETE -->
+        <div class="form-group city-search-container">
+          <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
+          <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Bandung)" autocomplete="off">
+          <input type="hidden" id="select-kota-id">
+          <div class="city-suggestions" id="city-suggestions"></div>
         </div>
 
-    </main>
-
-    <!-- MODAL PANDUAN RUNNING HTTPS LOKAL -->
-    <div id="httpsGuideModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
-        <div class="glass-card max-w-2xl w-full rounded-2xl border border-slate-700 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
-                <h3 class="font-bold text-base text-white flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-amber-400"></i> Panduan HTTPS Lokal (Izin Kamera HP)
-                </h3>
-                <button onclick="closeHttpsGuideModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <!-- Modal Content -->
-            <div class="p-6 space-y-5 overflow-y-auto text-xs text-slate-300 leading-relaxed">
-                <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-amber-200">
-                    <strong>Mengapa Kamera HP Gagal Terbuka?</strong>
-                    <p class="mt-1">Browser HP (Chrome/Safari) secara ketat melarang aplikasi web mengakses kamera apabila tidak menggunakan protokol aman (**HTTPS**), kecuali dibuka di URL `localhost` Komputer itu sendiri.</p>
-                </div>
-
-                <!-- Solution 1: Chrome Flag Bypass -->
-                <div class="space-y-2">
-                    <h4 class="font-bold text-sm text-indigo-300 flex items-center gap-1.5">
-                        <span class="w-5 h-5 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-[10px]">1</span>
-                        Cara Tercepat Tanpa Install Apapun (Atur Chrome Flag di HP)
-                    </h4>
-                    <ol class="list-decimal list-inside space-y-1 pl-2 text-slate-400">
-                        <li>Buka aplikasi **Google Chrome** di HP Anda.</li>
-                        <li>Ketik alamat <code class="bg-slate-900 text-indigo-300 px-1.5 py-0.5 rounded border border-slate-800">chrome://flags</code> pada address bar HP.</li>
-                        <li>Cari fitur bernama: <strong class="text-slate-200">"Insecure origins treated as secure"</strong>.</li>
-                        <li>Ubah opsi menjadi <strong class="text-emerald-400">Enabled</strong>.</li>
-                        <li>Masukkan IP Lokal Komputer & Port Anda (contoh: <code class="bg-slate-900 text-indigo-300 px-1.5 py-0.5 rounded border border-slate-800">http://192.168.1.10:8000</code>).</li>
-                        <li>Tekan tombol <strong class="text-white">Relaunch</strong> di bagian bawah untuk me-restart Chrome HP.</li>
-                    </ol>
-                </div>
-
-                <hr class="border-slate-800">
-
-                <!-- Solution 2: Local SSL Server via Node/Python -->
-                <div class="space-y-2">
-                    <h4 class="font-bold text-sm text-indigo-300 flex items-center gap-1.5">
-                        <span class="w-5 h-5 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-[10px]">2</span>
-                        Jalankan Server HTTPS Lokal Sederhana
-                    </h4>
-                    <p class="text-slate-400">Jalankan salah satu perintah berikut di terminal/command prompt pada folder tempat file HTML ini berada:</p>
-                    
-                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 font-mono text-[11px] space-y-2">
-                        <div>
-                            <span class="text-slate-500">// Menggunakan NPX (Rekomendasi tanpa install):</span>
-                            <p class="text-emerald-400">npx http-server -S -C cert.pem -K key.pem</p>
-                        </div>
-                        <div>
-                            <span class="text-slate-500">// Menggunakan Local SSL Proxy:</span>
-                            <p class="text-emerald-400">npx local-ssl-proxy --source 8001 --target 8000</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-6 py-3 bg-slate-900/80 border-t border-slate-800 text-right">
-                <button onclick="closeHttpsGuideModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-xl transition">
-                    Saya Mengerti
-                </button>
-            </div>
+        <div class="section-title">PENGATURAN IQOMAH & AUDIO</div>
+        <div class="form-group">
+          <label for="input-iqomah-timer">Durasi Jeda Iqomah (Menit)</label>
+          <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
         </div>
+        <div class="form-group form-group-checkbox">
+          <input type="checkbox" id="input-mute-video-azan">
+          <label for="input-mute-video-azan">Mute video YouTube secara otomatis saat Azan & Iqomah</label>
+        </div>
+
+        <div class="section-title">Mode Utama (Banner Statis / Video)</div>
+        <div class="form-group">
+          <label for="input-main-banner">URL Gambar Utama atau Link YouTube</label>
+          <input type="text" id="input-main-banner" placeholder="URL Gambar / Link Drive / Link YouTube">
+        </div>
+
+        <div class="section-title">Mode Video Utama</div>
+        <div class="form-group">
+          <label for="input-youtube-url">URL YouTube / Live Stream</label>
+          <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+
+        <div class="section-title">Slide Show Media (Sidebar & Full)</div>
+        <div class="form-group">
+          <label for="input-slide-timer">Timer Slideshow (Detik)</label>
+          <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
+        </div>
+        <div class="form-group">
+          <label for="input-slide-1">Slide Media 1 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive / YouTube 1">
+        </div>
+        <div class="form-group">
+          <label for="input-slide-2">Slide Media 2 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive / YouTube 2">
+        </div>
+        <div class="form-group">
+          <label for="input-slide-3">Slide Media 3 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive / YouTube 3">
+        </div>
+
+        <div class="section-title">Informasi & Aplikasi</div>
+        <div class="form-group">
+          <label for="input-running-text">Running Text</label>
+          <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
+        </div>
+
+        <button class="btn-install" id="btn-install-app" disabled>
+          <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span id="btn-install-text">Instal / Tambah ke Layar TV</span>
+        </button>
+
+        <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISPLAY CONTAINER -->
+  <div class="display-container" id="display-container">
+    
+    <!-- TOMBOL CONTROL: VERTIKAL DI SISI KANAN TENGAH -->
+    <div class="controls-group">
+      <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
+        <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+      </button>
+      <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
     </div>
 
-    <script>
-        // ==========================================
-        // GLOBAL STATE & VARIABLES
-        // ==========================================
-        let currentRole = null; // 'sender' or 'receiver'
-        let peer = null;
-        let localStream = null;
-        let currentCall = null;
-        let currentFacingMode = 'environment'; // Default kamera belakang HP
-        let isAudioEnabled = true;
-        let isVideoEnabled = true;
-        let isVideoCoverFit = false; // False = contain, True = cover
+    <header>
+      <div class="header-left">
+        <div class="digital-clock" id="clock">00<span class="colon">:</span>00</div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-center">
+        <div class="masjid-title" id="display-masjid">Nama Masjid</div>
+        <div class="masjid-address" id="display-alamat">
+          <span class="address-marquee">alamat</span>
+        </div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-right">
+        <div class="hijri-date" id="hijri-date">-- ---------- ---- H</div>
+        <div class="gregorian-date" id="gregorian-date">--</div>
+      </div>
+    </header>
 
-        // Auto-Hide Control Overlay Timer
-        let overlayTimeout = null;
-        const IDLE_TIME_LIMIT = 3000; // 3 detik auto-hide
+    <div class="main-wrapper" id="main-wrapper">
+      <section class="center-banner">
+        <div class="banner-inner">
+          <img src="https://picsum.photos/1200/800?random=1" alt="Blur Background" class="bg-blur" id="bg-blur" />
+          <img src="https://picsum.photos/1200/800?random=1" alt="Latar Display" class="bg-image" id="bg-image" />
+          
+          <div class="video-container" id="video-container">
+            <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
+          </div>
 
-        // UI DOM Elements
-        const mainHeader = document.getElementById('mainHeader');
-        const roleSelector = document.getElementById('roleSelector');
-        const senderView = document.getElementById('senderView');
-        const receiverView = document.getElementById('receiverView');
-        const statusBadge = document.getElementById('statusBadge');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const receiverOverlayControls = document.getElementById('receiverOverlayControls');
-        const receiverTopNotice = document.getElementById('receiverTopNotice');
+          <!-- POPUP HEADER MODE VIDEO (CENTERED) -->
+          <div class="video-header-popup">
+            <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
+            <div class="video-popup-divider"></div>
+            <div class="video-popup-center">
+              <div class="video-popup-title" id="popup-masjid">Nama Masjid</div>
+              <div class="video-popup-address" id="popup-alamat">
+                <span class="video-popup-address-marquee">alamat</span>
+              </div>
+            </div>
+            <div class="video-popup-divider"></div>
+            <div class="video-popup-date">
+              <div style="font-size: 1rem; font-weight: 800;" id="popup-hijri">-- ---------- ---- H</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;" id="popup-gregorian">--</div>
+            </div>
+          </div>
 
-        // ==========================================
-        // INITIALIZATION & URL PARAMETERS
-        // ==========================================
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check if context is secure (HTTPS or Localhost)
-            const isSecureContext = window.isSecureContext;
-            if (!isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-                const banner = document.getElementById('httpsWarningBanner');
-                if (banner) banner.classList.remove('hidden');
-            }
+          <!-- OVERLAY MODAL WAKTU AZAN DAN IQOMAH -->
+          <div class="prayer-event-overlay" id="prayer-event-overlay">
+            <div class="event-title" id="event-title">WAKTU AZAN</div>
+            <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT SUBUH</div>
+            <div class="event-timer" id="event-timer">00:00</div>
+          </div>
 
-            // Auto connect if ID parameter exists in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const peerIdParam = urlParams.get('id');
-            if (peerIdParam) {
-                selectRole('receiver');
-                document.getElementById('remotePeerIdInput').value = peerIdParam;
-            }
+          <!-- POPUP FOOTER FULLSCREEN -->
+          <div class="fullscreen-footer-popup">
+            <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
+            <div class="fs-popup-divider"></div>
+            <div class="fs-prayer-box">
+              <div class="fs-prayer-details">
+                <div class="fs-prayer-name" id="fs-next-name">--</div>
+                <div class="fs-prayer-time" id="fs-next-time">--:--</div>
+              </div>
+              <div class="fs-prayer-countdown" id="fs-next-countdown">-00:00:00</div>
+            </div>
+          </div>
 
-            // Bind Overlay Interaction Listener for Receiver Fullscreen
-            setupReceiverOverlayAutoHide();
+        </div>
+      </section>
+    </div>
+
+    <!-- BAR JADWAL SHOLAT -->
+    <footer class="prayer-bar" id="prayer-bar">
+      <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
+      <div class="prayer-item" id="card-subuh"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
+      <div class="prayer-item" id="card-terbit"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
+      <div class="prayer-item" id="card-dzuhur"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
+      <div class="prayer-item" id="card-ashar"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
+      <div class="prayer-item" id="card-maghrib"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
+      <div class="prayer-item" id="card-isya"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
+    </footer>
+
+    <!-- RUNNING TEXT -->
+    <div class="running-text-bar" id="running-bar">
+      <div class="marquee-content" id="display-running-text">Masukkan Running Text</div>
+    </div>
+  </div>
+
+  <script>
+    let currentSchedule = null;
+    let lastFetchedDate = null;
+    let allCities = [];
+    const modes = ['mode-main', 'mode-video', 'mode-fullscreen', 'mode-sidebar'];
+    let currentModeIdx = 0;
+
+    let slideShowTimer = null;
+    let currentSlideIdx = 0;
+    let slideMediaList = [];
+    let mainBannerMedia = "";
+    let slideTimerSec = 5;
+
+    /* STATUS EVENT WAKTU AZAN & IQOMAH */
+    let isAzanIqomahActive = false;
+    let currentEventSholat = "";
+    let triggeredToday = {};
+    let currentVideoOriginalUrl = "";
+
+    const DEFAULT_SETTINGS = {
+      masjid: "Nama Masjid",
+      alamat: "alamat",
+      cityId: "",
+      cityName: "",
+      iqomahTimer: 10,
+      muteVideoAzan: true,
+      mainBanner: "https://picsum.photos/1200/800?random=99",
+      youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
+      slideTimer: 5,
+      slides: [
+        "https://picsum.photos/1200/800?random=1",
+        "https://picsum.photos/1200/800?random=2",
+        "https://picsum.photos/1200/800?random=3"
+      ],
+      runningText: "Masukkan Running Text"
+    };
+
+    const toggleBtn = document.getElementById('btn-toggle-settings');
+    const closeBtn = document.getElementById('btn-close-settings');
+    const modalOverlay = document.getElementById('settings-modal-overlay');
+    const saveBtn = document.getElementById('btn-save-settings');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const iconFsEnter = document.getElementById('icon-fs-enter');
+    const iconFsExit = document.getElementById('icon-fs-exit');
+
+    /* SYSTEM AUDIO BEEP DENGAN WEB AUDIO API */
+    let audioCtx = null;
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+    document.addEventListener('click', initAudioContext, { once: true });
+    document.addEventListener('keydown', initAudioContext, { once: true });
+
+    function playBeepSound(frequency = 800, duration = 0.15, count = 1, delay = 0.2) {
+      initAudioContext();
+      if (!audioCtx) return;
+
+      let now = audioCtx.currentTime;
+      for (let i = 0; i < count; i++) {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(frequency, now + (i * delay));
+
+        gain.gain.setValueAtTime(0.3, now + (i * delay));
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (i * delay) + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + (i * delay));
+        osc.stop(now + (i * delay) + duration);
+      }
+    }
+
+    /* FUNGSI CONTROL MUTE / UNMUTE VIDEO YOUTUBE IFRAME */
+    function setYoutubeMuteState(isMuted) {
+      const iframe = document.getElementById('youtube-iframe');
+      if (!iframe || !iframe.src) return;
+
+      try {
+        let url = new URL(iframe.src);
+        let currentMute = url.searchParams.get('mute');
+        let targetMute = isMuted ? '1' : '0';
+
+        if (currentMute !== targetMute) {
+          url.searchParams.set('mute', targetMute);
+          iframe.src = url.toString();
+        }
+      } catch (e) {
+        console.error("Gagal mengubah status mute video YouTube:", e);
+      }
+    }
+
+    toggleBtn.addEventListener('click', () => modalOverlay.classList.add('open'));
+    closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    });
+
+    /* INTEGRASI PWA / TOMBOL INSTAL APLIKASI DI MENU SETTING */
+    let deferredPrompt;
+    const btnInstallApp = document.getElementById('btn-install-app');
+    const btnInstallText = document.getElementById('btn-install-text');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstallApp.disabled = false;
+      btnInstallText.textContent = "Instal / Tambah ke Layar TV";
+    });
+
+    btnInstallApp.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          btnInstallText.textContent = "Aplikasi Berhasil Diinstal";
+          btnInstallApp.disabled = true;
+        }
+        deferredPrompt = null;
+      } else {
+        alert("Gunakan menu browser TV Anda (titik tiga) lalu pilih 'Tambah ke Layar Utama' / 'Install App'.");
+      }
+    });
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Gagal mengaktifkan mode Fullscreen: ${err.message}`);
         });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
 
-        // Update UI Status Badge
-        function updateStatus(state, message) {
-            statusText.innerText = message;
-            statusDot.className = "w-2.5 h-2.5 rounded-full ";
-            
-            if (state === 'connected') {
-                statusDot.classList.add('bg-emerald-500', 'pulse-connected');
-                statusBadge.className = "flex items-center gap-2 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-full text-xs font-medium text-emerald-300";
-            } else if (state === 'connecting') {
-                statusDot.classList.add('bg-amber-500', 'animate-ping');
-                statusBadge.className = "flex items-center gap-2 bg-amber-950/60 border border-amber-800 px-3 py-1.5 rounded-full text-xs font-medium text-amber-300";
-            } else {
-                statusDot.classList.add('bg-slate-500');
-                statusBadge.className = "flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs font-medium text-slate-300";
-            }
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        iconFsEnter.style.display = 'none';
+        iconFsExit.style.display = 'block';
+      } else {
+        iconFsEnter.style.display = 'block';
+        iconFsExit.style.display = 'none';
+      }
+    });
+
+    function isYoutubeUrl(url) {
+      if (!url) return false;
+      return url.includes('youtube.com') || url.includes('youtu.be');
+    }
+
+    /* OPSI 1: FUNGSI KONVERSI OTOMATIS LINK GOOGLE DRIVE MENJADI DIRECT IMAGE LINK */
+    function convertGoogleDriveUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+        const matches = url.match(/\/(?:file\/)?d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (matches && matches[1]) {
+          return `https://lh3.googleusercontent.com/d/${matches[1]}`;
+        }
+      }
+      return url;
+    }
+
+    function convertYoutubeEmbedUrl(url, forceMute = false) {
+      if (!url) return '';
+      let videoId = '';
+      
+      try {
+        if (url.includes('youtu.be/')) {
+          videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/watch')) {
+          const urlParams = new URLSearchParams(url.split('?')[1]);
+          videoId = urlParams.get('v');
+        } else if (url.includes('youtube.com/live/')) {
+          videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
+        } else if (url.includes('youtube.com/shorts/')) {
+          videoId = url.split('youtube.com/shorts/')[1].split('?')[0].split('&')[0];
+        } else if (url.length === 11 && !url.includes('/')) {
+          videoId = url;
         }
 
-        // Role Switcher Handler
-        function selectRole(role) {
-            currentRole = role;
-            roleSelector.classList.add('hidden');
+        if (videoId) {
+          const muteVal = forceMute ? 1 : 0;
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muteVal}&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+        }
+      } catch (e) {
+        console.error("Gagal memproses URL YouTube:", e);
+      }
 
-            if (role === 'sender') {
-                mainHeader.classList.remove('hidden');
-                senderView.classList.remove('hidden');
-                initSender();
-            } else if (role === 'receiver') {
-                mainHeader.classList.add('hidden'); // Clean display without main header
-                receiverView.classList.remove('hidden');
-                initReceiver();
+      return url;
+    }
+
+    function processMediaUrl(url) {
+      if (!url) return { type: 'image', url: '' };
+      if (isYoutubeUrl(url)) {
+        return { type: 'youtube', url: convertYoutubeEmbedUrl(url) };
+      }
+      return { type: 'image', url: convertGoogleDriveUrl(url) };
+    }
+
+    function handleModeChange() {
+      const activeMode = modes[currentModeIdx];
+      const prayerBar = document.getElementById('prayer-bar');
+      const runningBar = document.getElementById('running-bar');
+      const displayContainer = document.getElementById('display-container');
+      const mainWrapper = document.getElementById('main-wrapper');
+
+      if (activeMode === 'mode-sidebar') {
+        mainWrapper.insertBefore(prayerBar, mainWrapper.firstChild);
+      } else {
+        displayContainer.insertBefore(prayerBar, runningBar);
+      }
+
+      if (activeMode === 'mode-main') {
+        if (slideShowTimer) clearInterval(slideShowTimer);
+        displayMedia(mainBannerMedia || processMediaUrl(DEFAULT_SETTINGS.mainBanner));
+      } else if (activeMode === 'mode-video') {
+        if (slideShowTimer) clearInterval(slideShowTimer);
+        const videoUrl = document.getElementById('input-youtube-url').value || DEFAULT_SETTINGS.youtubeUrl;
+        displayMedia({ type: 'youtube', url: convertYoutubeEmbedUrl(videoUrl) });
+      } else if (activeMode === 'mode-sidebar' || activeMode === 'mode-fullscreen') {
+        startSlideShow();
+      }
+    }
+
+    modes.forEach((modeId, idx) => {
+      document.getElementById(modeId).addEventListener('change', (e) => {
+        if (e.target.checked) {
+          currentModeIdx = idx;
+          handleModeChange();
+        }
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        modalOverlay.classList.toggle('open');
+        return;
+      }
+
+      if (modalOverlay.classList.contains('open')) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+        return;
+      }
+
+      if (e.key === 'ChannelUp' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        currentModeIdx = (currentModeIdx + 1) % modes.length;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
+      } else if (e.key === 'ChannelDown' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+        currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
+      }
+
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        currentModeIdx = parseInt(e.key) - 1;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
+      }
+    });
+
+    function getStoredSettings() {
+      const saved = localStorage.getItem('display_masjid_settings');
+      if (saved) {
+        try {
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        } catch (e) {
+          return DEFAULT_SETTINGS;
+        }
+      }
+      return DEFAULT_SETTINGS;
+    }
+
+    function applySettings(settings) {
+      document.getElementById('display-masjid').textContent = settings.masjid;
+      document.getElementById('popup-masjid').textContent = settings.masjid;
+
+      document.getElementById('display-alamat').innerHTML = `<span class="address-marquee">${settings.alamat}</span>`;
+      document.getElementById('popup-alamat').innerHTML = `<span class="video-popup-address-marquee">${settings.alamat}</span>`;
+
+      document.getElementById('display-running-text').textContent = settings.runningText;
+
+      mainBannerMedia = processMediaUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
+
+      slideTimerSec = parseInt(settings.slideTimer) || 5;
+
+      const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
+      slideMediaList = rawSlides.map(processMediaUrl).filter(item => item && item.url && item.url.trim() !== '');
+
+      if (slideMediaList.length === 0) {
+        slideMediaList = DEFAULT_SETTINGS.slides.map(processMediaUrl);
+      }
+
+      handleModeChange();
+
+      document.getElementById('input-masjid').value = settings.masjid;
+      document.getElementById('input-alamat').value = settings.alamat;
+      document.getElementById('input-search-kota').value = settings.cityName || '';
+      document.getElementById('select-kota-id').value = settings.cityId || '';
+      document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
+      document.getElementById('input-mute-video-azan').checked = settings.muteVideoAzan !== undefined ? settings.muteVideoAzan : true;
+      document.getElementById('input-main-banner').value = settings.mainBanner || '';
+      document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
+      document.getElementById('input-slide-timer').value = slideTimerSec;
+      document.getElementById('input-slide-1').value = rawSlides[0] || '';
+      document.getElementById('input-slide-2').value = rawSlides[1] || '';
+      document.getElementById('input-slide-3').value = rawSlides[2] || '';
+      document.getElementById('input-running-text').value = settings.runningText;
+    }
+
+    function startSlideShow() {
+      if (slideShowTimer) clearInterval(slideShowTimer);
+      
+      if (!slideMediaList || slideMediaList.length === 0) {
+        slideMediaList = DEFAULT_SETTINGS.slides.map(processMediaUrl);
+      }
+
+      currentSlideIdx = 0;
+      displayMedia(slideMediaList[currentSlideIdx]);
+
+      if (slideMediaList.length > 1) {
+        slideShowTimer = setInterval(() => {
+          currentSlideIdx = (currentSlideIdx + 1) % slideMediaList.length;
+          displayMedia(slideMediaList[currentSlideIdx]);
+        }, slideTimerSec * 1000);
+      }
+    }
+
+    function displayMedia(mediaObj) {
+      if (!mediaObj || !mediaObj.url) return;
+
+      const bgImg = document.getElementById('bg-image');
+      const bgBlur = document.getElementById('bg-blur');
+      const videoContainer = document.getElementById('video-container');
+      const youtubeIframe = document.getElementById('youtube-iframe');
+
+      if (mediaObj.type === 'youtube') {
+        bgImg.style.opacity = '0';
+        bgBlur.style.opacity = '0';
+        videoContainer.style.display = 'block';
+        if (youtubeIframe.src !== mediaObj.url) {
+          youtubeIframe.src = mediaObj.url;
+        }
+      } else {
+        videoContainer.style.display = 'none';
+        youtubeIframe.src = '';
+
+        bgImg.style.opacity = '0.3';
+        bgBlur.style.opacity = '0.3';
+
+        setTimeout(() => {
+          bgImg.src = mediaObj.url;
+          bgBlur.src = mediaObj.url;
+          bgImg.style.opacity = '1';
+          bgBlur.style.opacity = '1';
+        }, 200);
+      }
+    }
+
+    function getHijriDate(date) {
+      const months = [
+        'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
+        'Jumadil Ula', 'Jumadil Akhir', 'Rajab', 'Sya\'ban',
+        'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'
+      ];
+
+      let day = date.getDate();
+      let month = date.getMonth();
+      let year = date.getFullYear();
+
+      if (month < 2) {
+        year -= 1;
+        month += 12;
+      }
+
+      let a = Math.floor(year / 100);
+      let b = 2 - a + Math.floor(a / 4);
+      let jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
+
+      let z = jd + 0.5;
+      let i = Math.floor((z - 1867216.25) / 36524.25);
+      let aa = z + 1 + i - Math.floor(i / 4);
+      let bb = aa + 1524;
+      let cc = Math.floor((bb - 122.1) / 365.25);
+      let dd = Math.floor(365.25 * cc);
+      let ee = Math.floor((bb - dd) / 30.6001);
+
+      let l = bb - dd - Math.floor(30.6001 * ee);
+      let hYear = Math.floor((jd - 1948439.5) / 354.367068);
+      let hMonth = Math.floor((jd - 1948439.5 - (hYear * 354.367068)) / 29.530589);
+      let hDay = Math.floor(jd - 1948439.5 - (hYear * 354.367068) - (hMonth * 29.530589)) + 1;
+
+      if (hMonth >= 12) {
+        hMonth = 0;
+        hYear++;
+      }
+
+      return `${hDay} ${months[hMonth]} ${hYear + 1} H`;
+    }
+
+    function triggerAzanIqomahFlow(prayerName) {
+      if (isAzanIqomahActive) return;
+      isAzanIqomahActive = true;
+
+      const overlay = document.getElementById('prayer-event-overlay');
+      const titleEl = document.getElementById('event-title');
+      const subtitleEl = document.getElementById('event-subtitle');
+      const timerEl = document.getElementById('event-timer');
+      const settings = getStoredSettings();
+      const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
+
+      // Mute video YouTube jika opsi di setting diaktifkan
+      if (settings.muteVideoAzan) {
+        setYoutubeMuteState(true);
+      }
+
+      // Play Beep awal Azan (3x Beep Panjang)
+      playBeepSound(900, 0.35, 3, 0.45);
+
+      titleEl.textContent = "WAKTU AZAN";
+      subtitleEl.textContent = `MEMASUKI WAKTU SHOLAT ${prayerName.toUpperCase()}`;
+      overlay.classList.add('active');
+
+      let azanDurationSec = 60; // Didefinisikan 1 menit penanda azan
+      timerEl.textContent = "01:00";
+
+      let azanInterval = setInterval(() => {
+        azanDurationSec--;
+        let m = String(Math.floor(azanDurationSec / 60)).padStart(2, '0');
+        let s = String(azanDurationSec % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (azanDurationSec <= 0) {
+          clearInterval(azanInterval);
+          startIqomahCountdown();
+        }
+      }, 1000);
+
+      function startIqomahCountdown() {
+        titleEl.textContent = "COUNTDOWN IQOMAH";
+        subtitleEl.textContent = `MENUJU SHOLAT ${prayerName.toUpperCase()}`;
+        let iqomahSec = iqomahMinutes * 60;
+
+        let iqomahInterval = setInterval(() => {
+          iqomahSec--;
+          let m = String(Math.floor(iqomahSec / 60)).padStart(2, '0');
+          let s = String(iqomahSec % 60).padStart(2, '0');
+          timerEl.textContent = `${m}:${s}`;
+
+          // Beep peringatan 10 detik sebelum iqomah
+          if (iqomahSec <= 10 && iqomahSec > 0) {
+            playBeepSound(1000, 0.1, 1, 0);
+          }
+
+          if (iqomahSec <= 0) {
+            clearInterval(iqomahInterval);
+
+            // Beep saat waktu Iqomah Tiba (5x Beep Cepat)
+            playBeepSound(1200, 0.15, 5, 0.2);
+
+            overlay.classList.remove('active');
+            isAzanIqomahActive = false;
+
+            // Kembalikan audio video YouTube (unmute) jika diatur demikian
+            if (settings.muteVideoAzan) {
+              setYoutubeMuteState(false);
             }
+          }
+        }, 1000);
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timeNowStr = `${hours}:${minutes}`;
+      const clockHtml = `${hours}<span class="colon">:</span>${minutes}`;
+      
+      document.getElementById('clock').innerHTML = clockHtml;
+      document.getElementById('popup-clock').innerHTML = clockHtml;
+      document.getElementById('fs-clock').innerHTML = clockHtml;
+
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      const dateStr = now.toLocaleDateString('id-ID', options);
+      document.getElementById('gregorian-date').textContent = dateStr;
+      document.getElementById('popup-gregorian').textContent = dateStr;
+
+      const hijriString = getHijriDate(now);
+      document.getElementById('hijri-date').textContent = hijriString;
+      document.getElementById('popup-hijri').textContent = hijriString;
+
+      const currentDateString = now.toDateString();
+      if (lastFetchedDate !== currentDateString) {
+        triggeredToday = {};
+        const settings = getStoredSettings();
+        if (settings.cityId) {
+          fetchPrayerTimes(settings.cityId);
+        }
+      }
+
+      if (currentSchedule) {
+        updatePrayerCountdown(currentSchedule);
+
+        // PENANUSAN WAKTU AZAN SHOLAT FARDHU
+        const mainPrayers = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+        mainPrayers.forEach(prayerKey => {
+          if (currentSchedule[prayerKey] === timeNowStr && seconds === "00") {
+            if (!triggeredToday[prayerKey]) {
+              triggeredToday[prayerKey] = true;
+              triggerAzanIqomahFlow(prayerKey);
+            }
+          }
+        });
+      }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    async function loadCityList() {
+      const searchInput = document.getElementById('input-search-kota');
+      const cityIdInput = document.getElementById('select-kota-id');
+      const suggestionsBox = document.getElementById('city-suggestions');
+      const settings = getStoredSettings();
+
+      try {
+        const response = await fetch('https://api.myquran.com/v2/sholat/kota/semua');
+        const data = await response.json();
+        if (data.status) {
+          allCities = data.data;
+
+          let defaultCity = null;
+          if (settings.cityId) {
+            defaultCity = allCities.find(c => c.id === settings.cityId);
+          }
+          if (!defaultCity) {
+            defaultCity = allCities.find(c => c.lokasi.includes('BANDUNG')) || allCities[0];
+          }
+
+          if (defaultCity) {
+            cityIdInput.value = defaultCity.id;
+            searchInput.value = defaultCity.lokasi;
+            fetchPrayerTimes(defaultCity.id);
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat daftar kota:', err);
+      }
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = '';
+
+        if (!query) {
+          suggestionsBox.classList.remove('show');
+          return;
         }
 
-        // Reset Role (Back to Home Screen)
-        function resetRole() {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            if (peer) {
-                peer.destroy();
-                peer = null;
-            }
-            if (currentCall) {
-                currentCall.close();
-                currentCall = null;
-            }
-
-            senderView.classList.add('hidden');
-            receiverView.classList.add('hidden');
-            roleSelector.classList.remove('hidden');
-            mainHeader.classList.remove('hidden');
-            
-            updateStatus('disconnected', 'Belum Terhubung');
-        }
-
-        // ==========================================
-        // SENDER (HP) LOGIC & FALLBACK CAMERA
-        // ==========================================
-        async function initSender() {
-            updateStatus('connecting', 'Membuka Kamera HP...');
-            
-            // 1. Get Camera Stream with Fallbacks
-            await startLocalCameraWithFallback(currentFacingMode);
-
-            // 2. Initialize PeerJS Connection
-            const customId = 'cam-' + Math.random().toString(36).substring(2, 8);
-            peer = new Peer(customId);
-
-            peer.on('open', (id) => {
-                document.getElementById('senderPeerId').innerText = id;
-                generateQRCode(id);
-                updateStatus('disconnected', 'Siap Menunggu Komputer');
+        const filtered = allCities.filter(c => c.lokasi.toLowerCase().includes(query));
+        if (filtered.length > 0) {
+          filtered.slice(0, 8).forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'city-suggestion-item';
+            item.textContent = c.lokasi;
+            item.addEventListener('click', () => {
+              searchInput.value = c.lokasi;
+              cityIdInput.value = c.id;
+              suggestionsBox.classList.remove('show');
             });
-
-            // 3. Handle incoming call from computer
-            peer.on('call', (call) => {
-                currentCall = call;
-                updateStatus('connecting', 'Menghubungkan ke Receiver...');
-                
-                // Answer call with local media stream
-                call.answer(localStream);
-
-                call.on('stream', () => {
-                    updateStatus('connected', 'Terkoneksi & Live Stream');
-                });
-
-                call.on('close', () => {
-                    updateStatus('disconnected', 'Koneksi Terputus');
-                });
-
-                call.on('error', (err) => {
-                    console.error("Call error:", err);
-                    updateStatus('disconnected', 'Error Koneksi');
-                });
-
-                updateStatus('connected', 'Streaming ke Komputer!');
-            });
-
-            peer.on('error', (err) => {
-                console.error("PeerJS error:", err);
-                updateStatus('disconnected', 'Gagal Membuat ID Peer');
-            });
+            suggestionsBox.appendChild(item);
+          });
+          suggestionsBox.classList.add('show');
+        } else {
+          suggestionsBox.classList.remove('show');
         }
+      });
 
-        // Robust Camera Capture with Multi-level Fallbacks
-        async function startLocalCameraWithFallback(facingMode) {
-            const overlay = document.getElementById('cameraOverlay');
-            const overlayText = document.getElementById('cameraOverlayText');
-            overlay.classList.remove('hidden');
-
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-
-            // Constraint attempts array (from ideal to basic fallback)
-            const constraintAttempts = [
-                { video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true },
-                { video: { facingMode: facingMode }, audio: true },
-                { video: true, audio: true },
-                { video: true, audio: false }
-            ];
-
-            let streamAcquired = false;
-
-            for (let i = 0; i < constraintAttempts.length; i++) {
-                try {
-                    overlayText.innerText = `Mencoba Akses Kamera (${i + 1}/4)...`;
-                    localStream = await navigator.mediaDevices.getUserMedia(constraintAttempts[i]);
-                    streamAcquired = true;
-                    break;
-                } catch (err) {
-                    console.warn(`Attempt ${i + 1} failed:`, err);
-                }
-            }
-
-            if (streamAcquired) {
-                const localVideo = document.getElementById('localVideo');
-                localVideo.srcObject = localStream;
-                overlay.classList.add('hidden');
-
-                // If in an active call, replace video tracks dynamically
-                if (currentCall) {
-                    const videoTrack = localStream.getVideoTracks()[0];
-                    const sender = currentCall.peerConnection.getSenders().find(s => s && s.track && s.track.kind === 'video');
-                    if (sender) {
-                        sender.replaceTrack(videoTrack);
-                    }
-                }
-            } else {
-                overlayText.innerText = "Gagal mengakses kamera!";
-                alert("Gagal membuka kamera HP.\n\nPastikan Anda memberikan izin kamera di browser dan web diakses melalui HTTPS.");
-                openHttpsGuideModal();
-            }
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.city-search-container')) {
+          suggestionsBox.classList.remove('show');
         }
+      });
+    }
 
-        // Switch Facing Camera (Front <-> Back)
-        async function switchCamera() {
-            currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
-            const localVideo = document.getElementById('localVideo');
-            
-            if (currentFacingMode === 'user') {
-                localVideo.classList.add('-scale-x-100');
-            } else {
-                localVideo.classList.remove('-scale-x-100');
-            }
+    async function fetchPrayerTimes(cityId) {
+      if (!cityId) return;
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
 
-            await startLocalCameraWithFallback(currentFacingMode);
+      try {
+        const res = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${yyyy}/${mm}/${dd}`);
+        const data = await res.json();
+        if (data.status) {
+          const j = data.data.jadwal;
+          currentSchedule = j;
+          lastFetchedDate = today.toDateString();
+
+          document.getElementById('time-imsak').textContent = j.imsak || '--:--';
+          document.getElementById('time-subuh').textContent = j.subuh;
+          document.getElementById('time-terbit').textContent = j.terbit;
+          document.getElementById('time-dzuhur').textContent = j.dzuhur;
+          document.getElementById('time-ashar').textContent = j.ashar;
+          document.getElementById('time-maghrib').textContent = j.maghrib;
+          document.getElementById('time-isya').textContent = j.isya;
+
+          updatePrayerCountdown(j);
         }
+      } catch (e) {
+        console.error('Gagal mengambil jadwal sholat:', e);
+      }
+    }
 
-        // Toggle Video Track
-        function toggleLocalVideo() {
-            if (localStream && localStream.getVideoTracks().length > 0) {
-                isVideoEnabled = !isVideoEnabled;
-                localStream.getVideoTracks()[0].enabled = isVideoEnabled;
-                
-                const btn = document.getElementById('toggleCamBtn');
-                btn.innerHTML = isVideoEnabled 
-                    ? `<i class="fa-solid fa-video"></i> <span>Kamera On</span>`
-                    : `<i class="fa-solid fa-video-slash text-red-400"></i> <span>Kamera Off</span>`;
-            }
+    function updatePrayerCountdown(jadwal) {
+      const now = new Date();
+      const currentSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+
+      const timeToSec = (t) => {
+        if (!t) return 0;
+        const [h, m] = t.split(':').map(Number);
+        return (h * 3600) + (m * 60);
+      };
+
+      const times = [
+        { id: 'card-imsak', name: 'Imsak', timeStr: jadwal.imsak, sec: timeToSec(jadwal.imsak) },
+        { id: 'card-subuh', name: 'Subuh', timeStr: jadwal.subuh, sec: timeToSec(jadwal.subuh) },
+        { id: 'card-terbit', name: 'Syuruq', timeStr: jadwal.terbit, sec: timeToSec(jadwal.terbit) },
+        { id: 'card-dzuhur', name: 'Dzuhur', timeStr: jadwal.dzuhur, sec: timeToSec(jadwal.dzuhur) },
+        { id: 'card-ashar', name: 'Ashar', timeStr: jadwal.ashar, sec: timeToSec(jadwal.ashar) },
+        { id: 'card-maghrib', name: 'Maghrib', timeStr: jadwal.maghrib, sec: timeToSec(jadwal.maghrib) },
+        { id: 'card-isya', name: "Isya'", timeStr: jadwal.isya, sec: timeToSec(jadwal.isya) }
+      ];
+
+      times.forEach(t => {
+        const el = document.getElementById(t.id);
+        if (el) {
+          el.classList.remove('active');
+          const oldCd = el.querySelector('.prayer-countdown');
+          if (oldCd) oldCd.remove();
         }
+      });
 
-        // Toggle Audio Track
-        function toggleLocalAudio() {
-            if (localStream && localStream.getAudioTracks().length > 0) {
-                isAudioEnabled = !isAudioEnabled;
-                localStream.getAudioTracks()[0].enabled = isAudioEnabled;
+      let next = times.find(t => t.sec > currentSeconds);
+      if (!next) next = times[0];
 
-                const btn = document.getElementById('toggleMicBtn');
-                btn.innerHTML = isAudioEnabled 
-                    ? `<i class="fa-solid fa-microphone"></i> <span>Mic On</span>`
-                    : `<i class="fa-solid fa-microphone-slash text-red-400"></i> <span>Mic Mute</span>`;
-            }
-        }
+      let diffSec = next.sec - currentSeconds;
+      if (diffSec < 0) diffSec += 86400;
 
-        // Generate QR Code
-        function generateQRCode(peerId) {
-            const qrContainer = document.getElementById("qrcode");
-            qrContainer.innerHTML = "";
-            
-            const connectUrl = window.location.origin + window.location.pathname + '?id=' + peerId;
-            
-            new QRCode(qrContainer, {
-                text: connectUrl,
-                width: 120,
-                height: 120,
-                colorDark : "#0f172a",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M
-            });
-        }
+      const h = String(Math.floor(diffSec / 3600)).padStart(2, '0');
+      const m = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
+      const s = String(diffSec % 60).padStart(2, '0');
+      const countdownFormatted = `-${h}:${m}:${s}`;
 
-        // Copy Peer ID to Clipboard
-        function copySenderId() {
-            const idText = document.getElementById('senderPeerId').innerText;
-            if (!idText || idText.includes('Membuat')) return;
+      const activeEl = document.getElementById(next.id);
+      if (activeEl) {
+        activeEl.classList.add('active');
+        let cdEl = document.createElement('div');
+        cdEl.className = 'prayer-countdown';
+        cdEl.textContent = countdownFormatted;
+        activeEl.appendChild(cdEl);
+      }
 
-            const tempInput = document.createElement('input');
-            tempInput.value = idText;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
+      document.getElementById('fs-next-name').textContent = next.name;
+      document.getElementById('fs-next-time').textContent = next.timeStr || '--:--';
+      document.getElementById('fs-next-countdown').textContent = countdownFormatted;
+    }
 
-            alert('ID HP (' + idText + ') berhasil disalin!');
-        }
+    saveBtn.addEventListener('click', () => {
+      const settings = {
+        masjid: document.getElementById('input-masjid').value,
+        alamat: document.getElementById('input-alamat').value,
+        cityId: document.getElementById('select-kota-id').value,
+        cityName: document.getElementById('input-search-kota').value,
+        iqomahTimer: document.getElementById('input-iqomah-timer').value,
+        muteVideoAzan: document.getElementById('input-mute-video-azan').checked,
+        mainBanner: document.getElementById('input-main-banner').value,
+        youtubeUrl: document.getElementById('input-youtube-url').value,
+        slideTimer: document.getElementById('input-slide-timer').value,
+        slides: [
+          document.getElementById('input-slide-1').value,
+          document.getElementById('input-slide-2').value,
+          document.getElementById('input-slide-3').value
+        ],
+        runningText: document.getElementById('input-running-text').value
+      };
 
-        // ==========================================
-        // RECEIVER (KOMPUTER) LOGIC
-        // ==========================================
-        function initReceiver() {
-            updateStatus('connecting', 'Membuka Receiver...');
+      localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
+      applySettings(settings);
+      fetchPrayerTimes(settings.cityId);
+      modalOverlay.classList.remove('open');
+    });
 
-            peer = new Peer();
-
-            peer.on('open', (id) => {
-                updateStatus('disconnected', 'Siap Menghubungkan');
-            });
-
-            peer.on('error', (err) => {
-                console.error("PeerJS Error:", err);
-                alert("Terjadi kesalahan koneksi PeerJS: " + err.type);
-                updateStatus('disconnected', 'Gagal Terhubung');
-            });
-        }
-
-        // Connect to Sender Peer ID
-        function connectToSender(event) {
-            if (event) event.preventDefault();
-
-            const remoteId = document.getElementById('remotePeerIdInput').value.trim();
-            if (!remoteId) {
-                alert('Silakan masukkan ID dari HP!');
-                return;
-            }
-
-            updateStatus('connecting', 'Menghubungkan ke HP...');
-
-            const dummyStream = createEmptyMediaStream();
-            const call = peer.call(remoteId, dummyStream);
-            currentCall = call;
-
-            call.on('stream', (remoteStream) => {
-                const remoteVideo = document.getElementById('remoteVideo');
-                remoteVideo.srcObject = remoteStream;
-                
-                document.getElementById('receiverWaitingOverlay').classList.add('hidden');
-                document.getElementById('receiverConnStatusText').innerText = remoteId;
-                updateStatus('connected', 'Streaming Live!');
-
-                // Trigger Initial Overlay Auto-Hide Countdown
-                resetOverlayTimeout();
-            });
-
-            call.on('close', () => {
-                disconnectReceiver();
-            });
-
-            call.on('error', (err) => {
-                console.error("Call error:", err);
-                alert("Gagal terhubung. Pastikan ID HP benar dan HP masih membuka halaman web ini.");
-                updateStatus('disconnected', 'Koneksi Gagal');
-            });
-        }
-
-        // Create empty media stream for calling
-        function createEmptyMediaStream() {
-            const ctx = document.createElement('canvas').getContext('2d');
-            return ctx.canvas.captureStream();
-        }
-
-        // Toggle Video Fit Mode (Contain vs Cover Aspect Ratio)
-        function toggleVideoFitMode() {
-            const remoteVideo = document.getElementById('remoteVideo');
-            const btn = document.getElementById('fitModeBtn');
-            isVideoCoverFit = !isVideoCoverFit;
-
-            if (isVideoCoverFit) {
-                remoteVideo.classList.remove('object-contain');
-                remoteVideo.classList.add('object-cover');
-                btn.classList.add('bg-indigo-600', 'text-white');
-            } else {
-                remoteVideo.classList.remove('object-cover');
-                remoteVideo.classList.add('object-contain');
-                btn.classList.remove('bg-indigo-600', 'text-white');
-            }
-        }
-
-        // Toggle Audio Mute on Receiver
-        function toggleAudioMute() {
-            const remoteVideo = document.getElementById('remoteVideo');
-            remoteVideo.muted = !remoteVideo.muted;
-
-            const btn = document.getElementById('muteReceiverAudioBtn');
-            btn.innerHTML = remoteVideo.muted 
-                ? `<i class="fa-solid fa-volume-xmark text-red-400 text-xs"></i>` 
-                : `<i class="fa-solid fa-volume-high text-xs"></i>`;
-        }
-
-        // Fullscreen Toggle
-        function toggleFullscreen() {
-            const container = document.getElementById('receiverView');
-            if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => {
-                    alert(`Gagal layar penuh: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        // Disconnect Receiver
-        function disconnectReceiver() {
-            if (currentCall) {
-                currentCall.close();
-                currentCall = null;
-            }
-            const remoteVideo = document.getElementById('remoteVideo');
-            remoteVideo.srcObject = null;
-
-            document.getElementById('receiverWaitingOverlay').classList.remove('hidden');
-            updateStatus('disconnected', 'Terputus');
-            showOverlayControls();
-        }
-
-        // ==========================================
-        // AUTO-HIDE OVERLAY CONTROLS (3 DETIK IDLE)
-        // ==========================================
-        function setupReceiverOverlayAutoHide() {
-            const receiverContainer = document.getElementById('receiverView');
-
-            // Activity triggers show overlay & reset timer
-            const handleUserActivity = () => {
-                if (currentRole === 'receiver') {
-                    showOverlayControls();
-                    resetOverlayTimeout();
-                }
-            };
-
-            receiverContainer.addEventListener('mousemove', handleUserActivity);
-            receiverContainer.addEventListener('mousedown', handleUserActivity);
-            receiverContainer.addEventListener('touchstart', handleUserActivity);
-            receiverContainer.addEventListener('touchmove', handleUserActivity);
-        }
-
-        function resetOverlayTimeout() {
-            clearTimeout(overlayTimeout);
-            overlayTimeout = setTimeout(() => {
-                // Only hide if waiting overlay is hidden (active stream)
-                const isWaitingVisible = !document.getElementById('receiverWaitingOverlay').classList.contains('hidden');
-                if (!isWaitingVisible) {
-                    hideOverlayControls();
-                }
-            }, IDLE_TIME_LIMIT);
-        }
-
-        function showOverlayControls() {
-            receiverOverlayControls.classList.remove('overlay-hidden');
-            receiverTopNotice.classList.remove('overlay-hidden');
-            document.body.style.cursor = 'default';
-        }
-
-        function hideOverlayControls() {
-            receiverOverlayControls.classList.add('overlay-hidden');
-            receiverTopNotice.classList.add('overlay-hidden');
-            document.body.style.cursor = 'none'; // Hide mouse cursor in clean monitor mode
-        }
-
-        // ==========================================
-        // MODAL HANDLERS
-        // ==========================================
-        function openHttpsGuideModal() {
-            document.getElementById('httpsGuideModal').classList.remove('hidden');
-        }
-
-        function closeHttpsGuideModal() {
-            document.getElementById('httpsGuideModal').classList.add('hidden');
-        }
-    </script>
+    const initialSettings = getStoredSettings();
+    applySettings(initialSettings);
+    loadCityList();
+  </script>
 </body>
 </html>
