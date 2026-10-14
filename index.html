@@ -60,74 +60,76 @@
       position: relative; overflow: hidden;
     }
 
-    /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI SISI TENGAH SEBELAH KANAN SECARA VERTIKAL */
+    /* TOMBOL KONTROL DI SISI KANAN */
     .controls-group {
       position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 100;
       display: flex; flex-direction: column; gap: 10px; align-items: center;
     }
 
     .btn-control {
-      width: 42px; height: 42px;
-      background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 10px; color: #fff; font-size: 1.2rem; display: flex;
+      width: 46px; height: 46px;
+      background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px; color: #fff; font-size: 1.2rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
     }
-    .btn-control:hover, .btn-control:focus { background: var(--accent-color); color: #000; transform: scale(1.08); outline: none; }
-    .btn-control svg { width: 22px; height: 22px; fill: currentColor; }
+    .btn-control.remote-focused, .btn-control:hover, .btn-control:focus {
+      background: var(--accent-color); color: #000; transform: scale(1.12); outline: none; border-color: #fff;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .btn-control svg { width: 24px; height: 24px; fill: currentColor; }
 
-    /* MODAL POPUP PENGATURAN (REMOTE NAVIGATION READY) */
+    /* SLIDE MENU PENGATURAN (SLIDE DARI KANAN) */
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
-      z-index: 500; display: flex; justify-content: center; align-items: center;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px);
+      z-index: 500; display: flex; justify-content: flex-end;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     .settings-modal-overlay.open { opacity: 1; pointer-events: auto; }
 
     .settings-modal {
-      width: 90%; max-width: 580px; max-height: 85vh;
-      background: #0f172a; border: 2px solid var(--accent-color);
-      border-radius: 16px; padding: 24px; color: #fff;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
-      transform: translateY(20px); transition: transform 0.3s ease;
+      width: 100%; max-width: 460px; height: 100vh;
+      background: #0f172a; border-left: 2px solid var(--accent-color);
+      padding: 24px; color: #fff;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
+      transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .settings-modal-overlay.open .settings-modal { transform: translateY(0); }
+    .settings-modal-overlay.open .settings-modal { transform: translateX(0); }
 
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
     .modal-header h3 { font-size: 1.25rem; color: var(--accent-color); font-weight: 700; }
     .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.6rem; cursor: pointer; line-height: 1; }
     .close-btn:hover { color: #ef4444; }
 
-    .modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 6px; }
+    .modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; flex: 1; }
     .modal-body::-webkit-scrollbar { width: 6px; }
     .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
     .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-    /* ITEM MENU DUA TINGKAT UNTUK REMOTE TV */
+    /* ITEM MENU DUA TINGKAT DENGAN INDIKATOR FOKUS */
     .menu-item {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 16px; background: rgba(255,255,255,0.05); border-radius: 10px;
       border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease;
     }
-    .menu-item.nav-selected { border-color: var(--accent-color); background: rgba(255,255,255,0.15); box-shadow: 0 0 12px var(--accent-glow); }
-    .menu-item.editing { border-color: #10b981; background: rgba(16, 185, 129, 0.2); }
+    .menu-item.nav-selected { border-color: var(--accent-color); background: rgba(245, 158, 11, 0.25); box-shadow: 0 0 12px var(--accent-glow); }
+    .menu-item.editing { border-color: #10b981; background: rgba(16, 185, 129, 0.25); }
     .menu-item-label { font-size: 0.95rem; font-weight: 600; color: #cbd5e1; }
     .menu-item-value { font-size: 0.9rem; color: #f8fafc; font-weight: 700; max-width: 50%; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .menu-edit-panel {
-      display: none; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 4px;
+      display: none; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; margin-top: 4px;
     }
     .menu-item.editing + .menu-edit-panel { display: flex; flex-direction: column; gap: 8px; }
 
     .menu-edit-panel input, .menu-edit-panel select, .menu-edit-panel textarea {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3);
+      width: 100%; padding: 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3);
       background: #1e293b; color: #fff; font-size: 0.9rem; outline: none;
     }
     .menu-edit-panel input:focus, .menu-edit-panel select:focus, .menu-edit-panel textarea:focus {
-      border-color: var(--accent-color);
+      border-color: #10b981; background: rgba(16, 185, 129, 0.15);
     }
 
     .city-search-container { position: relative; }
@@ -143,7 +145,7 @@
     .city-suggestion-item:hover, .city-suggestion-item.focused { background: var(--accent-color); color: #000; }
 
     .btn-action { background: var(--accent-color); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; text-align: center; }
-    .btn-action:hover { background: var(--accent-hover); color: #fff; }
+    .btn-action.nav-selected, .btn-action:hover { background: var(--accent-hover); color: #fff; outline: none; box-shadow: 0 0 12px var(--accent-glow); }
 
     /* HEADER DISPLAY UTAMA */
     header {
@@ -226,7 +228,7 @@
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px var(--accent-glow);
     }
 
-    /* FOOTER JADWAL SHOLAT (PROPORTIONAL & COMPACT DESIGN) */
+    /* FOOTER JADWAL SHOLAT */
     .prayer-bar-wrapper {
       background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
       display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
@@ -340,11 +342,11 @@
   <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
   <input type="radio" id="mode-sidebar" name="display-mode" class="mode-switch">
 
-  <!-- MODAL POPUP PENGATURAN (REMOTE NAVIGATION CONTROL) -->
+  <!-- SLIDE MENU PENGATURAN -->
   <div class="settings-modal-overlay" id="settings-modal-overlay">
     <div class="settings-modal">
       <div class="modal-header">
-        <h3>Pengaturan Display (Remote Navigation)</h3>
+        <h3>Pengaturan Display (Slide Menu)</h3>
         <button class="close-btn" id="btn-close-settings">&times;</button>
       </div>
 
@@ -405,7 +407,7 @@
           </div>
         </div>
 
-        <!-- 6. DUSASI IQOMAH -->
+        <!-- 6. DURASI IQOMAH -->
         <div class="menu-item" data-menu="iqomah">
           <span class="menu-item-label">Durasi Jeda Iqomah (Menit)</span>
           <span class="menu-item-value" id="val-iqomah">10 Menit</span>
@@ -450,7 +452,6 @@
           <button class="btn-action" id="btn-install-app">Instal Ke Layar Utama Google TV</button>
         </div>
 
-        <button class="btn-action" id="btn-save-settings" style="margin-top: 15px;">Simpan & Terapkan Pengaturan</button>
       </div>
     </div>
   </div>
@@ -458,13 +459,13 @@
   <!-- DISPLAY CONTAINER -->
   <div class="display-container" id="display-container">
     
-    <!-- TOMBOL CONTROL SISI KANAN -->
+    <!-- TOMBOL KONTROL DI SISI KANAN -->
     <div class="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
         <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
       </button>
-      <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
+      <button class="btn-control remote-focused" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
     </div>
 
     <header>
@@ -536,7 +537,7 @@
       </section>
     </div>
 
-    <!-- BAR JADWAL SHOLAT (SUMBER DIHAPUS, UKURAN LEBIH COMPACT) -->
+    <!-- BAR JADWAL SHOLAT DENGAN PENANDA & COUNTDOWN -->
     <div class="prayer-bar-wrapper" id="prayer-bar-wrapper">
       <footer class="prayer-bar" id="prayer-bar">
         <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
@@ -568,16 +569,12 @@
     let mainBannerMedia = "";
     let slideTimerSec = 5;
 
-    let isAzanIqomahActive = false;
-    let triggeredToday = {};
-
     const DEFAULT_SETTINGS = {
       masjid: "Masjid Al Jihad",
       alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
       cityId: "1609",
       cityName: "KOTA JAMBI",
       iqomahTimer: 10,
-      muteVideoAzan: true,
       theme: "amber",
       mainBanner: "https://picsum.photos/1200/800?random=99",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
@@ -610,14 +607,28 @@
     const modalOverlay = document.getElementById('settings-modal-overlay');
     const toggleBtn = document.getElementById('btn-toggle-settings');
     const closeBtn = document.getElementById('btn-close-settings');
-    const saveBtn = document.getElementById('btn-save-settings');
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const btnToggleFsModal = document.getElementById('btn-toggle-fs-modal');
+
+    let isMainScreenFocused = true;
+    let mainFocusIdx = 0; // 0: Settings, 1: Fullscreen
+    const mainActionButtons = [toggleBtn, btnFullscreen];
+
+    function updateMainFocusState() {
+      mainActionButtons.forEach((btn, idx) => {
+        if (isMainScreenFocused && idx === mainFocusIdx) {
+          btn.classList.add('remote-focused');
+        } else {
+          btn.classList.remove('remote-focused');
+        }
+      });
+    }
 
     toggleBtn.addEventListener('click', () => openSettingsModal());
     closeBtn.addEventListener('click', () => closeSettingsModal());
 
     function openSettingsModal() {
+      isMainScreenFocused = false;
       modalOverlay.classList.add('open');
       selectedMenuIdx = 0;
       updateMenuNavState();
@@ -629,6 +640,8 @@
         activeEditingMenu.classList.remove('editing');
         activeEditingMenu = null;
       }
+      isMainScreenFocused = true;
+      updateMainFocusState();
     }
 
     /* REMOTE TV NAVIGATION LOGIC FOR MENU SETTINGS */
@@ -667,21 +680,65 @@
         activeEditingMenu = item;
         const panel = document.getElementById(`panel-${item.dataset.menu}`);
         if (panel) {
-          const input = panel.querySelector('input, select, textarea');
+          const input = panel.querySelector('input, select, textarea, button');
           if (input) input.focus();
         }
       }
     }
 
+    /* AUTO-SAVE SETTINGS HELPER */
+    function saveCurrentSettings() {
+      const settings = {
+        masjid: document.getElementById('input-masjid').value,
+        alamat: document.getElementById('input-alamat').value,
+        cityId: document.getElementById('select-kota-id').value,
+        cityName: document.getElementById('input-search-kota').value,
+        iqomahTimer: document.getElementById('input-iqomah-timer').value,
+        theme: document.getElementById('input-theme').value,
+        mainBanner: document.getElementById('input-main-banner').value,
+        youtubeUrl: document.getElementById('input-youtube-url').value,
+        runningText: document.getElementById('input-running-text').value
+      };
+      localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
+      applySettings(settings);
+      if (settings.cityId) fetchPrayerTimes(settings.cityId);
+      updateMenuValuesDisplay();
+    }
+
+    // Attach auto-save listeners to all input elements
+    ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-youtube-url', 'input-running-text'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', saveCurrentSettings);
+        el.addEventListener('change', saveCurrentSettings);
+      }
+    });
+
     /* HANDLE REMOTE D-PAD KEY EVENTS */
     window.addEventListener('keydown', (e) => {
-      if (e.key === 's' || e.key === 'S') {
+      if (e.key === 's' || e.key === 'S' || e.key === 'Enter' || e.key === 'Select') {
         if (modalOverlay.classList.contains('open')) {
-          closeSettingsModal();
+          if (!activeEditingMenu) {
+            if (menuItems[selectedMenuIdx].dataset.menu === 'install' || menuItems[selectedMenuIdx].dataset.menu === 'fullscreen') {
+              const panelBtn = document.getElementById(`panel-${menuItems[selectedMenuIdx].dataset.menu}`).querySelector('button');
+              if (panelBtn) panelBtn.click();
+            } else {
+              toggleMenuEdit(menuItems[selectedMenuIdx]);
+            }
+          } else {
+            activeEditingMenu.classList.remove('editing');
+            activeEditingMenu = null;
+            updateMenuValuesDisplay();
+          }
+          return;
         } else {
-          openSettingsModal();
+          if (mainFocusIdx === 0) {
+            openSettingsModal();
+          } else {
+            toggleFullscreen();
+          }
+          return;
         }
-        return;
       }
 
       if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
@@ -696,12 +753,26 @@
         }
       }
 
+      /* KONDISI DI DALAM MENU PENGATURAN */
       if (modalOverlay.classList.contains('open')) {
         if (activeEditingMenu) {
-          if (e.key === 'Enter' || e.key === 'Select') {
-            activeEditingMenu.classList.remove('editing');
-            activeEditingMenu = null;
-            updateMenuValuesDisplay();
+          const currentPanel = document.getElementById(`panel-${activeEditingMenu.dataset.menu}`);
+          const selectEl = currentPanel.querySelector('select');
+          const inputEl = currentPanel.querySelector('input[type="number"]');
+
+          if (selectEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            let optsLength = selectEl.options.length;
+            let curIdx = selectEl.selectedIndex;
+            if (e.key === 'ArrowUp') selectEl.selectedIndex = (curIdx - 1 + optsLength) % optsLength;
+            if (e.key === 'ArrowDown') selectEl.selectedIndex = (curIdx + 1) % optsLength;
+            selectEl.dispatchEvent(new Event('change'));
+          } else if (inputEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            let val = parseInt(inputEl.value) || 10;
+            if (e.key === 'ArrowUp') inputEl.value = val + 1;
+            if (e.key === 'ArrowDown' && val > 1) inputEl.value = val - 1;
+            inputEl.dispatchEvent(new Event('input'));
           }
           return;
         }
@@ -714,31 +785,31 @@
           e.preventDefault();
           selectedMenuIdx = (selectedMenuIdx + 1) % menuItems.length;
           updateMenuNavState();
-        } else if (e.key === 'Enter' || e.key === 'Select') {
-          e.preventDefault();
-          toggleMenuEdit(menuItems[selectedMenuIdx]);
         }
         return;
       }
 
-      if (e.key === 'ArrowRight') {
-        currentModeIdx = (currentModeIdx + 1) % modes.length;
-        document.getElementById(modes[currentModeIdx]).checked = true;
-        handleModeChange();
-      } else if (e.key === 'ArrowLeft') {
-        currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
-        document.getElementById(modes[currentModeIdx]).checked = true;
-        handleModeChange();
-      } else if (e.key === 'Enter' || e.key === 'Select') {
-        openSettingsModal();
+      /* KONDISI DI LAYAR UTAMA */
+      if (isMainScreenFocused) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          mainFocusIdx = mainFocusIdx === 0 ? 1 : 0;
+          updateMainFocusState();
+        } else if (e.key === 'ArrowRight' || e.key === 'MediaFastForward') {
+          currentModeIdx = (currentModeIdx + 1) % modes.length;
+          document.getElementById(modes[currentModeIdx]).checked = true;
+          handleModeChange();
+        } else if (e.key === 'ArrowLeft' || e.key === 'MediaRewind') {
+          currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
+          document.getElementById(modes[currentModeIdx]).checked = true;
+          handleModeChange();
+        }
       }
     });
 
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.error(`Gagal mengaktifkan mode Fullscreen: ${err.message}`);
-        });
+        document.documentElement.requestFullscreen().catch(err => console.error(err));
       } else {
         if (document.exitFullscreen) document.exitFullscreen();
       }
@@ -796,19 +867,17 @@
         if (url.includes('youtu.be/')) {
           videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
         } else if (url.includes('youtube.com/watch')) {
-          const urlParams = new URLSearchParams(url.split('?')[1]);
-          videoId = urlParams.get('v');
+          videoId = new URLSearchParams(url.split('?')[1]).get('v');
         } else if (url.includes('youtube.com/live/')) {
           videoId = url.split('youtube.com/live/')[1].split('?')[0].split('&')[0];
         } else if (url.length === 11 && !url.includes('/')) {
           videoId = url;
         }
         if (videoId) {
-          const muteVal = forceMute ? 1 : 0;
-          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muteVal}&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${forceMute ? 1 : 0}&controls=0&loop=1&playlist=${videoId}&enablejsapi=1`;
         }
       } catch (e) {
-        console.error("Gagal memproses YouTube URL:", e);
+        console.error(e);
       }
       return url;
     }
@@ -959,7 +1028,6 @@
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-      const timeNowStr = `${hours}:${minutes}`;
       const clockHtml = `${hours}<span class="colon">:</span>${minutes}`;
       
       document.getElementById('clock').innerHTML = clockHtml;
@@ -977,7 +1045,6 @@
 
       const currentDateString = now.toDateString();
       if (lastFetchedDate !== currentDateString) {
-        triggeredToday = {};
         const settings = getStoredSettings();
         if (settings.cityId) fetchPrayerTimes(settings.cityId);
       }
@@ -1024,6 +1091,7 @@
               searchInput.value = c.lokasi;
               cityIdInput.value = c.id;
               suggestionsBox.classList.remove('show');
+              saveCurrentSettings();
             });
             suggestionsBox.appendChild(item);
           });
@@ -1118,28 +1186,10 @@
       document.getElementById('fs-next-countdown').textContent = countdownFormatted;
     }
 
-    saveBtn.addEventListener('click', () => {
-      const settings = {
-        masjid: document.getElementById('input-masjid').value,
-        alamat: document.getElementById('input-alamat').value,
-        cityId: document.getElementById('select-kota-id').value,
-        cityName: document.getElementById('input-search-kota').value,
-        iqomahTimer: document.getElementById('input-iqomah-timer').value,
-        theme: document.getElementById('input-theme').value,
-        mainBanner: document.getElementById('input-main-banner').value,
-        youtubeUrl: document.getElementById('input-youtube-url').value,
-        runningText: document.getElementById('input-running-text').value
-      };
-
-      localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
-      applySettings(settings);
-      fetchPrayerTimes(settings.cityId);
-      closeSettingsModal();
-    });
-
     const initialSettings = getStoredSettings();
     applySettings(initialSettings);
     loadCityList();
+    updateMainFocusState();
   </script>
 </body>
 </html>
