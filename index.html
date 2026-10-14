@@ -424,7 +424,16 @@
           <input type="text" id="input-main-banner" placeholder="URL Gambar / Kosongkan untuk Default Islami">
         </div>
 
-        <!-- 8. YOUTUBE URL -->
+        <!-- 8. SLIDESHOW / LINK MODE SIDEBAR & FULLSCREEN -->
+        <div class="menu-item" data-menu="slideshow">
+          <span class="menu-item-label">Link Slideshow (Sidebar/FS)</span>
+          <span class="menu-item-value" id="val-slideshow">Default Islami</span>
+        </div>
+        <div class="menu-edit-panel" id="panel-slideshow">
+          <textarea id="input-slideshow-urls" rows="3" placeholder="Masukkan URL gambar / YouTube / Google Drive, pisahkan dengan baris baru (Enter)"></textarea>
+        </div>
+
+        <!-- 9. YOUTUBE URL -->
         <div class="menu-item" data-menu="youtube">
           <span class="menu-item-label">URL YouTube Mode Video</span>
           <span class="menu-item-value" id="val-youtube">YouTube Stream</span>
@@ -433,7 +442,7 @@
           <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
         </div>
 
-        <!-- 9. RUNNING TEXT -->
+        <!-- 10. RUNNING TEXT -->
         <div class="menu-item" data-menu="runningtext">
           <span class="menu-item-label">Running Text</span>
           <span class="menu-item-value" id="val-runningtext">Pesan informasi</span>
@@ -442,7 +451,7 @@
           <textarea id="input-running-text" rows="2" placeholder="Informasi running text"></textarea>
         </div>
 
-        <!-- 10. INSTAL TV APP -->
+        <!-- 11. INSTAL TV APP -->
         <div class="menu-item" data-menu="install">
           <span class="menu-item-label">Instal Aplikasi Google TV</span>
           <span class="menu-item-value" id="val-install">Instal App</span>
@@ -515,7 +524,7 @@
           <!-- OVERLAY AZAN & IQOMAH -->
           <div class="prayer-event-overlay" id="prayer-event-overlay">
             <div class="event-title" id="event-title">WAKTU AZAN</div>
-            <div class="event-subtitle" id="event-subtitle" id="event-subtitle-text">MEMASUKI WAKTU SHOLAT</div>
+            <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT</div>
             <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
@@ -568,11 +577,10 @@
     let mainBannerMedia = "";
     let slideTimerSec = 5;
 
-    // Koleksi Gambar Islami Default (jika URL kosong)
     const DEFAULT_ISLAMIC_SLIDES = [
-      "https://images.unsplash.com/photo-1564769625615-f50b0ef093a5?q=80&w=1600&auto=format&fit=crop", // Masjid/Arsitektur Islami
-      "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1600&auto=format&fit=crop", // Suasana Tenang
-      "https://images.unsplash.com/photo-1590076215330-e160e209844f?q=80&w=1600&auto=format&fit=crop"  // Kubah Masjid
+      "https://images.unsplash.com/photo-1564769625615-f50b0ef093a5?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1590076215330-e160e209844f?q=80&w=1600&auto=format&fit=crop"
     ];
 
     const DEFAULT_SETTINGS = {
@@ -583,9 +591,9 @@
       iqomahTimer: 10,
       theme: "amber",
       mainBanner: "",
+      slidesText: "",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
       slideTimer: 5,
-      slides: [],
       runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan"
     };
 
@@ -612,7 +620,7 @@
     const btnToggleFsModal = document.getElementById('btn-toggle-fs-modal');
 
     let isMainScreenFocused = true;
-    let mainFocusIdx = 0; // 0: Settings, 1: Fullscreen
+    let mainFocusIdx = 0;
     const mainActionButtons = [toggleBtn, btnFullscreen];
 
     function updateMainFocusState() {
@@ -694,6 +702,7 @@
         iqomahTimer: document.getElementById('input-iqomah-timer').value,
         theme: document.getElementById('input-theme').value,
         mainBanner: document.getElementById('input-main-banner').value,
+        slidesText: document.getElementById('input-slideshow-urls').value,
         youtubeUrl: document.getElementById('input-youtube-url').value,
         runningText: document.getElementById('input-running-text').value
       };
@@ -703,7 +712,7 @@
       updateMenuValuesDisplay();
     }
 
-    ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-youtube-url', 'input-running-text'].forEach(id => {
+    ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-slideshow-urls', 'input-youtube-url', 'input-running-text'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('input', saveCurrentSettings);
@@ -737,7 +746,6 @@
         }
       }
 
-      // TOMBOL KIRI UNTUK KEMBALI KETIKA DI MENU SETTING
       if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
         if (modalOverlay.classList.contains('open')) {
           if (activeEditingMenu) {
@@ -969,6 +977,7 @@
       document.getElementById('val-iqomah').textContent = `${document.getElementById('input-iqomah-timer').value} Menit`;
       document.getElementById('val-theme').textContent = document.getElementById('input-theme').options[document.getElementById('input-theme').selectedIndex].text;
       document.getElementById('val-mainbanner').textContent = document.getElementById('input-main-banner').value ? "Kustom" : "Default Islami";
+      document.getElementById('val-slideshow').textContent = document.getElementById('input-slideshow-urls').value ? "Kustom" : "Default Islami";
       document.getElementById('val-youtube').textContent = document.getElementById('input-youtube-url').value ? "Tersetel" : "Stream";
       document.getElementById('val-runningtext').textContent = document.getElementById('input-running-text').value;
     }
@@ -984,7 +993,6 @@
 
       applyTheme(settings.theme || 'amber');
 
-      // Jika URL gambar belum tersetel/kosong, gunakan gambar islami default
       if (settings.mainBanner && settings.mainBanner.trim() !== "") {
         mainBannerMedia = processMediaUrl(settings.mainBanner);
       } else {
@@ -993,7 +1001,14 @@
 
       slideTimerSec = parseInt(settings.slideTimer) || 5;
 
-      const rawSlides = (settings.slides && settings.slides.length > 0) ? settings.slides : DEFAULT_ISLAMIC_SLIDES;
+      let rawSlides = [];
+      if (settings.slidesText && settings.slidesText.trim() !== "") {
+        rawSlides = settings.slidesText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      }
+      if (rawSlides.length === 0) {
+        rawSlides = DEFAULT_ISLAMIC_SLIDES;
+      }
+      
       slideMediaList = rawSlides.map(processMediaUrl).filter(item => item && item.url);
 
       handleModeChange();
@@ -1005,6 +1020,7 @@
       document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
       document.getElementById('input-theme').value = settings.theme || 'amber';
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
+      document.getElementById('input-slideshow-urls').value = settings.slidesText || '';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
       document.getElementById('input-running-text').value = settings.runningText;
 
@@ -1165,7 +1181,6 @@
       let next = times.find(t => t.sec > currentSeconds);
       if (!next) next = times[0];
 
-      // LOGIKA WAKTU AZAN & COUNTDOWN IQOMAH OTOMATIS
       const overlay = document.getElementById('prayer-event-overlay');
       const eventTitle = document.getElementById('event-title');
       const eventSubtitle = document.getElementById('event-subtitle');
@@ -1174,11 +1189,9 @@
       const settings = getStoredSettings();
       const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
       
-      // Cek apakah sedang pas waktu azan (toleransi 0 - 3 menit dari jam masuk shalat fardhu selain imsak & syuruq)
       let activePrayerMatch = times.find(t => t.name !== 'Imsak' && t.name !== 'Syuruq' && currentSeconds >= t.sec && currentSeconds <= t.sec + 180);
       
       if (activePrayerMatch) {
-        // Mode Azan (berlangsung 3 menit pertama)
         overlay.classList.add('active');
         eventTitle.textContent = `WAKTU AZAN`;
         eventSubtitle.textContent = `MEMASUKI WAKTU SHOLAT ${activePrayerMatch.name.toUpperCase()}`;
@@ -1188,7 +1201,6 @@
         let as = String(azanRem % 60).padStart(2, '0');
         eventTimer.textContent = `${am}:${as}`;
       } else {
-        // Cek apakah sedang masa tunggu iqomah (mulai dari 3 menit setelah azan sampai durasi iqomah habis)
         let iqomahMatch = times.find(t => {
           if (t.name === 'Imsak' || t.name === 'Syuruq') return false;
           let iqomahStart = t.sec + 180;
