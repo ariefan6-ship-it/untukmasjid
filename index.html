@@ -100,8 +100,7 @@
 
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
     .modal-header h3 { font-size: 1.25rem; color: var(--accent-color); font-weight: 700; }
-    .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.6rem; cursor: pointer; line-height: 1; }
-    .close-btn:hover { color: #ef4444; }
+    .modal-header-hint { font-size: 0.8rem; color: #94a3b8; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px; }
 
     .modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; flex: 1; }
     .modal-body::-webkit-scrollbar { width: 6px; }
@@ -206,9 +205,9 @@
       justify-content: center; align-items: center; text-align: center; padding: 20px;
     }
     .prayer-event-overlay.active { display: flex; }
-    .event-title { font-size: 3rem; font-weight: 900; color: var(--accent-color); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
-    .event-subtitle { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 20px; }
-    .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid var(--accent-color); }
+    .event-title { font-size: 3.5rem; font-weight: 900; color: var(--accent-color); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    .event-subtitle { font-size: 2rem; color: #cbd5e1; margin-bottom: 25px; }
+    .event-timer { font-size: 6.5rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 15px 45px; border-radius: 20px; border: 2px solid var(--accent-color); box-shadow: 0 0 30px var(--accent-glow); }
 
     /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
@@ -346,8 +345,8 @@
   <div class="settings-modal-overlay" id="settings-modal-overlay">
     <div class="settings-modal">
       <div class="modal-header">
-        <h3>Pengaturan Display (Slide Menu)</h3>
-        <button class="close-btn" id="btn-close-settings">&times;</button>
+        <h3>Pengaturan Display</h3>
+        <span class="modal-header-hint">Tekan Kiri (&larr;) untuk Kembali</span>
       </div>
 
       <div class="modal-body" id="menu-list">
@@ -419,10 +418,10 @@
         <!-- 7. BANNER UTAMA -->
         <div class="menu-item" data-menu="mainbanner">
           <span class="menu-item-label">URL Media Utama / Gambar</span>
-          <span class="menu-item-value" id="val-mainbanner">Default Image</span>
+          <span class="menu-item-value" id="val-mainbanner">Default Islami</span>
         </div>
         <div class="menu-edit-panel" id="panel-mainbanner">
-          <input type="text" id="input-main-banner" placeholder="URL Gambar / Link Drive / YouTube">
+          <input type="text" id="input-main-banner" placeholder="URL Gambar / Kosongkan untuk Default Islami">
         </div>
 
         <!-- 8. YOUTUBE URL -->
@@ -489,14 +488,14 @@
     <div class="main-wrapper" id="main-wrapper">
       <section class="center-banner">
         <div class="banner-inner">
-          <img src="https://picsum.photos/1200/800?random=1" alt="Blur Background" class="bg-blur" id="bg-blur" />
-          <img src="https://picsum.photos/1200/800?random=1" alt="Latar Display" class="bg-image" id="bg-image" />
+          <img src="" alt="Blur Background" class="bg-blur" id="bg-blur" />
+          <img src="" alt="Latar Display" class="bg-image" id="bg-image" />
           
           <div class="video-container" id="video-container">
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- POPUP HEADER MODE VIDEO -->
+          <!-- HEADER POPUP MODE VIDEO -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
@@ -516,7 +515,7 @@
           <!-- OVERLAY AZAN & IQOMAH -->
           <div class="prayer-event-overlay" id="prayer-event-overlay">
             <div class="event-title" id="event-title">WAKTU AZAN</div>
-            <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT SUBUH</div>
+            <div class="event-subtitle" id="event-subtitle" id="event-subtitle-text">MEMASUKI WAKTU SHOLAT</div>
             <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
@@ -537,7 +536,7 @@
       </section>
     </div>
 
-    <!-- BAR JADWAL SHOLAT DENGAN PENANDA & COUNTDOWN -->
+    <!-- BAR JADWAL SHOLAT -->
     <div class="prayer-bar-wrapper" id="prayer-bar-wrapper">
       <footer class="prayer-bar" id="prayer-bar">
         <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
@@ -569,6 +568,13 @@
     let mainBannerMedia = "";
     let slideTimerSec = 5;
 
+    // Koleksi Gambar Islami Default (jika URL kosong)
+    const DEFAULT_ISLAMIC_SLIDES = [
+      "https://images.unsplash.com/photo-1564769625615-f50b0ef093a5?q=80&w=1600&auto=format&fit=crop", // Masjid/Arsitektur Islami
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1600&auto=format&fit=crop", // Suasana Tenang
+      "https://images.unsplash.com/photo-1590076215330-e160e209844f?q=80&w=1600&auto=format&fit=crop"  // Kubah Masjid
+    ];
+
     const DEFAULT_SETTINGS = {
       masjid: "Masjid Al Jihad",
       alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
@@ -576,14 +582,10 @@
       cityName: "KOTA JAMBI",
       iqomahTimer: 10,
       theme: "amber",
-      mainBanner: "https://picsum.photos/1200/800?random=99",
+      mainBanner: "",
       youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
       slideTimer: 5,
-      slides: [
-        "https://picsum.photos/1200/800?random=1",
-        "https://picsum.photos/1200/800?random=2",
-        "https://picsum.photos/1200/800?random=3"
-      ],
+      slides: [],
       runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan"
     };
 
@@ -606,7 +608,6 @@
 
     const modalOverlay = document.getElementById('settings-modal-overlay');
     const toggleBtn = document.getElementById('btn-toggle-settings');
-    const closeBtn = document.getElementById('btn-close-settings');
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const btnToggleFsModal = document.getElementById('btn-toggle-fs-modal');
 
@@ -625,7 +626,6 @@
     }
 
     toggleBtn.addEventListener('click', () => openSettingsModal());
-    closeBtn.addEventListener('click', () => closeSettingsModal());
 
     function openSettingsModal() {
       isMainScreenFocused = false;
@@ -644,7 +644,6 @@
       updateMainFocusState();
     }
 
-    /* REMOTE TV NAVIGATION LOGIC FOR MENU SETTINGS */
     let selectedMenuIdx = 0;
     let activeEditingMenu = null;
     const menuItems = Array.from(document.querySelectorAll('.menu-item'));
@@ -686,7 +685,6 @@
       }
     }
 
-    /* AUTO-SAVE SETTINGS HELPER */
     function saveCurrentSettings() {
       const settings = {
         masjid: document.getElementById('input-masjid').value,
@@ -705,7 +703,6 @@
       updateMenuValuesDisplay();
     }
 
-    // Attach auto-save listeners to all input elements
     ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-youtube-url', 'input-running-text'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -714,7 +711,6 @@
       }
     });
 
-    /* HANDLE REMOTE D-PAD KEY EVENTS */
     window.addEventListener('keydown', (e) => {
       if (e.key === 's' || e.key === 'S' || e.key === 'Enter' || e.key === 'Select') {
         if (modalOverlay.classList.contains('open')) {
@@ -741,7 +737,8 @@
         }
       }
 
-      if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
+      // TOMBOL KIRI UNTUK KEMBALI KETIKA DI MENU SETTING
+      if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
         if (modalOverlay.classList.contains('open')) {
           if (activeEditingMenu) {
             activeEditingMenu.classList.remove('editing');
@@ -753,7 +750,6 @@
         }
       }
 
-      /* KONDISI DI DALAM MENU PENGATURAN */
       if (modalOverlay.classList.contains('open')) {
         if (activeEditingMenu) {
           const currentPanel = document.getElementById(`panel-${activeEditingMenu.dataset.menu}`);
@@ -789,7 +785,6 @@
         return;
       }
 
-      /* KONDISI DI LAYAR UTAMA */
       if (isMainScreenFocused) {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           e.preventDefault();
@@ -905,7 +900,7 @@
 
       if (activeMode === 'mode-main') {
         if (slideShowTimer) clearInterval(slideShowTimer);
-        displayMedia(mainBannerMedia || processMediaUrl(DEFAULT_SETTINGS.mainBanner));
+        displayMedia(mainBannerMedia || slideMediaList[0]);
       } else if (activeMode === 'mode-video') {
         if (slideShowTimer) clearInterval(slideShowTimer);
         const videoUrl = document.getElementById('input-youtube-url').value || DEFAULT_SETTINGS.youtubeUrl;
@@ -918,7 +913,7 @@
     function startSlideShow() {
       if (slideShowTimer) clearInterval(slideShowTimer);
       if (!slideMediaList || slideMediaList.length === 0) {
-        slideMediaList = DEFAULT_SETTINGS.slides.map(processMediaUrl);
+        slideMediaList = DEFAULT_ISLAMIC_SLIDES.map(processMediaUrl);
       }
       currentSlideIdx = 0;
       displayMedia(slideMediaList[currentSlideIdx]);
@@ -973,7 +968,7 @@
       document.getElementById('val-kota').textContent = document.getElementById('input-search-kota').value || 'KOTA JAMBI';
       document.getElementById('val-iqomah').textContent = `${document.getElementById('input-iqomah-timer').value} Menit`;
       document.getElementById('val-theme').textContent = document.getElementById('input-theme').options[document.getElementById('input-theme').selectedIndex].text;
-      document.getElementById('val-mainbanner').textContent = document.getElementById('input-main-banner').value ? "Kustom" : "Default";
+      document.getElementById('val-mainbanner').textContent = document.getElementById('input-main-banner').value ? "Kustom" : "Default Islami";
       document.getElementById('val-youtube').textContent = document.getElementById('input-youtube-url').value ? "Tersetel" : "Stream";
       document.getElementById('val-runningtext').textContent = document.getElementById('input-running-text').value;
     }
@@ -989,10 +984,16 @@
 
       applyTheme(settings.theme || 'amber');
 
-      mainBannerMedia = processMediaUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
+      // Jika URL gambar belum tersetel/kosong, gunakan gambar islami default
+      if (settings.mainBanner && settings.mainBanner.trim() !== "") {
+        mainBannerMedia = processMediaUrl(settings.mainBanner);
+      } else {
+        mainBannerMedia = processMediaUrl(DEFAULT_ISLAMIC_SLIDES[0]);
+      }
+
       slideTimerSec = parseInt(settings.slideTimer) || 5;
 
-      const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
+      const rawSlides = (settings.slides && settings.slides.length > 0) ? settings.slides : DEFAULT_ISLAMIC_SLIDES;
       slideMediaList = rawSlides.map(processMediaUrl).filter(item => item && item.url);
 
       handleModeChange();
@@ -1163,6 +1164,51 @@
 
       let next = times.find(t => t.sec > currentSeconds);
       if (!next) next = times[0];
+
+      // LOGIKA WAKTU AZAN & COUNTDOWN IQOMAH OTOMATIS
+      const overlay = document.getElementById('prayer-event-overlay');
+      const eventTitle = document.getElementById('event-title');
+      const eventSubtitle = document.getElementById('event-subtitle');
+      const eventTimer = document.getElementById('event-timer');
+      
+      const settings = getStoredSettings();
+      const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
+      
+      // Cek apakah sedang pas waktu azan (toleransi 0 - 3 menit dari jam masuk shalat fardhu selain imsak & syuruq)
+      let activePrayerMatch = times.find(t => t.name !== 'Imsak' && t.name !== 'Syuruq' && currentSeconds >= t.sec && currentSeconds <= t.sec + 180);
+      
+      if (activePrayerMatch) {
+        // Mode Azan (berlangsung 3 menit pertama)
+        overlay.classList.add('active');
+        eventTitle.textContent = `WAKTU AZAN`;
+        eventSubtitle.textContent = `MEMASUKI WAKTU SHOLAT ${activePrayerMatch.name.toUpperCase()}`;
+        let azanElapsed = currentSeconds - activePrayerMatch.sec;
+        let azanRem = 180 - azanElapsed;
+        let am = String(Math.floor(azanRem / 60)).padStart(2, '0');
+        let as = String(azanRem % 60).padStart(2, '0');
+        eventTimer.textContent = `${am}:${as}`;
+      } else {
+        // Cek apakah sedang masa tunggu iqomah (mulai dari 3 menit setelah azan sampai durasi iqomah habis)
+        let iqomahMatch = times.find(t => {
+          if (t.name === 'Imsak' || t.name === 'Syuruq') return false;
+          let iqomahStart = t.sec + 180;
+          let iqomahEnd = t.sec + (iqomahMinutes * 60);
+          return currentSeconds >= iqomahStart && currentSeconds <= iqomahEnd;
+        });
+
+        if (iqomahMatch) {
+          overlay.classList.add('active');
+          eventTitle.textContent = `MENUNGGU IQOMAH`;
+          eventSubtitle.textContent = `SHOLAT ${iqomahMatch.name.toUpperCase()}`;
+          let iqomahDeadline = iqomahMatch.sec + (iqomahMinutes * 60);
+          let remIqomah = iqomahDeadline - currentSeconds;
+          let im = String(Math.floor(remIqomah / 60)).padStart(2, '0');
+          let is = String(remIqomah % 60).padStart(2, '0');
+          eventTimer.textContent = `${im}:${is}`;
+        } else {
+          overlay.classList.remove('active');
+        }
+      }
 
       let diffSec = next.sec - currentSeconds;
       if (diffSec < 0) diffSec += 86400;
