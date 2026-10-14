@@ -7,11 +7,20 @@
   <style>
     :root {
       --primary-color: #f59e0b;
-      --primary-hover: #d97706;
-      --bg-color: #0f172a;
-      --card-bg: rgba(255, 255, 255, 0.95);
-      --text-main: #0f172a;
-      --text-muted: #64748b;
+      --bg-header: rgba(255, 255, 255, 0.92);
+      --text-header: #0f172a;
+      --prayer-bg: rgba(255, 255, 255, 0.95);
+      --prayer-text: #0f172a;
+      --prayer-name-color: #475569;
+      --running-bg: #0f172a;
+      --running-text: #fbbf24;
+      --card-imsak: #3b82f6;
+      --card-subuh: #10b981;
+      --card-terbit: #8b5cf6;
+      --card-dzuhur: #f59e0b;
+      --card-ashar: #ec4899;
+      --card-maghrib: #f97316;
+      --card-isya: #06b6d4;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
@@ -23,10 +32,8 @@
       position: relative; overflow: hidden;
     }
 
-    /* STATE MANAGEMENT MODE DISPLAY (PURE CSS) */
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI SISI TENGAH SEBELAH KANAN SECARA VERTIKAL */
     .controls-group {
       position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 100;
       display: flex; flex-direction: column; gap: 10px; align-items: center;
@@ -38,10 +45,9 @@
       border-radius: 10px; color: #fff; font-size: 1.2rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
     }
-    .btn-control:hover, .btn-control:focus, .btn-control.focused-remote { background: var(--primary-color); color: #000; transform: scale(1.08); outline: none; border-color: #fff; }
+    .btn-control:hover, .btn-control:focus, .btn-control.selected-nav { background: var(--primary-color); color: #000; transform: scale(1.08); outline: none; }
     .btn-control svg { width: 22px; height: 22px; fill: currentColor; }
 
-    /* MODAL POPUP PENGATURAN */
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
@@ -52,7 +58,7 @@
 
     .settings-modal {
       width: 90%; max-width: 520px; max-height: 85vh;
-      background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 16px; padding: 24px; color: #fff;
       box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
       transform: translateY(20px); transition: transform 0.3s ease;
@@ -65,20 +71,12 @@
     .close-btn:hover { color: #ef4444; }
 
     .modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 6px; }
-    
     .modal-body::-webkit-scrollbar { width: 6px; }
     .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
     .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-    .setting-item-wrapper {
-      display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; transition: background 0.2s;
-    }
-    .setting-item-wrapper.focused-setting {
-      background: rgba(245, 158, 11, 0.2);
-      border: 1px dashed var(--primary-color);
-    }
-
-    .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; padding: 4px; border-radius: 8px; transition: background 0.2s; }
+    .form-group.selected-nav { background: rgba(245, 158, 11, 0.15); border: 1px dashed var(--primary-color); }
     .form-group label { font-size: 0.85rem; font-weight: 600; color: #cbd5e1; }
     .form-group input, .form-group select, .form-group textarea {
       width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
@@ -92,9 +90,7 @@
     .form-group-checkbox input[type="checkbox"] {
       width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);
     }
-    .form-group-checkbox label {
-      cursor: pointer; font-size: 0.85rem; color: #cbd5e1;
-    }
+    .form-group-checkbox label { cursor: pointer; font-size: 0.85rem; color: #cbd5e1; }
 
     .city-search-container { position: relative; }
     .city-suggestions {
@@ -111,7 +107,7 @@
     .section-title { font-size: 0.9rem; font-weight: 700; color: var(--primary-color); margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
     
     .btn-save { background: var(--primary-color); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
-    .btn-save:hover, .btn-save.focused-setting { background: var(--primary-hover); color: #fff; }
+    .btn-save:hover, .btn-save.selected-nav { background: #d97706; color: #fff; outline: none; }
 
     .btn-install { 
       background: #10b981; color: #fff; font-weight: 700; padding: 10px; border: none; border-radius: 8px; 
@@ -120,27 +116,25 @@
     .btn-install:hover { background: #059669; }
     .btn-install:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
 
-    /* HEADER DISPLAY UTAMA */
     header {
-      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
+      background: var(--bg-header); backdrop-filter: blur(8px); padding: 0.6rem 2rem;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
     }
-    .digital-clock { font-size: 3.2rem; font-weight: 800; color: var(--text-main); line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+    .digital-clock { font-size: 3.2rem; font-weight: 800; color: var(--text-header); line-height: 1; letter-spacing: -1px; white-space: nowrap; }
     .colon { animation: blinkColon 1s infinite; display: inline-block; margin: 0 2px; }
     @keyframes blinkColon { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
     .header-center { text-align: center; max-width: 45%; overflow: hidden; }
-    .masjid-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .masjid-address { font-size: 0.95rem; color: var(--text-muted); font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
+    .masjid-title { font-size: 1.5rem; font-weight: 800; color: var(--text-header); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .masjid-address { font-size: 0.95rem; color: #64748b; font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
     .address-marquee { display: inline-block; padding-left: 100%; animation: addressMarquee 18s linear infinite; white-space: nowrap; }
     @keyframes addressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
     .header-right { text-align: right; }
-    .hijri-date { font-size: 1.35rem; font-weight: 800; color: var(--text-main); }
-    .gregorian-date { font-size: 0.95rem; color: var(--text-muted); margin-top: 0.1rem; font-weight: 500; }
+    .hijri-date { font-size: 1.35rem; font-weight: 800; color: var(--text-header); }
+    .gregorian-date { font-size: 0.95rem; color: #64748b; margin-top: 0.1rem; font-weight: 500; }
     .header-divider { width: 2px; height: 35px; background: #e2e8f0; }
 
-    /* MAIN CONTENT & SLIDESHOW */
     .main-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 0; }
     .center-banner { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
     .banner-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
@@ -151,7 +145,6 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
-    /* HEADER POPUP MODE VIDEO - DIPOSISIKAN DI CENTER */
     .video-header-popup {
       display: none; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 35;
       width: 90%; max-width: 800px;
@@ -185,10 +178,9 @@
       100% { transform: translate(-100%, 0); }
     }
 
-    /* POPUP OVERLAY AZAN & IQOMAH */
     .prayer-event-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
-      background: var(--bg-color); color: #fff; display: none; flex-direction: column;
+      background: #0f172a; color: #fff; display: none; flex-direction: column;
       justify-content: center; align-items: center; text-align: center; padding: 20px;
     }
     .prayer-event-overlay.active { display: flex; }
@@ -196,7 +188,6 @@
     .event-subtitle { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 20px; }
     .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid rgba(245, 158, 11, 0.4); }
 
-    /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
       display: none; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 35;
       background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -214,70 +205,87 @@
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
 
-    /* FOOTER JADWAL SHOLAT & COUNTDOWN */
+    .prayer-bar-container {
+      background: var(--prayer-bg); backdrop-filter: blur(10px); display: flex; flex-direction: column;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.05); z-index: 10; flex-shrink: 0;
+    }
     .prayer-bar {
-      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: repeat(7, 1fr);
-      padding: 0.5rem 1rem; gap: 0.5rem; align-items: center; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
+      display: grid; grid-template-columns: repeat(7, 1fr); padding: 0.4rem 1rem 0.2rem 1rem; gap: 0.5rem; align-items: center;
     }
-    .prayer-item { 
-      text-align: center; padding: 0.5rem 0.2rem; border-radius: 12px; transition: all 0.3s ease; 
-      border-bottom: 4px solid var(--accent-color, #3b82f6); /* Aksen warna berbeda */
-    }
-    .prayer-name { font-size: 1.1rem; font-weight: 700; color: #475569; margin-bottom: 0.1rem; }
-    .prayer-time { font-size: 2.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .prayer-item { text-align: center; padding: 0.4rem 0.2rem; border-radius: 12px; transition: all 0.3s ease; position: relative; }
+    .prayer-name { font-size: 1.05rem; font-weight: 700; color: var(--prayer-name-color); margin-bottom: 0.1rem; }
+    .prayer-time { font-size: 2.1rem; font-weight: 800; color: var(--prayer-text); letter-spacing: -0.5px; }
     
+    /* Aksen Warna Berbeda di Bawah Setiap Jadwal Sholat */
+    .prayer-item::after {
+      content: ''; display: block; height: 4px; width: 40%; margin: 4px auto 0 auto; border-radius: 4px;
+    }
+    #card-imsak::after { background-color: var(--card-imsak); }
+    #card-subuh::after { background-color: var(--card-subuh); }
+    #card-terbit::after { background-color: var(--card-terbit); }
+    #card-dzuhur::after { background-color: var(--card-dzuhur); }
+    #card-ashar::after { background-color: var(--card-ashar); }
+    #card-maghrib::after { background-color: var(--card-maghrib); }
+    #card-isya::after { background-color: var(--card-isya); }
+
     .prayer-countdown {
       font-size: 0.75rem; font-weight: 700; color: #ffffff; margin-top: 0.2rem;
       background: rgba(0, 0, 0, 0.25); padding: 2px 6px; border-radius: 6px; display: inline-block;
     }
 
-    .prayer-item.active { background: var(--primary-color); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); transform: translateY(-4px); padding: 0.6rem 0.2rem; border-bottom-color: #fff; }
+    .prayer-item.active { background: var(--primary-color); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); transform: translateY(-4px); padding: 0.5rem 0.2rem; }
     .prayer-item.active .prayer-name, .prayer-item.active .prayer-time { color: #ffffff; }
+    .prayer-item.active::after { background-color: #ffffff; }
+
+    .prayer-source-info {
+      text-align: center; font-size: 0.72rem; color: #64748b; padding-bottom: 0.3rem; font-weight: 600; letter-spacing: 0.3px;
+    }
 
     .running-text-bar {
-      background: var(--bg-color); color: #fbbf24; font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
+      background: var(--running-bg); color: var(--running-text); font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
       overflow: hidden; white-space: nowrap; position: relative; z-index: 20; border-top: 2px solid var(--primary-color); display: flex; align-items: center; width: 100%; flex-shrink: 0;
     }
     .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* SUMBER WAKTU KEMENAG */
-    .prayer-source-info {
-      grid-column: 1 / -1; font-size: 0.75rem; color: #64748b; text-align: center; font-style: italic; padding-top: 2px;
-    }
-
-    /* MODE VIDEO RULES */
     #mode-video:checked ~ .display-container header { display: none !important; }
     #mode-video:checked ~ .display-container .video-container { display: block !important; }
     #mode-video:checked ~ .display-container .video-header-popup { display: flex !important; }
-    #mode-video:checked ~ .display-container .prayer-bar {
+    #mode-video:checked ~ .display-container .prayer-bar-container {
       position: absolute !important; bottom: 45px; left: 2%; right: 2%; width: 96%; border-radius: 16px;
-      background: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(12px) !important;
+      background: rgba(15, 23, 42, 0.85) !important; backdrop-filter: blur(12px) !important;
       border: 1px solid rgba(255, 255, 255, 0.15); z-index: 30;
     }
     #mode-video:checked ~ .display-container .prayer-name { color: #cbd5e1 !important; }
     #mode-video:checked ~ .display-container .prayer-time { color: #ffffff !important; }
     #mode-video:checked ~ .display-container .running-text-bar { position: absolute !important; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.92) !important; }
 
-    /* FULLSCREEN MODE RULES */
     #mode-fullscreen:checked ~ .display-container header,
-    #mode-fullscreen:checked ~ .display-container .prayer-bar,
+    #mode-fullscreen:checked ~ .display-container .prayer-bar-container,
     #mode-fullscreen:checked ~ .display-container .running-text-bar { display: none !important; }
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* MODE SIDEBAR RULES */
-    #mode-sidebar:checked ~ .display-container .prayer-bar {
-      display: grid !important;
-      grid-template-columns: 1fr !important;
-      width: 280px !important;
+    #mode-sidebar:checked ~ .display-container .prayer-bar-container {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 290px !important;
       height: 100% !important;
-      align-content: space-around !important;
+      justify-content: space-between !important;
       border-right: 2px solid #e2e8f0 !important;
       box-shadow: 4px 0 15px rgba(0,0,0,0.05) !important;
       padding: 0.6rem 0.5rem !important;
-      background: rgba(255, 255, 255, 0.98) !important;
+      background: var(--prayer-bg) !important;
       flex-shrink: 0 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-bar {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      height: auto !important;
+      grid-template-columns: none !important;
+      gap: 0.4rem !important;
+      padding: 0 !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item {
       width: 100% !important;
@@ -293,14 +301,11 @@
     #mode-sidebar:checked ~ .display-container .prayer-name {
       font-size: 1rem !important;
       margin-bottom: 0 !important;
-      color: #475569 !important;
+      color: var(--prayer-name-color) !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-time {
-      font-size: 1.6rem !important;
-      color: #0f172a !important;
-    }
-    #mode-sidebar:checked ~ .display-container .prayer-source-info {
-      font-size: 0.65rem !important;
+      font-size: 1.5rem !important;
+      color: var(--prayer-text) !important;
     }
     #mode-sidebar:checked ~ .display-container .bg-blur,
     #mode-sidebar:checked ~ .display-container .bg-image {
@@ -313,7 +318,6 @@
 </head>
 <body>
 
-  <!-- Switch Mode Display -->
   <input type="radio" id="mode-main" name="display-mode" class="mode-switch" checked>
   <input type="radio" id="mode-video" name="display-mode" class="mode-switch">
   <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
@@ -323,133 +327,99 @@
   <div class="settings-modal-overlay" id="settings-modal-overlay">
     <div class="settings-modal">
       <div class="modal-header">
-        <h3>Pengaturan Display (Navigasi Atas/Bawah, OK untuk Edit/Buka)</h3>
+        <h3>Pengaturan Display</h3>
         <button class="close-btn" id="btn-close-settings">&times;</button>
       </div>
 
-      <div class="modal-body" id="settings-menu-list">
-        
-        <div class="setting-item-wrapper" data-target="input-masjid">
-          <div class="form-group">
-            <label for="input-masjid">Nama Masjid</label>
-            <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
-          </div>
+      <div class="modal-body" id="settings-modal-body">
+        <div class="form-group" data-setting-item>
+          <label for="input-masjid">Nama Masjid</label>
+          <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
         </div>
 
-        <div class="setting-item-wrapper" data-target="input-alamat">
-          <div class="form-group">
-            <label for="input-alamat">Alamat Masjid</label>
-            <input type="text" id="input-alamat" placeholder="Alamat singkat">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-alamat">Alamat Masjid</label>
+          <input type="text" id="input-alamat" placeholder="Alamat singkat">
         </div>
 
-        <!-- CARI KOTA DENGAN AUTOCOMPLETE & AUTO-DETECT -->
-        <div class="setting-item-wrapper" data-target="input-search-kota">
-          <div class="form-group city-search-container">
-            <label for="input-search-kota">Lokasi Kota / Kabupaten (Auto-Detect / Manual)</label>
-            <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Jambi)" autocomplete="off">
-            <input type="hidden" id="select-kota-id">
-            <div class="city-suggestions" id="city-suggestions"></div>
-          </div>
+        <div class="form-group city-search-container" data-setting-item>
+          <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
+          <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Jambi)" autocomplete="off">
+          <input type="hidden" id="select-kota-id">
+          <div class="city-suggestions" id="city-suggestions"></div>
         </div>
 
-        <div class="setting-item-wrapper" data-target="setting-fullscreen-action">
-          <div class="form-group">
-            <label>Mode Fullscreen (Layar Penuh)</label>
-            <button class="btn-save" id="setting-fullscreen-action" style="margin-top:0; background:#3b82f6; color:#fff;">Aktifkan / Matikan Fullscreen</button>
-          </div>
-        </div>
-
-        <div class="setting-item-wrapper" data-target="input-theme-color">
-          <div class="form-group">
-            <label for="input-theme-color">Warna Utama Tampilan (Tema)</label>
-            <input type="color" id="input-theme-color" value="#f59e0b" style="height: 40px; cursor: pointer;">
-          </div>
+        <div class="section-title">PENGATURAN WARNA TAMPILAN</div>
+        <div class="form-group" data-setting-item>
+          <label for="input-color-theme">Warna Tema Utama (Aksen)</label>
+          <input type="color" id="input-color-theme" value="#f59e0b" style="height: 40px; padding: 2px; cursor: pointer;">
         </div>
 
         <div class="section-title">PENGATURAN IQOMAH & AUDIO</div>
-        <div class="setting-item-wrapper" data-target="input-iqomah-timer">
-          <div class="form-group">
-            <label for="input-iqomah-timer">Durasi Jeda Iqomah (Menit)</label>
-            <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-iqomah-timer">Durasi Jeda Iqomah (Menit)</label>
+          <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
         </div>
-        <div class="setting-item-wrapper" data-target="input-mute-video-azan">
-          <div class="form-group form-group-checkbox">
+        <div class="form-group" data-setting-item>
+          <div class="form-group-checkbox">
             <input type="checkbox" id="input-mute-video-azan">
             <label for="input-mute-video-azan">Mute video YouTube secara otomatis saat Azan & Iqomah</label>
           </div>
         </div>
 
         <div class="section-title">Mode Utama (Banner Statis / Video)</div>
-        <div class="setting-item-wrapper" data-target="input-main-banner">
-          <div class="form-group">
-            <label for="input-main-banner">URL Gambar Utama atau Link YouTube</label>
-            <input type="text" id="input-main-banner" placeholder="URL Gambar / Link Drive / Link YouTube">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-main-banner">URL Gambar Utama atau Link YouTube</label>
+          <input type="text" id="input-main-banner" placeholder="URL Gambar / Link Drive / Link YouTube">
         </div>
 
         <div class="section-title">Mode Video Utama</div>
-        <div class="setting-item-wrapper" data-target="input-youtube-url">
-          <div class="form-group">
-            <label for="input-youtube-url">URL YouTube / Live Stream</label>
-            <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-youtube-url">URL YouTube / Live Stream</label>
+          <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
         </div>
 
         <div class="section-title">Slide Show Media (Sidebar & Full)</div>
-        <div class="setting-item-wrapper" data-target="input-slide-timer">
-          <div class="form-group">
-            <label for="input-slide-timer">Timer Slideshow (Detik)</label>
-            <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-slide-timer">Timer Slideshow (Detik)</label>
+          <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
         </div>
-        <div class="setting-item-wrapper" data-target="input-slide-1">
-          <div class="form-group">
-            <label for="input-slide-1">Slide Media 1 (Gambar / YouTube)</label>
-            <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive / YouTube 1">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-slide-1">Slide Media 1 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-1" placeholder="URL Gambar / Link Drive / YouTube 1">
         </div>
-        <div class="setting-item-wrapper" data-target="input-slide-2">
-          <div class="form-group">
-            <label for="input-slide-2">Slide Media 2 (Gambar / YouTube)</label>
-            <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive / YouTube 2">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-slide-2">Slide Media 2 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-2" placeholder="URL Gambar / Link Drive / YouTube 2">
         </div>
-        <div class="setting-item-wrapper" data-target="input-slide-3">
-          <div class="form-group">
-            <label for="input-slide-3">Slide Media 3 (Gambar / YouTube)</label>
-            <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive / YouTube 3">
-          </div>
+        <div class="form-group" data-setting-item>
+          <label for="input-slide-3">Slide Media 3 (Gambar / YouTube)</label>
+          <input type="text" id="input-slide-3" placeholder="URL Gambar / Link Drive / YouTube 3">
         </div>
 
-        <div class="section-title">Informasi & Aplikasi</div>
-        <div class="setting-item-wrapper" data-target="input-running-text">
-          <div class="form-group">
-            <label for="input-running-text">Running Text</label>
-            <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
-          </div>
+        <div class="section-title">Informasi & Layar Penuh</div>
+        <div class="form-group" data-setting-item>
+          <label for="input-running-text">Running Text</label>
+          <textarea id="input-running-text" rows="2" placeholder="Ketik pesan informasi..."></textarea>
         </div>
 
-        <div class="setting-item-wrapper" data-target="btn-install-app">
-          <button class="btn-install" id="btn-install-app" disabled>
-            <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            <span id="btn-install-text">Instal / Tambah ke Layar TV</span>
-          </button>
+        <div class="form-group" data-setting-item>
+          <label>Mode Layar Penuh (Fullscreen)</label>
+          <button type="button" class="btn-save" id="btn-modal-fullscreen" style="margin-top: 0; background: #334155; color: #fff;">Aktifkan / Keluar Fullscreen</button>
         </div>
 
-        <div class="setting-item-wrapper" data-target="btn-save-settings">
-          <button class="btn-save" id="btn-save-settings">Terapkan Pengaturan</button>
-        </div>
+        <button class="btn-install" id="btn-install-app" disabled>
+          <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span id="btn-install-text">Instal / Tambah ke Layar TV</span>
+        </button>
 
+        <button class="btn-save" id="btn-save-settings" data-setting-item>Terapkan Pengaturan</button>
       </div>
     </div>
   </div>
 
-  <!-- DISPLAY CONTAINER -->
   <div class="display-container" id="display-container">
     
-    <!-- TOMBOL CONTROL: VERTIKAL DI SISI KANAN TENGAH -->
     <div class="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
         <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -486,7 +456,6 @@
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- POPUP HEADER MODE VIDEO (CENTERED) -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
@@ -503,14 +472,12 @@
             </div>
           </div>
 
-          <!-- OVERLAY MODAL WAKTU AZAN DAN IQOMAH -->
           <div class="prayer-event-overlay" id="prayer-event-overlay">
             <div class="event-title" id="event-title">WAKTU AZAN</div>
             <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT SUBUH</div>
             <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
-          <!-- POPUP FOOTER FULLSCREEN -->
           <div class="fullscreen-footer-popup">
             <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
             <div class="fs-popup-divider"></div>
@@ -527,19 +494,20 @@
       </section>
     </div>
 
-    <!-- BAR JADWAL SHOLAT -->
-    <footer class="prayer-bar" id="prayer-bar">
-      <div class="prayer-item" id="card-imsak" style="--accent-color: #38bdf8;"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
-      <div class="prayer-item" id="card-subuh" style="--accent-color: #818cf8;"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
-      <div class="prayer-item" id="card-terbit" style="--accent-color: #c084fc;"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
-      <div class="prayer-item" id="card-dzuhur" style="--accent-color: #f43f5e;"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
-      <div class="prayer-item" id="card-ashar" style="--accent-color: #fb923c;"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
-      <div class="prayer-item" id="card-maghrib" style="--accent-color: #34d399;"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
-      <div class="prayer-item" id="card-isya" style="--accent-color: #22d3ee;"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
-      <div class="prayer-source-info">Sumber waktu sholat: Kementerian Agama Republik Indonesia (KEMENAG)</div>
-    </footer>
+    <!-- CONTAINER JADWAL SHOLAT & SUMBER KEMENAG -->
+    <div class="prayer-bar-container" id="prayer-bar-container">
+      <footer class="prayer-bar" id="prayer-bar">
+        <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
+        <div class="prayer-item" id="card-subuh"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
+        <div class="prayer-item" id="card-terbit"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
+        <div class="prayer-item" id="card-dzuhur"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
+        <div class="prayer-item" id="card-ashar"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
+        <div class="prayer-item" id="card-maghrib"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
+        <div class="prayer-item" id="card-isya"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
+      </footer>
+      <div class="prayer-source-info">Sumber Waktu Sholat: Kementerian Agama Republik Indonesia (KEMENAG)</div>
+    </div>
 
-    <!-- RUNNING TEXT -->
     <div class="running-text-bar" id="running-bar">
       <div class="marquee-content" id="display-running-text">Masukkan Running Text</div>
     </div>
@@ -558,17 +526,17 @@
     let mainBannerMedia = "";
     let slideTimerSec = 5;
 
-    /* STATUS EVENT WAKTU AZAN & IQOMAH */
     let isAzanIqomahActive = false;
-    let currentEventSholat = "";
     let triggeredToday = {};
-    let currentVideoOriginalUrl = "";
+
+    let settingsNavIndex = 0;
+    let isEditingSetting = false;
 
     const DEFAULT_SETTINGS = {
       masjid: "Masjid Al Jihad",
       alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
-      cityId: "",
-      cityName: "",
+      cityId: "0704",
+      cityName: "KOTA JAMBI",
       themeColor: "#f59e0b",
       iqomahTimer: 10,
       muteVideoAzan: true,
@@ -580,7 +548,7 @@
         "https://picsum.photos/1200/800?random=2",
         "https://picsum.photos/1200/800?random=3"
       ],
-      runningText: "Selamat datang di Masjid Al Jihad - Jaga ketenangan selama berada di dalam masjid."
+      runningText: "Selamat datang di Masjid Al Jihad. Harap mematikan atau menSilent handphone Anda selama berada di dalam masjid."
     };
 
     const toggleBtn = document.getElementById('btn-toggle-settings');
@@ -590,23 +558,8 @@
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const iconFsEnter = document.getElementById('icon-fs-enter');
     const iconFsExit = document.getElementById('icon-fs-exit');
+    const btnModalFullscreen = document.getElementById('btn-modal-fullscreen');
 
-    // Pengaturan Navigasi Remote dalam Modal Setting
-    const settingWrappers = Array.from(document.querySelectorAll('.setting-item-wrapper'));
-    let currentSettingIndex = 0;
-
-    function updateSettingFocus() {
-      settingWrappers.forEach((el, idx) => {
-        if (idx === currentSettingIndex) {
-          el.classList.add('focused-setting');
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-          el.classList.remove('focused-setting');
-        }
-      });
-    }
-
-    /* SYSTEM AUDIO BEEP DENGAN WEB AUDIO API */
     let audioCtx = null;
     function initAudioContext() {
       if (!audioCtx) {
@@ -661,17 +614,22 @@
     }
 
     toggleBtn.addEventListener('click', () => {
-      modalOverlay.classList.toggle('open');
-      if (modalOverlay.classList.contains('open')) {
-        currentSettingIndex = 0;
-        updateSettingFocus();
-      }
+      modalOverlay.classList.add('open');
+      settingsNavIndex = 0;
+      isEditingSetting = false;
+      updateSettingsNavHighlight();
     });
 
-    closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
+    closeBtn.addEventListener('click', () => {
+      modalOverlay.classList.remove('open');
+      isEditingSetting = false;
+    });
 
     modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('open');
+        isEditingSetting = false;
+      }
     });
 
     let deferredPrompt;
@@ -712,6 +670,7 @@
     }
 
     btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnModalFullscreen.addEventListener('click', toggleFullscreen);
 
     document.addEventListener('fullscreenchange', () => {
       if (document.fullscreenElement) {
@@ -778,15 +737,15 @@
 
     function handleModeChange() {
       const activeMode = modes[currentModeIdx];
-      const prayerBar = document.getElementById('prayer-bar');
+      const prayerBarContainer = document.getElementById('prayer-bar-container');
       const runningBar = document.getElementById('running-bar');
       const displayContainer = document.getElementById('display-container');
       const mainWrapper = document.getElementById('main-wrapper');
 
       if (activeMode === 'mode-sidebar') {
-        mainWrapper.insertBefore(prayerBar, mainWrapper.firstChild);
+        mainWrapper.insertBefore(prayerBarContainer, mainWrapper.firstChild);
       } else {
-        displayContainer.insertBefore(prayerBar, runningBar);
+        displayContainer.insertBefore(prayerBarContainer, runningBar);
       }
 
       if (activeMode === 'mode-main') {
@@ -810,62 +769,17 @@
       });
     });
 
-    // KONTROL KEYBOARD & REMOTE TV
+    /* KONTROL REMOTE / KEYBOARD SESUAI PERMINTAAN */
     window.addEventListener('keydown', (e) => {
-      const isModalOpen = modalOverlay.classList.contains('open');
-
-      // Tombol Tengah Remote (Enter / Select / MediaPlayPause / NumpadEnter)
-      if (['Enter', 'Select', 'MediaPlayPause'].includes(e.key) || e.keyCode === 13) {
-        if (!isModalOpen) {
-          // Buka menu setting dengan tombol tengah remote
-          modalOverlay.classList.add('open');
-          currentSettingIndex = 0;
-          updateSettingFocus();
-          e.preventDefault();
-          return;
-        } else {
-          // Jika di dalam modal setting, fokuskan interaksi pada input/tombol di item aktif
-          const activeWrapper = settingWrappers[currentSettingIndex];
-          if (activeWrapper) {
-            const btnAction = activeWrapper.querySelector('button');
-            const inputAction = activeWrapper.querySelector('input, select, textarea');
-            if (btnAction && btnAction.id === 'setting-fullscreen-action') {
-              toggleFullscreen();
-            } else if (btnAction) {
-              btnAction.click();
-            } else if (inputAction) {
-              inputAction.focus();
-            }
-          }
-          e.preventDefault();
-          return;
-        }
-      }
-
-      // Navigasi Atas/Bawah dalam Modal Setting
-      if (isModalOpen) {
-        if (e.key === 'ArrowUp' || e.key === 'ChannelUp' || e.key === 'PageUp') {
-          currentSettingIndex = (currentSettingIndex - 1 + settingWrappers.length) % settingWrappers.length;
-          updateSettingFocus();
-          e.preventDefault();
-          return;
-        } else if (e.key === 'ArrowDown' || e.key === 'ChannelDown' || e.key === 'PageDown') {
-          currentSettingIndex = (currentSettingIndex + 1) % settingWrappers.length;
-          updateSettingFocus();
-          e.preventDefault();
-          return;
-        } else if (e.key === 'Escape' || e.key === 'Backspace') {
-          modalOverlay.classList.remove('open');
-          e.preventDefault();
-          return;
-        }
-      }
-
       if (e.key === 's' || e.key === 'S') {
-        modalOverlay.classList.toggle('open');
-        if (modalOverlay.classList.contains('open')) {
-          currentSettingIndex = 0;
-          updateSettingFocus();
+        if (!modalOverlay.classList.contains('open')) {
+          modalOverlay.classList.add('open');
+          settingsNavIndex = 0;
+          isEditingSetting = false;
+          updateSettingsNavHighlight();
+        } else {
+          modalOverlay.classList.remove('open');
+          isEditingSetting = false;
         }
         return;
       }
@@ -875,18 +789,94 @@
         return;
       }
 
-      if (!isModalOpen) {
-        if (e.key === 'ChannelUp' || e.key === 'PageUp') {
-          currentModeIdx = (currentModeIdx + 1) % modes.length;
-          document.getElementById(modes[currentModeIdx]).checked = true;
-          handleModeChange();
-        } else if (e.key === 'ChannelDown' || e.key === 'PageDown') {
-          currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
-          document.getElementById(modes[currentModeIdx]).checked = true;
-          handleModeChange();
+      const settingItems = document.querySelectorAll('[data-setting-item], #btn-save-settings');
+
+      if (modalOverlay.classList.contains('open')) {
+        if (e.key === 'ArrowDown') {
+          if (!isEditingSetting) {
+            e.preventDefault();
+            settingsNavIndex = (settingsNavIndex + 1) % settingItems.length;
+            updateSettingsNavHighlight();
+          }
+        } else if (e.key === 'ArrowUp') {
+          if (!isEditingSetting) {
+            e.preventDefault();
+            settingsNavIndex = (settingsNavIndex - 1 + settingItems.length) % settingItems.length;
+            updateSettingsNavHighlight();
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const currentItem = settingItems[settingsNavIndex];
+          if (currentItem === saveBtn) {
+            saveBtn.click();
+          } else {
+            const inputEl = currentItem.querySelector('input, select, textarea, button');
+            if (inputEl) {
+              if (inputEl.type === 'checkbox') {
+                inputEl.checked = !inputEl.checked;
+              } else if (inputEl.tagName === 'BUTTON') {
+                inputEl.click();
+              } else {
+                isEditingSetting = !isEditingSetting;
+                if (isEditingSetting) {
+                  inputEl.focus();
+                  currentItem.style.border = '2px solid #10b981';
+                } else {
+                  inputEl.blur();
+                  currentItem.style.border = '';
+                }
+              }
+            }
+          }
+        } else if (e.key === 'Escape') {
+          if (isEditingSetting) {
+            isEditingSetting = false;
+            updateSettingsNavHighlight();
+          } else {
+            modalOverlay.classList.remove('open');
+          }
         }
+        return;
+      }
+
+      // Klik Kanan Kiri untuk berpindah mode
+      if (e.key === 'ArrowRight' || e.key === 'ChannelUp') {
+        currentModeIdx = (currentModeIdx + 1) % modes.length;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ChannelDown') {
+        currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
+      }
+
+      // Tombol Tengah / Enter untuk membuka menu setting
+      if (e.key === 'Enter' || e.key === 'Select') {
+        modalOverlay.classList.add('open');
+        settingsNavIndex = 0;
+        isEditingSetting = false;
+        updateSettingsNavHighlight();
+      }
+
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        currentModeIdx = parseInt(e.key) - 1;
+        document.getElementById(modes[currentModeIdx]).checked = true;
+        handleModeChange();
       }
     });
+
+    function updateSettingsNavHighlight() {
+      const settingItems = document.querySelectorAll('[data-setting-item], #btn-save-settings');
+      settingItems.forEach((item, idx) => {
+        if (idx === settingsNavIndex) {
+          item.classList.add('selected-nav');
+          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          item.classList.remove('selected-nav');
+          item.style.border = '';
+        }
+      });
+    }
 
     function getStoredSettings() {
       const saved = localStorage.getItem('display_masjid_settings');
@@ -903,16 +893,6 @@
     function applyThemeColor(colorHex) {
       if (!colorHex) return;
       document.documentElement.style.setProperty('--primary-color', colorHex);
-      
-      // Hitung warna hover yang sedikit lebih gelap
-      let useColor = colorHex.replace('#','');
-      if(useColor.length === 3) useColor = useColor.split('').map(c => c+c).join('');
-      let num = parseInt(useColor, 16);
-      let r = (num >> 16) - 25; if(r<0) r=0;
-      let g = ((num >> 8) & 0x00FF) - 25; if(g<0) g=0;
-      let b = (num & 0x0000FF) - 25; if(b<0) b=0;
-      let hoverHex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-      document.documentElement.style.setProperty('--primary-hover', hoverHex);
     }
 
     function applySettings(settings) {
@@ -927,7 +907,6 @@
       applyThemeColor(settings.themeColor || DEFAULT_SETTINGS.themeColor);
 
       mainBannerMedia = processMediaUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
-
       slideTimerSec = parseInt(settings.slideTimer) || 5;
 
       const rawSlides = settings.slides || DEFAULT_SETTINGS.slides;
@@ -943,7 +922,7 @@
       document.getElementById('input-alamat').value = settings.alamat;
       document.getElementById('input-search-kota').value = settings.cityName || '';
       document.getElementById('select-kota-id').value = settings.cityId || '';
-      document.getElementById('input-theme-color').value = settings.themeColor || '#f59e0b';
+      document.getElementById('input-color-theme').value = settings.themeColor || '#f59e0b';
       document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
       document.getElementById('input-mute-video-azan').checked = settings.muteVideoAzan !== undefined ? settings.muteVideoAzan : true;
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
@@ -1103,7 +1082,7 @@
             overlay.classList.remove('active');
             isAzanIqomahActive = false;
 
-            if (settings.muteVideo`azan`) {
+            if (settings.muteVideoAzan) {
               setYoutubeMuteState(false);
             }
           }
@@ -1173,38 +1152,15 @@
           let defaultCity = null;
           if (settings.cityId) {
             defaultCity = allCities.find(c => c.id === settings.cityId);
-          } else {
-            // Auto detect via Geolocation GPS atau default ke Jambi jika gagal/izin ditolak
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(async (position) => {
-                try {
-                  const lat = position.coords.latitude;
-                  const lon = position.coords.longitude;
-                  // Cari kota terdekat atau sesuaikan dengan query Kemenag
-                  const geoRes = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/jambi`);
-                  const geoData = await geoRes.json();
-                  if(geoData.status && geoData.data.length > 0) {
-                    defaultCity = geoData.data[0];
-                    cityIdInput.value = defaultCity.id;
-                    searchInput.value = defaultCity.lokasi;
-                    fetchPrayerTimes(defaultCity.id);
-                    return;
-                  }
-                } catch(err) { console.error(err); }
-              }, () => {});
-            }
           }
-
           if (!defaultCity) {
-            defaultCity = allCities.find(c => c.lokasi.toLowerCase().includes('jambi')) || allCities[0];
+            defaultCity = allCities.find(c => c.lokasi.includes('JAMBI')) || allCities[0];
           }
 
-          if (defaultCity && !cityIdInput.value) {
+          if (defaultCity) {
             cityIdInput.value = defaultCity.id;
             searchInput.value = defaultCity.lokasi;
             fetchPrayerTimes(defaultCity.id);
-          } else if (cityIdInput.value) {
-            fetchPrayerTimes(cityIdInput.value);
           }
         }
       } catch (err) {
@@ -1336,7 +1292,7 @@
         alamat: document.getElementById('input-alamat').value,
         cityId: document.getElementById('select-kota-id').value,
         cityName: document.getElementById('input-search-kota').value,
-        themeColor: document.getElementById('input-theme-color').value,
+        themeColor: document.getElementById('input-color-theme').value,
         iqomahTimer: document.getElementById('input-iqomah-timer').value,
         muteVideoAzan: document.getElementById('input-mute-video-azan').checked,
         mainBanner: document.getElementById('input-main-banner').value,
@@ -1354,6 +1310,7 @@
       applySettings(settings);
       fetchPrayerTimes(settings.cityId);
       modalOverlay.classList.remove('open');
+      isEditingSetting = false;
     });
 
     const initialSettings = getStoredSettings();
