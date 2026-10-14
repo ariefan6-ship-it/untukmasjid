@@ -5,12 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Display Jadwal Sholat Digital</title>
   <style>
+    :root {
+      --primary-accent: #f59e0b;
+      --primary-accent-hover: #d97706;
+      --bg-container: #f1f5f9;
+      --header-bg: rgba(255, 255, 255, 0.92);
+      --header-text: #0f172a;
+      --subtext: #64748b;
+      --prayer-bg: rgba(255, 255, 255, 0.95);
+      --prayer-text: #0f172a;
+      --prayer-name-color: #475569;
+      --card-accent-border: #f59e0b;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
     body { background-color: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; user-select: none; }
 
     .display-container {
       width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.78vh;
-      background-color: #f1f5f9; display: flex; flex-direction: column; justify-content: space-between;
+      background-color: var(--bg-container); display: flex; flex-direction: column; justify-content: space-between;
       position: relative; overflow: hidden;
     }
 
@@ -29,7 +42,7 @@
       border-radius: 10px; color: #fff; font-size: 1.2rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
     }
-    .btn-control:hover, .btn-control:focus { background: #f59e0b; color: #000; transform: scale(1.08); }
+    .btn-control:hover, .btn-control:focus, .btn-control.remote-focused { background: var(--primary-accent); color: #000; transform: scale(1.08); outline: 2px solid #fff; }
     .btn-control svg { width: 22px; height: 22px; fill: currentColor; }
 
     /* MODAL POPUP PENGATURAN */
@@ -51,9 +64,9 @@
     .settings-modal-overlay.open .settings-modal { transform: translateY(0); }
 
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
-    .modal-header h3 { font-size: 1.25rem; color: #f59e0b; font-weight: 700; }
+    .modal-header h3 { font-size: 1.25rem; color: var(--primary-accent); font-weight: 700; }
     .close-btn { background: none; border: none; color: #cbd5e1; font-size: 1.6rem; cursor: pointer; line-height: 1; }
-    .close-btn:hover { color: #ef4444; }
+    .close-btn:hover, .close-btn.remote-focused { color: #ef4444; outline: 2px solid #fff; border-radius: 4px; }
 
     .modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding-right: 6px; }
     
@@ -67,17 +80,21 @@
       width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.08); color: #fff; font-size: 0.85rem; outline: none;
     }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f59e0b; background: rgba(255,255,255,0.15); }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus,
+    .form-group input.remote-focused, .form-group select.remote-focused, .form-group textarea.remote-focused {
+      border-color: var(--primary-accent); background: rgba(255,255,255,0.2); box-shadow: 0 0 0 2px var(--primary-accent);
+    }
     
     .form-group-checkbox {
       display: flex; align-items: center; gap: 10px; margin-top: 4px;
     }
     .form-group-checkbox input[type="checkbox"] {
-      width: 18px; height: 18px; cursor: pointer; accent-color: #f59e0b;
+      width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-accent);
     }
     .form-group-checkbox label {
       cursor: pointer; font-size: 0.85rem; color: #cbd5e1;
     }
+    .form-group-checkbox.remote-focused { background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px; }
 
     .city-search-container { position: relative; }
     .city-suggestions {
@@ -89,38 +106,38 @@
     .city-suggestion-item {
       padding: 8px 12px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    .city-suggestion-item:hover { background: #f59e0b; color: #000; }
+    .city-suggestion-item:hover, .city-suggestion-item.remote-focused { background: var(--primary-accent); color: #000; }
 
-    .section-title { font-size: 0.9rem; font-weight: 700; color: #f59e0b; margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--primary-accent); margin-top: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
     
-    .btn-save { background: #f59e0b; color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
-    .btn-save:hover { background: #d97706; color: #fff; }
+    .btn-save { background: var(--primary-accent); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
+    .btn-save:hover, .btn-save.remote-focused { background: var(--primary-accent-hover); color: #fff; outline: 2px solid #fff; }
 
     .btn-install { 
       background: #10b981; color: #fff; font-weight: 700; padding: 10px; border: none; border-radius: 8px; 
       cursor: pointer; margin-top: 5px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-install:hover { background: #059669; }
+    .btn-install:hover, .btn-install.remote-focused { background: #059669; outline: 2px solid #fff; }
     .btn-install:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
 
     /* HEADER DISPLAY UTAMA */
     header {
-      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
+      background: var(--header-bg); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
     }
-    .digital-clock { font-size: 3.2rem; font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+    .digital-clock { font-size: 3.2rem; font-weight: 800; color: var(--header-text); line-height: 1; letter-spacing: -1px; white-space: nowrap; }
     .colon { animation: blinkColon 1s infinite; display: inline-block; margin: 0 2px; }
     @keyframes blinkColon { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
     .header-center { text-align: center; max-width: 45%; overflow: hidden; }
-    .masjid-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .masjid-address { font-size: 0.95rem; color: #64748b; font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
+    .masjid-title { font-size: 1.5rem; font-weight: 800; color: var(--header-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .masjid-address { font-size: 0.95rem; color: var(--subtext); font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
     .address-marquee { display: inline-block; padding-left: 100%; animation: addressMarquee 18s linear infinite; white-space: nowrap; }
     @keyframes addressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
     .header-right { text-align: right; }
-    .hijri-date { font-size: 1.35rem; font-weight: 800; color: #0f172a; }
-    .gregorian-date { font-size: 0.95rem; color: #64748b; margin-top: 0.1rem; font-weight: 500; }
+    .hijri-date { font-size: 1.35rem; font-weight: 800; color: var(--header-text); }
+    .gregorian-date { font-size: 0.95rem; color: var(--subtext); margin-top: 0.1rem; font-weight: 500; }
     .header-divider { width: 2px; height: 35px; background: #e2e8f0; }
 
     /* MAIN CONTENT & SLIDESHOW */
@@ -153,7 +170,7 @@
       flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden;
     }
     .video-popup-title { 
-      font-size: 1.25rem; font-weight: 800; color: #f59e0b; white-space: nowrap; 
+      font-size: 1.25rem; font-weight: 800; color: var(--primary-accent); white-space: nowrap; 
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; 
     }
     .video-popup-address { 
@@ -175,9 +192,9 @@
       justify-content: center; align-items: center; text-align: center; padding: 20px;
     }
     .prayer-event-overlay.active { display: flex; }
-    .event-title { font-size: 3rem; font-weight: 900; color: #f59e0b; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    .event-title { font-size: 3rem; font-weight: 900; color: var(--primary-accent); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
     .event-subtitle { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 20px; }
-    .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid rgba(245, 158, 11, 0.4); }
+    .event-timer { font-size: 6rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 10px 40px; border-radius: 20px; border: 2px solid var(--card-accent-border); }
 
     /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
@@ -190,33 +207,41 @@
     .fs-popup-divider { width: 2px; height: 38px; background: rgba(255, 255, 255, 0.2); }
     .fs-prayer-box { display: flex; align-items: center; gap: 16px; }
     .fs-prayer-details { display: flex; flex-direction: column; justify-content: center; }
-    .fs-prayer-name { font-size: 0.85rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; }
+    .fs-prayer-name { font-size: 0.85rem; font-weight: 700; color: var(--primary-accent); text-transform: uppercase; letter-spacing: 1px; }
     .fs-prayer-time { font-size: 1.8rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
     .fs-prayer-countdown {
-      font-size: 1.1rem; font-weight: 800; color: #000; background: #f59e0b;
+      font-size: 1.1rem; font-weight: 800; color: #000; background: var(--primary-accent);
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
 
     /* FOOTER JADWAL SHOLAT & COUNTDOWN */
     .prayer-bar {
-      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: grid; grid-template-columns: repeat(7, 1fr);
+      background: var(--prayer-bg); backdrop-filter: blur(10px); display: grid; grid-template-columns: repeat(7, 1fr);
       padding: 0.5rem 1rem; gap: 0.5rem; align-items: center; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
     }
-    .prayer-item { text-align: center; padding: 0.5rem 0.2rem; border-radius: 12px; transition: all 0.3s ease; }
-    .prayer-name { font-size: 1.1rem; font-weight: 700; color: #475569; margin-bottom: 0.1rem; }
-    .prayer-time { font-size: 2.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .prayer-item {
+      text-align: center; padding: 0.5rem 0.2rem; border-radius: 12px; transition: all 0.3s ease;
+      position: relative; border-bottom: 4px solid transparent;
+    }
+    .prayer-name { font-size: 1.1rem; font-weight: 700; color: var(--prayer-name-color); margin-bottom: 0.1rem; }
+    .prayer-time { font-size: 2.2rem; font-weight: 800; color: var(--prayer-text); letter-spacing: -0.5px; }
     
     .prayer-countdown {
       font-size: 0.75rem; font-weight: 700; color: #ffffff; margin-top: 0.2rem;
       background: rgba(0, 0, 0, 0.25); padding: 2px 6px; border-radius: 6px; display: inline-block;
     }
 
-    .prayer-item.active { background: #f59e0b; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); transform: translateY(-4px); padding: 0.6rem 0.2rem; }
+    .prayer-item.active { background: var(--primary-accent); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); transform: translateY(-4px); padding: 0.6rem 0.2rem; border-bottom: 4px solid #000 !important; }
     .prayer-item.active .prayer-name, .prayer-item.active .prayer-time { color: #ffffff; }
 
+    /* SUMBER WAKTU SHOLAT */
+    .prayer-source-bar {
+      grid-column: span 7; text-align: center; font-size: 0.75rem; color: var(--subtext); font-weight: 500; padding-top: 2px; border-top: 1px solid rgba(0,0,0,0.06); margin-top: 2px;
+    }
+
     .running-text-bar {
-      background: #0f172a; color: #fbbf24; font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
-      overflow: hidden; white-space: nowrap; position: relative; z-index: 20; border-top: 2px solid #f59e0b; display: flex; align-items: center; width: 100%; flex-shrink: 0;
+      background: #0f172a; color: var(--primary-accent); font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
+      overflow: hidden; white-space: nowrap; position: relative; z-index: 20; border-top: 2px solid var(--primary-accent); display: flex; align-items: center; width: 100%; flex-shrink: 0;
     }
     .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
@@ -232,6 +257,7 @@
     }
     #mode-video:checked ~ .display-container .prayer-name { color: #cbd5e1 !important; }
     #mode-video:checked ~ .display-container .prayer-time { color: #ffffff !important; }
+    #mode-video:checked ~ .display-container .prayer-source-bar { color: #94a3b8 !important; border-top: 1px solid rgba(255,255,255,0.1) !important; }
     #mode-video:checked ~ .display-container .running-text-bar { position: absolute !important; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.92) !important; }
 
     /* FULLSCREEN MODE RULES */
@@ -252,14 +278,14 @@
       border-right: 2px solid #e2e8f0 !important;
       box-shadow: 4px 0 15px rgba(0,0,0,0.05) !important;
       padding: 0.6rem 0.5rem !important;
-      background: rgba(255, 255, 255, 0.98) !important;
+      background: var(--prayer-bg) !important;
       flex-shrink: 0 !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item {
       width: 100% !important;
       display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
       padding: 0.5rem 0.8rem !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item.active {
@@ -267,13 +293,17 @@
       padding: 0.6rem 0.8rem !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-name {
-      font-size: 1rem !important;
+      font-size: 0.95rem !important;
       margin-bottom: 0 !important;
-      color: #475569 !important;
+      color: var(--prayer-name-color) !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-time {
-      font-size: 1.6rem !important;
-      color: #0f172a !important;
+      font-size: 1.5rem !important;
+      color: var(--prayer-text) !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-source-bar {
+      grid-column: span 1 !important;
+      margin-top: 4px !important;
     }
     #mode-sidebar:checked ~ .display-container .bg-blur,
     #mode-sidebar:checked ~ .display-container .bg-image {
@@ -300,7 +330,7 @@
         <button class="close-btn" id="btn-close-settings">&times;</button>
       </div>
 
-      <div class="modal-body">
+      <div class="modal-body" id="settings-modal-body">
         <div class="form-group">
           <label for="input-masjid">Nama Masjid</label>
           <input type="text" id="input-masjid" placeholder="Masukkan nama masjid">
@@ -311,12 +341,28 @@
           <input type="text" id="input-alamat" placeholder="Alamat singkat">
         </div>
 
-        <!-- CARI KOTA DENGAN AUTOCOMPLETE -->
+        <!-- CARI KOTA DENGAN AUTOCOMPLETE & AUTO-DETECT -->
         <div class="form-group city-search-container">
           <label for="input-search-kota">Lokasi Kota / Kabupaten</label>
-          <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Bandung)" autocomplete="off">
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="input-search-kota" placeholder="Ketik nama kota... atau Deteksi Otomatis" autocomplete="off" style="flex: 1;">
+            <button type="button" id="btn-auto-detect-loc" class="btn-control" style="width: 40px; height: 40px; border-radius: 8px; font-size: 0.9rem;" title="Deteksi Lokasi GPS">&#128205;</button>
+          </div>
           <input type="hidden" id="select-kota-id">
           <div class="city-suggestions" id="city-suggestions"></div>
+        </div>
+
+        <div class="section-title">PENGATURAN WARNA TAMPILAN</div>
+        <div class="form-group">
+          <label for="input-theme-color">Warna Utama Aksen</label>
+          <select id="input-theme-color">
+            <option value="#f59e0b">Amber Emas (Default)</option>
+            <option value="#10b981">Emerald Hijau</option>
+            <option value="#3b82f6">Blue Biru</option>
+            <option value="#ef4444">Ruby Merah</option>
+            <option value="#8b5cf6">Purple Ungu</option>
+            <option value="#ec4899">Pink Merah Muda</option>
+          </select>
         </div>
 
         <div class="section-title">PENGATURAN IQOMAH & AUDIO</div>
@@ -380,11 +426,7 @@
     
     <!-- TOMBOL CONTROL: VERTIKAL DI SISI KANAN TENGAH -->
     <div class="controls-group">
-      <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
-        <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-        <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
-      </button>
-      <button class="btn-control" id="btn-toggle-settings" title="Pengaturan">&#8285;</button>
+      <button class="btn-control" id="btn-toggle-settings" title="Pengaturan (Tombol Tengah Remot)">&#8285;</button>
     </div>
 
     <header>
@@ -458,13 +500,14 @@
 
     <!-- BAR JADWAL SHOLAT -->
     <footer class="prayer-bar" id="prayer-bar">
-      <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
-      <div class="prayer-item" id="card-subuh"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
-      <div class="prayer-item" id="card-terbit"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
-      <div class="prayer-item" id="card-dzuhur"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
-      <div class="prayer-item" id="card-ashar"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
-      <div class="prayer-item" id="card-maghrib"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
-      <div class="prayer-item" id="card-isya"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
+      <div class="prayer-item" id="card-imsak" style="border-bottom-color: #3b82f6;"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
+      <div class="prayer-item" id="card-subuh" style="border-bottom-color: #10b981;"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
+      <div class="prayer-item" id="card-terbit" style="border-bottom-color: #64748b;"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
+      <div class="prayer-item" id="card-dzuhur" style="border-bottom-color: #f59e0b;"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
+      <div class="prayer-item" id="card-ashar" style="border-bottom-color: #8b5cf6;"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
+      <div class="prayer-item" id="card-maghrib" style="border-bottom-color: #ef4444;"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
+      <div class="prayer-item" id="card-isya" style="border-bottom-color: #3b82f6;"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
+      <div class="prayer-source-bar" id="prayer-source-text">Sumber Waktu Sholat: Kemenag / MyQuran API</div>
     </footer>
 
     <!-- RUNNING TEXT -->
@@ -490,13 +533,13 @@
     let isAzanIqomahActive = false;
     let currentEventSholat = "";
     let triggeredToday = {};
-    let currentVideoOriginalUrl = "";
 
     const DEFAULT_SETTINGS = {
-      masjid: "Nama Masjid",
-      alamat: "alamat",
+      masjid: "Masjid Al Jihad",
+      alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
       cityId: "",
       cityName: "",
+      themeColor: "#f59e0b",
       iqomahTimer: 10,
       muteVideoAzan: true,
       mainBanner: "https://picsum.photos/1200/800?random=99",
@@ -507,16 +550,13 @@
         "https://picsum.photos/1200/800?random=2",
         "https://picsum.photos/1200/800?random=3"
       ],
-      runningText: "Masukkan Running Text"
+      runningText: "Selamat datang di Masjid Al Jihad. Harap matikan handphone dan jaga keheningan selama di dalam masjid."
     };
 
     const toggleBtn = document.getElementById('btn-toggle-settings');
     const closeBtn = document.getElementById('btn-close-settings');
     const modalOverlay = document.getElementById('settings-modal-overlay');
     const saveBtn = document.getElementById('btn-save-settings');
-    const btnFullscreen = document.getElementById('btn-fullscreen');
-    const iconFsEnter = document.getElementById('icon-fs-enter');
-    const iconFsExit = document.getElementById('icon-fs-exit');
 
     /* SYSTEM AUDIO BEEP DENGAN WEB AUDIO API */
     let audioCtx = null;
@@ -573,11 +613,21 @@
       }
     }
 
-    toggleBtn.addEventListener('click', () => modalOverlay.classList.add('open'));
-    closeBtn.addEventListener('click', () => modalOverlay.classList.remove('open'));
+    function openSettingsModal() {
+      modalOverlay.classList.add('open');
+      setupModalRemoteNavigation();
+    }
+
+    function closeSettingsModal() {
+      modalOverlay.classList.remove('open');
+      removeModalRemoteNavigation();
+    }
+
+    toggleBtn.addEventListener('click', openSettingsModal);
+    closeBtn.addEventListener('click', closeSettingsModal);
 
     modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+      if (e.target === modalOverlay) closeSettingsModal();
     });
 
     /* INTEGRASI PWA / TOMBOL INSTAL APLIKASI DI MENU SETTING */
@@ -618,24 +668,11 @@
       }
     }
 
-    btnFullscreen.addEventListener('click', toggleFullscreen);
-
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        iconFsEnter.style.display = 'none';
-        iconFsExit.style.display = 'block';
-      } else {
-        iconFsEnter.style.display = 'block';
-        iconFsExit.style.display = 'none';
-      }
-    });
-
     function isYoutubeUrl(url) {
       if (!url) return false;
       return url.includes('youtube.com') || url.includes('youtu.be');
     }
 
-    /* OPSI 1: FUNGSI KONVERSI OTOMATIS LINK GOOGLE DRIVE MENJADI DIRECT IMAGE LINK */
     function convertGoogleDriveUrl(url) {
       if (!url) return '';
       if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
@@ -684,6 +721,15 @@
       return { type: 'image', url: convertGoogleDriveUrl(url) };
     }
 
+    function applyThemeColor(hexColor) {
+      if (!hexColor) return;
+      document.documentElement.style.setProperty('--primary-accent', hexColor);
+      
+      // Calculate hover darker tone roughly or keep solid
+      document.documentElement.style.setProperty('--primary-accent-hover', hexColor);
+      document.documentElement.style.setProperty('--card-accent-border', hexColor);
+    }
+
     function handleModeChange() {
       const activeMode = modes[currentModeIdx];
       const prayerBar = document.getElementById('prayer-bar');
@@ -718,30 +764,96 @@
       });
     });
 
+    /* PENGATURAN NAVIGASI REMOT DI DALAM MODAL SETTING (ATAS / BAWAH / TENGAH) */
+    let modalFocusableElements = [];
+    let modalFocusIdx = 0;
+
+    function setupModalRemoteNavigation() {
+      const modalBody = document.getElementById('settings-modal-body');
+      modalFocusableElements = Array.from(modalBody.querySelectorAll('input, select, textarea, button'));
+      modalFocusIdx = 0;
+      updateModalFocus();
+    }
+
+    function removeModalRemoteNavigation() {
+      modalFocusableElements.forEach(el => el.classList.remove('remote-focused'));
+    }
+
+    function updateModalFocus() {
+      modalFocusableElements.forEach((el, idx) => {
+        if (idx === modalFocusIdx) {
+          el.classList.add('remote-focused');
+          el.focus();
+        } else {
+          el.classList.remove('remote-focused');
+        }
+      });
+    }
+
     window.addEventListener('keydown', (e) => {
-      if (e.key === 's' || e.key === 'S') {
-        modalOverlay.classList.toggle('open');
-        return;
+      const isModalOpen = modalOverlay.classList.contains('open');
+
+      if (isModalOpen) {
+        if (e.key === 'ArrowUp' || e.key === 'ChannelUp') {
+          e.preventDefault();
+          modalFocusIdx = (modalFocusIdx - 1 + modalFocusableElements.length) % modalFocusableElements.length;
+          updateModalFocus();
+          return;
+        } else if (e.key === 'ArrowDown' || e.key === 'ChannelDown') {
+          e.preventDefault();
+          modalFocusIdx = (modalFocusIdx + 1) % modalFocusableElements.length;
+          updateModalFocus();
+          return;
+        } else if (e.key === 'Enter' || e.key === 'Select' || e.key === 'Space') {
+          // Tombol tengah remot (Enter / Select)
+          const currentEl = modalFocusableElements[modalFocusIdx];
+          if (currentEl) {
+            if (currentEl.tagName === 'BUTTON') {
+              e.preventDefault();
+              currentEl.click();
+            } else if (currentEl.type === 'checkbox') {
+              currentEl.checked = !currentEl.checked;
+              e.preventDefault();
+            }
+          }
+          return;
+        } else if (e.key === 'Escape' || e.key === 'Backspace') {
+          e.preventDefault();
+          closeSettingsModal();
+          return;
+        }
       }
 
-      if (modalOverlay.classList.contains('open')) return;
+      // KONTROL UTAMA SAAT MODAL TERTUTUP (REMOTE NAVIGATION)
+      if (e.key === 'Enter' || e.key === 'Select' || e.key === '13' || e.key === 'Space') {
+        // Tombol tengah remot membuka menu setting
+        if (!isModalOpen) {
+          e.preventDefault();
+          openSettingsModal();
+          return;
+        }
+      }
 
       if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
         return;
       }
 
-      if (e.key === 'ChannelUp' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-        currentModeIdx = (currentModeIdx + 1) % modes.length;
-        document.getElementById(modes[currentModeIdx]).checked = true;
-        handleModeChange();
-      } else if (e.key === 'ChannelDown' || e.key === 'ArrowDown' || e.key === 'PageDown') {
-        currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
-        document.getElementById(modes[currentModeIdx]).checked = true;
-        handleModeChange();
+      if (e.key === 'ChannelUp' || e.key === 'PageUp') {
+        if (!isModalOpen) {
+          currentModeIdx = (currentModeIdx + 1) % modes.length;
+          document.getElementById(modes[currentModeIdx]).checked = true;
+          handleModeChange();
+        }
+      } else if (e.key === 'ChannelDown' || e.key === 'PageDown') {
+        if (!isModalOpen) {
+          currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
+          document.getElementById(modes[currentModeIdx]).checked = true;
+          handleModeChange();
+        }
       }
 
-      if (['1', '2', '3', '4'].includes(e.key)) {
+      if (!isModalOpen && ['1', '2', '3', '4'].includes(e.key)) {
         currentModeIdx = parseInt(e.key) - 1;
         document.getElementById(modes[currentModeIdx]).checked = true;
         handleModeChange();
@@ -769,6 +881,8 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
+      applyThemeColor(settings.themeColor || DEFAULT_SETTINGS.themeColor);
+
       mainBannerMedia = processMediaUrl(settings.mainBanner || DEFAULT_SETTINGS.mainBanner);
 
       slideTimerSec = parseInt(settings.slideTimer) || 5;
@@ -786,6 +900,7 @@
       document.getElementById('input-alamat').value = settings.alamat;
       document.getElementById('input-search-kota').value = settings.cityName || '';
       document.getElementById('select-kota-id').value = settings.cityId || '';
+      document.getElementById('input-theme-color').value = settings.themeColor || '#f59e0b';
       document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
       document.getElementById('input-mute-video-azan').checked = settings.muteVideoAzan !== undefined ? settings.muteVideoAzan : true;
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
@@ -898,19 +1013,17 @@
       const settings = getStoredSettings();
       const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
 
-      // Mute video YouTube jika opsi di setting diaktifkan
       if (settings.muteVideoAzan) {
         setYoutubeMuteState(true);
       }
 
-      // Play Beep awal Azan (3x Beep Panjang)
       playBeepSound(900, 0.35, 3, 0.45);
 
       titleEl.textContent = "WAKTU AZAN";
       subtitleEl.textContent = `MEMASUKI WAKTU SHOLAT ${prayerName.toUpperCase()}`;
       overlay.classList.add('active');
 
-      let azanDurationSec = 60; // Didefinisikan 1 menit penanda azan
+      let azanDurationSec = 60;
       timerEl.textContent = "01:00";
 
       let azanInterval = setInterval(() => {
@@ -936,21 +1049,17 @@
           let s = String(iqomahSec % 60).padStart(2, '0');
           timerEl.textContent = `${m}:${s}`;
 
-          // Beep peringatan 10 detik sebelum iqomah
           if (iqomahSec <= 10 && iqomahSec > 0) {
             playBeepSound(1000, 0.1, 1, 0);
           }
 
           if (iqomahSec <= 0) {
             clearInterval(iqomahInterval);
-
-            // Beep saat waktu Iqomah Tiba (5x Beep Cepat)
             playBeepSound(1200, 0.15, 5, 0.2);
 
             overlay.classList.remove('active');
             isAzanIqomahActive = false;
 
-            // Kembalikan audio video YouTube (unmute) jika diatur demikian
             if (settings.muteVideoAzan) {
               setYoutubeMuteState(false);
             }
@@ -992,7 +1101,6 @@
       if (currentSchedule) {
         updatePrayerCountdown(currentSchedule);
 
-        // PENANUSAN WAKTU AZAN SHOLAT FARDHU
         const mainPrayers = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
         mainPrayers.forEach(prayerKey => {
           if (currentSchedule[prayerKey] === timeNowStr && seconds === "00") {
@@ -1007,31 +1115,70 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    async function loadCityList() {
+    async function loadCityList(autoDetect = false) {
       const searchInput = document.getElementById('input-search-kota');
       const cityIdInput = document.getElementById('select-kota-id');
       const suggestionsBox = document.getElementById('city-suggestions');
       const settings = getStoredSettings();
 
       try {
-        const response = await fetch('https://api.myquran.com/v2/sholat/kota/semua');
-        const data = await response.json();
-        if (data.status) {
-          allCities = data.data;
+        if (allCities.length === 0) {
+          const response = await fetch('https://api.myquran.com/v2/sholat/kota/semua');
+          const data = await response.json();
+          if (data.status) {
+            allCities = data.data;
+          }
+        }
 
-          let defaultCity = null;
-          if (settings.cityId) {
-            defaultCity = allCities.find(c => c.id === settings.cityId);
-          }
-          if (!defaultCity) {
-            defaultCity = allCities.find(c => c.lokasi.includes('BANDUNG')) || allCities[0];
-          }
+        let targetCity = null;
 
-          if (defaultCity) {
-            cityIdInput.value = defaultCity.id;
-            searchInput.value = defaultCity.lokasi;
-            fetchPrayerTimes(defaultCity.id);
-          }
+        if (autoDetect && navigator.geolocation) {
+          searchInput.value = "Mendeteksi lokasi perangkat...";
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            try {
+              // Cari kota terdekat atau gunakan reverse geocoding via Nominatim OpenStreetMap
+              const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+              const geoData = await geoRes.json();
+              let cityNameQuery = "";
+              if (geoData && geoData.address) {
+                cityNameQuery = geoData.address.city || geoData.address.town || geoData.address.county || geoData.address.state || "";
+              }
+
+              if (cityNameQuery) {
+                let match = allCities.find(c => c.lokasi.toLowerCase().includes(cityNameQuery.toLowerCase()));
+                if (match) {
+                  targetCity = match;
+                }
+              }
+
+              if (!targetCity) {
+                // Fallback default Jambi jika koordinat di luar list kota akurat
+                targetCity = allCities.find(c => c.lokasi.includes('JAMBI')) || allCities[0];
+              }
+
+              if (targetCity) {
+                cityIdInput.value = targetCity.id;
+                searchInput.value = targetCity.lokasi;
+                fetchPrayerTimes(targetCity.id);
+                
+                // Simpan otomatis ke local storage
+                let currentSet = getStoredSettings();
+                currentSet.cityId = targetCity.id;
+                currentSet.cityName = targetCity.lokasi;
+                localStorage.setItem('display_masjid_settings', JSON.stringify(currentSet));
+              }
+            } catch (err) {
+              console.error("Gagal reverse geocode lokasi:", err);
+              fallbackDefaultCity(settings, searchInput, cityIdInput);
+            }
+          }, (err) => {
+            console.warn("GPS Geolocation ditolak/gagal:", err);
+            fallbackDefaultCity(settings, searchInput, cityIdInput);
+          }, { timeout: 10000 });
+        } else {
+          fallbackDefaultCity(settings, searchInput, cityIdInput);
         }
       } catch (err) {
         console.error('Gagal memuat daftar kota:', err);
@@ -1072,6 +1219,27 @@
       });
     }
 
+    function fallbackDefaultCity(settings, searchInput, cityIdInput) {
+      let defaultCity = null;
+      if (settings.cityId) {
+        defaultCity = allCities.find(c => c.id === settings.cityId);
+      }
+      if (!defaultCity) {
+        // Default Jambi sesuai permintaan
+        defaultCity = allCities.find(c => c.lokasi.includes('KOTA JAMBI') || c.lokasi.includes('JAMBI')) || allCities[0];
+      }
+
+      if (defaultCity) {
+        cityIdInput.value = defaultCity.id;
+        searchInput.value = defaultCity.lokasi;
+        fetchPrayerTimes(defaultCity.id);
+      }
+    }
+
+    document.getElementById('btn-auto-detect-loc').addEventListener('click', () => {
+      loadCityList(true);
+    });
+
     async function fetchPrayerTimes(cityId) {
       if (!cityId) return;
       const today = new Date();
@@ -1094,6 +1262,8 @@
           document.getElementById('time-ashar').textContent = j.ashar;
           document.getElementById('time-maghrib').textContent = j.maghrib;
           document.getElementById('time-isya').textContent = j.isya;
+
+          document.getElementById('prayer-source-text').textContent = `Sumber Waktu Sholat: Kemenag / MyQuran API (${data.data.lokasi || ''})`;
 
           updatePrayerCountdown(j);
         }
@@ -1162,6 +1332,7 @@
         alamat: document.getElementById('input-alamat').value,
         cityId: document.getElementById('select-kota-id').value,
         cityName: document.getElementById('input-search-kota').value,
+        themeColor: document.getElementById('input-theme-color').value,
         iqomahTimer: document.getElementById('input-iqomah-timer').value,
         muteVideoAzan: document.getElementById('input-mute-video-azan').checked,
         mainBanner: document.getElementById('input-main-banner').value,
@@ -1178,12 +1349,12 @@
       localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
       applySettings(settings);
       fetchPrayerTimes(settings.cityId);
-      modalOverlay.classList.remove('open');
+      closeSettingsModal();
     });
 
     const initialSettings = getStoredSettings();
     applySettings(initialSettings);
-    loadCityList();
+    loadCityList(false);
   </script>
 </body>
 </html>
