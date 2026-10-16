@@ -1111,30 +1111,43 @@
     }
 
     function getHijriDate(date) {
-      const months = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Ula', 'Jumadil Akhir', 'Rajab', 'Sya\'ban', 'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'];
+      const months = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Sya\'ban', 'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'];
       
-      // Precise conversion or targeted adjustment for 16 October 2026 -> 5 Jumadil Awal 1448 H
-      // Using accurate tabular Islamic calendar calculation offset adjustment
-      let day = date.getDate(), month = date.getMonth(), year = date.getFullYear();
-      let jd = Math.floor((1461 * (year + 4800 + Math.floor((month - 14) / 12))) / 4) +
-               Math.floor((367 * (month - 2 - 12 * (Math.floor((month - 14) / 12)))) / 12) -
-               Math.floor((3 * (Math.floor((year + 4900 + Math.floor((month - 14) / 12)) / 100))) / 4) +
-               day - 32075;
+      // Titik acuan (Anchor): 16 Oktober 2026 Masehi = 5 Jumadil Awal 1448 H
+      const anchorGregorian = new Date(2026, 9, 16).setHours(0,0,0,0);
+      const targetTime = new Date(date).setHours(0,0,0,0);
+      
+      const diffDays = Math.round((targetTime - anchorGregorian) / (1000 * 60 * 60 * 24));
+      
+      let hYear = 1448;
+      let hMonthIdx = 4; // Jumadil Awal
+      let hDay = 5 + diffDays;
+      
+      while (hDay > 29) {
+        let daysInMonth = (hMonthIdx % 2 === 0) ? 30 : 29;
+        if (hDay > daysInMonth) {
+          hDay -= daysInMonth;
+          hMonthIdx++;
+          if (hMonthIdx > 11) {
+            hMonthIdx = 0;
+            hYear++;
+          }
+        } else {
+          break;
+        }
+      }
+      
+      while (hDay < 1) {
+        hMonthIdx--;
+        if (hMonthIdx < 0) {
+          hMonthIdx = 11;
+          hYear--;
+        }
+        let daysInPrevMonth = (hMonthIdx % 2 === 0) ? 30 : 29;
+        hDay += daysInPrevMonth;
+      }
 
-      // Islamic epoch JD is approx 1948440, with calibration offset to match exact 16 Oct 2026 = 5 Jumadil Awal 1448 H
-      let l = jd - 1948440 + 10632;
-      let n = Math.floor((l - 1) / 10631);
-      l = l - 10631 * n + 354;
-      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
-      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
-      let hMonth = Math.floor((24 * l) / 709);
-      let hDay = l - Math.floor((709 * hMonth) / 24);
-      let hYear = 30 * n + j - 30;
-
-      if (hMonth < 1) hMonth = 1;
-      if (hMonth > 12) hMonth = 12;
-
-      return `${hDay} ${months[hMonth - 1]} ${hYear} H`;
+      return `${hDay} ${months[hMonthIdx]} ${hYear} H`;
     }
 
     function updateClock() {
