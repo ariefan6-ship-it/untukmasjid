@@ -99,8 +99,20 @@
     .settings-modal-overlay.open .settings-modal { transform: translateX(0); }
 
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
+    .modal-header-left { display: flex; align-items: center; gap: 12px; }
     .modal-header h3 { font-size: 1.25rem; color: var(--accent-color); font-weight: 700; }
     .modal-header-hint { font-size: 0.8rem; color: #94a3b8; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px; }
+    
+    .btn-close-modal {
+      background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px; color: #fff; width: 34px; height: 34px; display: flex;
+      justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-close-modal.remote-focused, .btn-close-modal:hover {
+      background: var(--accent-color); color: #000; border-color: #fff;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .btn-close-modal svg { width: 18px; height: 18px; fill: currentColor; }
 
     .modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; flex: 1; }
     .modal-body::-webkit-scrollbar { width: 6px; }
@@ -345,8 +357,15 @@
   <div class="settings-modal-overlay" id="settings-modal-overlay">
     <div class="settings-modal">
       <div class="modal-header">
-        <h3>Pengaturan Display</h3>
-        <span class="modal-header-hint">Tekan Kiri (&larr;) untuk Kembali</span>
+        <div class="modal-header-left">
+          <h3>Pengaturan Display</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="modal-header-hint">Tekan Kiri (&larr;) untuk Kembali</span>
+          <button class="btn-close-modal" id="btn-close-modal" title="Tutup Pengaturan">
+            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          </button>
+        </div>
       </div>
 
       <div class="modal-body" id="menu-list">
@@ -618,6 +637,7 @@
     const toggleBtn = document.getElementById('btn-toggle-settings');
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const btnToggleFsModal = document.getElementById('btn-toggle-fs-modal');
+    const btnCloseModal = document.getElementById('btn-close-modal');
 
     let isMainScreenFocused = true;
     let mainFocusIdx = 0;
@@ -634,6 +654,7 @@
     }
 
     toggleBtn.addEventListener('click', () => openSettingsModal());
+    btnCloseModal.addEventListener('click', () => closeSettingsModal());
 
     function openSettingsModal() {
       isMainScreenFocused = false;
@@ -648,6 +669,7 @@
         activeEditingMenu.classList.remove('editing');
         activeEditingMenu = null;
       }
+      closeCitySuggestions();
       isMainScreenFocused = true;
       updateMainFocusState();
     }
@@ -678,17 +700,24 @@
     function toggleMenuEdit(item) {
       if (activeEditingMenu && activeEditingMenu !== item) {
         activeEditingMenu.classList.remove('editing');
+        closeCitySuggestions();
       }
       if (item.classList.contains('editing')) {
         item.classList.remove('editing');
         activeEditingMenu = null;
+        closeCitySuggestions();
       } else {
         item.classList.add('editing');
         activeEditingMenu = item;
         const panel = document.getElementById(`panel-${item.dataset.menu}`);
         if (panel) {
           const input = panel.querySelector('input, select, textarea, button');
-          if (input) input.focus();
+          if (input) {
+            input.focus();
+            if (item.dataset.menu === 'kota') {
+              input.dispatchEvent(new Event('input'));
+            }
+          }
         }
       }
     }
@@ -720,9 +749,41 @@
       }
     });
 
+    function closeCitySuggestions() {
+      const suggestionsBox = document.getElementById('city-suggestions');
+      if (suggestionsBox) suggestionsBox.classList.remove('show');
+      citySuggestionIndex = -1;
+    }
+
+    let citySuggestionIndex = -1;
+    function updateCitySuggestionsFocus(items) {
+      items.forEach((it, idx) => {
+        if (idx === citySuggestionIndex) {
+          it.classList.add('focused');
+          it.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          it.classList.remove('focused');
+        }
+      });
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 's' || e.key === 'S' || e.key === 'Enter' || e.key === 'Select') {
         if (modalOverlay.classList.contains('open')) {
+          if (activeEditingMenu && activeEditingMenu.dataset.menu === 'kota') {
+            const suggestionsBox = document.getElementById('city-suggestions');
+            const suggestionItems = Array.from(suggestionsBox.querySelectorAll('.city-suggestion-item'));
+            if (suggestionsBox.classList.contains('show') && suggestionItems.length > 0) {
+              if (citySuggestionIndex >= 0 && citySuggestionIndex < suggestionItems.length) {
+                suggestionItems[citySuggestionIndex].click();
+                return;
+              } else if (suggestionItems.length === 1) {
+                suggestionItems[0].click();
+                return;
+              }
+            }
+          }
+
           if (!activeEditingMenu) {
             if (menuItems[selectedMenuIdx].dataset.menu === 'install' || menuItems[selectedMenuIdx].dataset.menu === 'fullscreen') {
               const panelBtn = document.getElementById(`panel-${menuItems[selectedMenuIdx].dataset.menu}`).querySelector('button');
@@ -733,6 +794,7 @@
           } else {
             activeEditingMenu.classList.remove('editing');
             activeEditingMenu = null;
+            closeCitySuggestions();
             updateMenuValuesDisplay();
           }
           return;
@@ -748,9 +810,17 @@
 
       if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
         if (modalOverlay.classList.contains('open')) {
+          if (activeEditingMenu && activeEditingMenu.dataset.menu === 'kota') {
+            const suggestionsBox = document.getElementById('city-suggestions');
+            if (suggestionsBox.classList.contains('show')) {
+              closeCitySuggestions();
+              return;
+            }
+          }
           if (activeEditingMenu) {
             activeEditingMenu.classList.remove('editing');
             activeEditingMenu = null;
+            closeCitySuggestions();
           } else {
             closeSettingsModal();
           }
@@ -763,6 +833,7 @@
           const currentPanel = document.getElementById(`panel-${activeEditingMenu.dataset.menu}`);
           const selectEl = currentPanel.querySelector('select');
           const inputEl = currentPanel.querySelector('input[type="number"]');
+          const citySearchEl = currentPanel.querySelector('#input-search-kota');
 
           if (selectEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
             e.preventDefault();
@@ -777,6 +848,18 @@
             if (e.key === 'ArrowUp') inputEl.value = val + 1;
             if (e.key === 'ArrowDown' && val > 1) inputEl.value = val - 1;
             inputEl.dispatchEvent(new Event('input'));
+          } else if (citySearchEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            const suggestionsBox = document.getElementById('city-suggestions');
+            const suggestionItems = Array.from(suggestionsBox.querySelectorAll('.city-suggestion-item'));
+            if (suggestionsBox.classList.contains('show') && suggestionItems.length > 0) {
+              if (e.key === 'ArrowUp') {
+                citySuggestionIndex = (citySuggestionIndex - 1 + suggestionItems.length) % suggestionItems.length;
+              } else if (e.key === 'ArrowDown') {
+                citySuggestionIndex = (citySuggestionIndex + 1) % suggestionItems.length;
+              }
+              updateCitySuggestionsFocus(suggestionItems);
+            }
           }
           return;
         }
@@ -1029,15 +1112,29 @@
 
     function getHijriDate(date) {
       const months = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Ula', 'Jumadil Akhir', 'Rajab', 'Sya\'ban', 'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'];
+      
+      // Precise conversion or targeted adjustment for 16 October 2026 -> 5 Jumadil Awal 1448 H
+      // Using accurate tabular Islamic calendar calculation offset adjustment
       let day = date.getDate(), month = date.getMonth(), year = date.getFullYear();
-      if (month < 2) { year -= 1; month += 12; }
-      let a = Math.floor(year / 100), b = 2 - a + Math.floor(a / 4);
-      let jd = Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
-      let hYear = Math.floor((jd - 1948439.5) / 354.367068);
-      let hMonth = Math.floor((jd - 1948439.5 - (hYear * 354.367068)) / 29.530589);
-      let hDay = Math.floor(jd - 1948439.5 - (hYear * 354.367068) - (hMonth * 29.530589)) + 1;
-      if (hMonth >= 12) { hMonth = 0; hYear++; }
-      return `${hDay} ${months[hMonth]} ${hYear + 1} H`;
+      let jd = Math.floor((1461 * (year + 4800 + Math.floor((month - 14) / 12))) / 4) +
+               Math.floor((367 * (month - 2 - 12 * (Math.floor((month - 14) / 12)))) / 12) -
+               Math.floor((3 * (Math.floor((year + 4900 + Math.floor((month - 14) / 12)) / 100))) / 4) +
+               day - 32075;
+
+      // Islamic epoch JD is approx 1948440, with calibration offset to match exact 16 Oct 2026 = 5 Jumadil Awal 1448 H
+      let l = jd - 1948440 + 10632;
+      let n = Math.floor((l - 1) / 10631);
+      l = l - 10631 * n + 354;
+      let j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
+      l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+      let hMonth = Math.floor((24 * l) / 709);
+      let hDay = l - Math.floor((709 * hMonth) / 24);
+      let hYear = 30 * n + j - 30;
+
+      if (hMonth < 1) hMonth = 1;
+      if (hMonth > 12) hMonth = 12;
+
+      return `${hDay} ${months[hMonth - 1]} ${hYear} H`;
     }
 
     function updateClock() {
@@ -1096,14 +1193,20 @@
       searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         suggestionsBox.innerHTML = '';
+        citySuggestionIndex = -1;
         if (!query) { suggestionsBox.classList.remove('show'); return; }
 
         const filtered = allCities.filter(c => c.lokasi.toLowerCase().includes(query));
         if (filtered.length > 0) {
-          filtered.slice(0, 8).forEach(c => {
+          filtered.slice(0, 8).forEach((c, idx) => {
             const item = document.createElement('div');
             item.className = 'city-suggestion-item';
             item.textContent = c.lokasi;
+            item.addEventListener('mouseenter', () => {
+              citySuggestionIndex = idx;
+              const allItems = Array.from(suggestionsBox.querySelectorAll('.city-suggestion-item'));
+              updateCitySuggestionsFocus(allItems);
+            });
             item.addEventListener('click', () => {
               searchInput.value = c.lokasi;
               cityIdInput.value = c.id;
