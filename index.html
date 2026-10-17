@@ -61,6 +61,13 @@
       if (serverSettings) {
         applySettings(serverSettings);
         if (serverSettings.cityId) fetchPrayerTimes(serverSettings.cityId);
+
+        // Tambahkan di dalam dbRef.on('value', (snapshot) => { ... }) pada index.html:
+if (serverSettings.triggerFullscreen !== undefined) {
+  if (window._lastFsTrigger !== serverSettings.triggerFullscreen) {
+    window._lastFsTrigger = serverSettings.triggerFullscreen;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => console.error(err));
       
         // --- BAGIAN INI YANG MENGATUR PINDAH MODE DARI HP ADMIN ---
         if (serverSettings.activeModeIdx !== undefined) {
