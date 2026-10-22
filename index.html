@@ -37,76 +37,6 @@
     document.head.appendChild(link);
   </script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-  <script>
-    // Konfigurasi Firebase Anda
-    const firebaseConfig = {
-      apiKey: "AIzaSyAowFtl3jYyW9oApK8InVRDY-eXUthagbU",
-      authDomain: "jadwalsholatapp.firebaseapp.com",
-      databaseURL: "https://jadwalsholatapp-default-rtdb.firebaseio.com",
-      projectId: "jadwalsholatapp",
-      storageBucket: "jadwalsholatapp.firebasestorage.app",
-      messagingSenderId: "232235581161",
-      appId: "1:232235581161:web:85456e16ffa552f4887a78"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database().ref('settings');
-
-    // Dengarkan perubahan data dari database secara real-time
-    dbRef.on('value', (snapshot) => {
-      const serverSettings = snapshot.val();
-      if (serverSettings) {
-        applySettings(serverSettings);
-        if (serverSettings.cityId) fetchPrayerTimes(serverSettings.cityId);
-      
-        // --- BAGIAN INI YANG MENGATUR PINDAH MODE DARI HP ADMIN ---
-        if (serverSettings.activeModeIdx !== undefined) {
-          const targetModeIdx = parseInt(serverSettings.activeModeIdx);
-          if (targetModeIdx !== currentModeIdx && modes[targetModeIdx]) {
-            currentModeIdx = targetModeIdx;
-            document.getElementById(modes[currentModeIdx]).checked = true;
-            handleModeChange();
-          }
-        }
-
-        // --- TAMBAHAN: TRIGGER FULLSCREEN DARI HP ADMIN ---
-        if (serverSettings.triggerFullscreen !== undefined) {
-          if (window._lastFsTrigger !== serverSettings.triggerFullscreen) {
-            window._lastFsTrigger = serverSettings.triggerFullscreen;
-            if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(err => console.error(err));
-            }
-          }
-        }
-      }
-    });
-
-    // Fungsi simpan diperbarui agar mengirim ke Firebase
-    function saveCurrentSettings() {
-      const settings = {
-        masjid: document.getElementById('input-masjid').value,
-        alamat: document.getElementById('input-alamat').value,
-        cityId: document.getElementById('select-kota-id').value,
-        cityName: document.getElementById('input-search-kota').value,
-        iqomahTimer: document.getElementById('input-iqomah-timer').value,
-        theme: document.getElementById('input-theme').value,
-        mainBanner: document.getElementById('input-main-banner').value,
-        slideTimer: document.getElementById('input-slide-timer') ? document.getElementById('input-slide-timer').value : 5,
-        slidesText: document.getElementById('input-slideshow-urls').value,
-        youtubeUrl: document.getElementById('input-youtube-url').value,
-        runningText: document.getElementById('input-running-text').value,
-        activeModeIdx: currentModeIdx
-      };
-      
-      // Simpan ke Firebase (otomatis memperbarui TV dan HP admin)
-      dbRef.set(settings);
-      updateMenuValuesDisplay();
-    }
-  </script>
-
   <style>
     :root {
       --accent-color: #f59e0b;
@@ -792,6 +722,33 @@
       }
     }
 
+    function saveCurrentSettings() {
+      const settings = {
+        masjid: document.getElementById('input-masjid').value,
+        alamat: document.getElementById('input-alamat').value,
+        cityId: document.getElementById('select-kota-id').value,
+        cityName: document.getElementById('input-search-kota').value,
+        iqomahTimer: document.getElementById('input-iqomah-timer').value,
+        theme: document.getElementById('input-theme').value,
+        mainBanner: document.getElementById('input-main-banner').value,
+        slidesText: document.getElementById('input-slideshow-urls').value,
+        youtubeUrl: document.getElementById('input-youtube-url').value,
+        runningText: document.getElementById('input-running-text').value
+      };
+      localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
+      applySettings(settings);
+      if (settings.cityId) fetchPrayerTimes(settings.cityId);
+      updateMenuValuesDisplay();
+    }
+
+    ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-slideshow-urls', 'input-youtube-url', 'input-running-text'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', saveCurrentSettings);
+        el.addEventListener('change', saveCurrentSettings);
+      }
+    });
+
     function closeCitySuggestions() {
       const suggestionsBox = document.getElementById('city-suggestions');
       if (suggestionsBox) suggestionsBox.classList.remove('show');
@@ -1087,6 +1044,15 @@
       }
     }
 
+    function getStoredSettings() {
+      const saved = localStorage.getItem('display_masjid_settings');
+      if (saved) {
+        try { return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }; }
+        catch (e) { return DEFAULT_SETTINGS; }
+      }
+      return DEFAULT_SETTINGS;
+    }
+
     function updateMenuValuesDisplay() {
       document.getElementById('val-masjid').textContent = document.getElementById('input-masjid').value;
       document.getElementById('val-alamat').textContent = document.getElementById('input-alamat').value;
@@ -1147,13 +1113,14 @@
     function getHijriDate(date) {
       const months = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Sya\'ban', 'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'];
       
+      // Titik acuan (Anchor): 16 Oktober 2026 Masehi = 5 Jumadil Awal 1448 H
       const anchorGregorian = new Date(2026, 9, 16).setHours(0,0,0,0);
       const targetTime = new Date(date).setHours(0,0,0,0);
       
       const diffDays = Math.round((targetTime - anchorGregorian) / (1000 * 60 * 60 * 24));
       
       let hYear = 1448;
-      let hMonthIdx = 4;
+      let hMonthIdx = 4; // Jumadil Awal
       let hDay = 5 + diffDays;
       
       while (hDay > 29) {
@@ -1205,10 +1172,8 @@
 
       const currentDateString = now.toDateString();
       if (lastFetchedDate !== currentDateString) {
-        dbRef.once('value', (snap) => {
-          const settings = snap.val() || DEFAULT_SETTINGS;
-          if (settings.cityId) fetchPrayerTimes(settings.cityId);
-        });
+        const settings = getStoredSettings();
+        if (settings.cityId) fetchPrayerTimes(settings.cityId);
       }
 
       if (currentSchedule) updatePrayerCountdown(currentSchedule);
@@ -1220,21 +1185,19 @@
       const searchInput = document.getElementById('input-search-kota');
       const cityIdInput = document.getElementById('select-kota-id');
       const suggestionsBox = document.getElementById('city-suggestions');
+      const settings = getStoredSettings();
 
       try {
         const response = await fetch('https://api.myquran.com/v2/sholat/kota/semua');
         const data = await response.json();
         if (data.status) {
           allCities = data.data;
-          dbRef.once('value', (snap) => {
-            const settings = snap.val() || DEFAULT_SETTINGS;
-            let defaultCity = allCities.find(c => c.id === settings.cityId) || allCities.find(c => c.lokasi.includes('JAMBI')) || allCities[0];
-            if (defaultCity) {
-              cityIdInput.value = defaultCity.id;
-              searchInput.value = defaultCity.lokasi;
-              fetchPrayerTimes(defaultCity.id);
-            }
-          });
+          let defaultCity = allCities.find(c => c.id === settings.cityId) || allCities.find(c => c.lokasi.includes('JAMBI')) || allCities[0];
+          if (defaultCity) {
+            cityIdInput.value = defaultCity.id;
+            searchInput.value = defaultCity.lokasi;
+            fetchPrayerTimes(defaultCity.id);
+          }
         }
       } catch (err) {
         console.error('Gagal memuat daftar kota KEMENAG:', err);
@@ -1339,43 +1302,41 @@
       const eventSubtitle = document.getElementById('event-subtitle');
       const eventTimer = document.getElementById('event-timer');
       
-      dbRef.once('value', (snap) => {
-        const settings = snap.val() || DEFAULT_SETTINGS;
-        const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
-        
-        let activePrayerMatch = times.find(t => t.name !== 'Imsak' && t.name !== 'Syuruq' && currentSeconds >= t.sec && currentSeconds <= t.sec + 180);
-        
-        if (activePrayerMatch) {
-          overlay.classList.add('active');
-          eventTitle.textContent = `WAKTU AZAN`;
-          eventSubtitle.textContent = `MEMASUKI WAKTU SHOLAT ${activePrayerMatch.name.toUpperCase()}`;
-          let azanElapsed = currentSeconds - activePrayerMatch.sec;
-          let azanRem = 180 - azanElapsed;
-          let am = String(Math.floor(azanRem / 60)).padStart(2, '0');
-          let as = String(azanRem % 60).padStart(2, '0');
-          eventTimer.textContent = `${am}:${as}`;
-        } else {
-          let iqomahMatch = times.find(t => {
-            if (t.name === 'Imsak' || t.name === 'Syuruq') return false;
-            let iqomahStart = t.sec + 180;
-            let iqomahEnd = t.sec + (iqomahMinutes * 60);
-            return currentSeconds >= iqomahStart && currentSeconds <= iqomahEnd;
-          });
+      const settings = getStoredSettings();
+      const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
+      
+      let activePrayerMatch = times.find(t => t.name !== 'Imsak' && t.name !== 'Syuruq' && currentSeconds >= t.sec && currentSeconds <= t.sec + 180);
+      
+      if (activePrayerMatch) {
+        overlay.classList.add('active');
+        eventTitle.textContent = `WAKTU AZAN`;
+        eventSubtitle.textContent = `MEMASUKI WAKTU SHOLAT ${activePrayerMatch.name.toUpperCase()}`;
+        let azanElapsed = currentSeconds - activePrayerMatch.sec;
+        let azanRem = 180 - azanElapsed;
+        let am = String(Math.floor(azanRem / 60)).padStart(2, '0');
+        let as = String(azanRem % 60).padStart(2, '0');
+        eventTimer.textContent = `${am}:${as}`;
+      } else {
+        let iqomahMatch = times.find(t => {
+          if (t.name === 'Imsak' || t.name === 'Syuruq') return false;
+          let iqomahStart = t.sec + 180;
+          let iqomahEnd = t.sec + (iqomahMinutes * 60);
+          return currentSeconds >= iqomahStart && currentSeconds <= iqomahEnd;
+        });
 
-          if (iqomahMatch) {
-            overlay.classList.add('active');
-            eventTitle.textContent = `MENUNGGU IQOMAH`;
-            eventSubtitle.textContent = `SHOLAT ${iqomahMatch.name.toUpperCase()}`;
-            let iqomahDeadline = iqomahMatch.sec + (iqomahMinutes * 60);
-            let remIqomah = iqomahDeadline - currentSeconds;
-            let im = String(Math.floor(remIqomah / 60)).padStart(2, '0');
-            let is = String(remIqomah % 60).padStart(2, '0');
-            eventTimer.textContent = `${im}:${is}`;
-          } else {
-            overlay.classList.remove('active');
-          }
+        if (iqomahMatch) {
+          overlay.classList.add('active');
+          eventTitle.textContent = `MENUNGGU IQOMAH`;
+          eventSubtitle.textContent = `SHOLAT ${iqomahMatch.name.toUpperCase()}`;
+          let iqomahDeadline = iqomahMatch.sec + (iqomahMinutes * 60);
+          let remIqomah = iqomahDeadline - currentSeconds;
+          let im = String(Math.floor(remIqomah / 60)).padStart(2, '0');
+          let is = String(remIqomah % 60).padStart(2, '0');
+          eventTimer.textContent = `${im}:${is}`;
+        } else {
+          overlay.classList.remove('active');
         }
-      });
+      }
 
       let diffSec = next.sec - currentSeconds;
       if (diffSec < 0) diffSec += 86400;
@@ -1399,6 +1360,8 @@
       document.getElementById('fs-next-countdown').textContent = countdownFormatted;
     }
 
+    const initialSettings = getStoredSettings();
+    applySettings(initialSettings);
     loadCityList();
     updateMainFocusState();
   </script>
