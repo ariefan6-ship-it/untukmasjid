@@ -103,6 +103,7 @@
       };
       
       localStorage.setItem('tv_jadwal_settings', JSON.stringify(settings));
+      applySettings(settings);
       updateMenuValuesDisplay();
     }
   </script>
@@ -120,7 +121,6 @@
       --maghrib-color: #ef4444;
       --isya-color: #8b5cf6;
 
-      /* Dynamic Font Sizes Default */
       --font-size-clock: 3.2rem;
       --font-size-masjid: 1.5rem;
       --font-size-alamat: 0.95rem;
@@ -128,23 +128,21 @@
       --font-size-prayer: 1.7rem;
       --font-size-running: 1.15rem;
 
-      /* Slide Dynamic Transition */
       --slide-trans-duration: 0.8s;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
-    body { background-color: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; user-select: none; }
+    body { background-color: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; user-select: none; }
 
     .display-container {
       width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.78vh;
-      background-color: #f1f5f9; display: flex; flex-direction: column; justify-content: space-between;
+      background-color: #0f172a; display: flex; flex-direction: column; justify-content: space-between;
       position: relative; overflow: hidden;
       transition: all 0.5s ease-in-out;
     }
 
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI SISI KANAN - WITH AUTO HIDE */
     .controls-group {
       position: absolute; top: 50%; right: 10px; transform: translateY(-50%); z-index: 100;
       display: flex; flex-direction: column; gap: 8px; align-items: center;
@@ -161,10 +159,10 @@
 
     .btn-control {
       width: 32px; height: 32px;
-      background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 8px; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; display: flex;
       justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(4px); transition: all 0.2s ease;
-      opacity: 0.6;
+      opacity: 0.8;
     }
     .btn-control:hover, .btn-control.remote-focused, .btn-control:focus {
       opacity: 1; background: var(--accent-color); color: #000; transform: scale(1.1); outline: none; border-color: #fff;
@@ -172,7 +170,6 @@
     }
     .btn-control svg { width: 18px; height: 18px; fill: currentColor; }
 
-    /* MENU PENGATURAN MODEL TV PER KATEGORI */
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(10px);
@@ -198,7 +195,6 @@
 
     .tv-menu-body { display: flex; flex: 1; overflow: hidden; }
 
-    /* SISI KIRI: LIST KATEGORI */
     .tv-categories {
       width: 260px; background: rgba(15, 23, 42, 0.6); border-right: 1px solid rgba(255,255,255,0.1);
       padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
@@ -210,7 +206,6 @@
     .cat-item.active { background: rgba(255, 255, 255, 0.08); color: #fff; }
     .cat-item.focused { border-color: var(--accent-color); background: var(--accent-color); color: #000; box-shadow: 0 0 12px var(--accent-glow); }
 
-    /* SISI KANAN: LIST OPSI / EDIT PANEL */
     .tv-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .tv-content::-webkit-scrollbar { width: 6px; }
     .tv-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -253,9 +248,8 @@
     .btn-action { background: var(--accent-color); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-align: center; }
     .btn-action.focused, .btn-action:hover { background: var(--accent-hover); color: #fff; outline: none; box-shadow: 0 0 12px var(--accent-glow); }
 
-    /* HEADER DISPLAY UTAMA */
     header {
-      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
       transition: all 0.5s ease-in-out;
     }
@@ -274,23 +268,23 @@
     .gregorian-date { font-size: calc(var(--font-size-date) * 0.7); color: #64748b; margin-top: 0.1rem; font-weight: 500; }
     .header-divider { width: 2px; height: 35px; background: #e2e8f0; }
 
-    /* MAIN CONTENT & SLIDESHOW */
     .main-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 0; transition: all 0.5s ease-in-out; }
-    .center-banner { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    .center-banner { 
+      flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; 
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+    }
     .banner-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
 
-    /* BACKGROUND DIUBAH AGAR JERNIH DAN TIDAK BLUR */
     .bg-image { 
       position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 100%; 
       object-fit: cover; opacity: 1; filter: none !important; 
       transition: opacity var(--slide-trans-duration) ease-in-out, transform var(--slide-trans-duration) ease-in-out; 
     }
 
-    /* EFEK TRANSISI SLIDE */
     .trans-fade .bg-image { opacity: 0; }
     .trans-fade .bg-image.active-slide { opacity: 1; }
 
-    .trans-zoom .bg-image { transform: scale(1.15); opacity: 0; }
+    .trans-zoom .bg-image { transform: scale(1.1); opacity: 0; }
     .trans-zoom .bg-image.active-slide { transform: scale(1); opacity: 1; }
 
     .trans-slide .bg-image { transform: translateX(100%); opacity: 1; }
@@ -299,7 +293,6 @@
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
 
-    /* HEADER POPUP MODE VIDEO */
     .video-header-popup {
       display: none; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 35;
       width: 90%; max-width: 800px;
@@ -320,7 +313,6 @@
     .video-popup-address-marquee { display: inline-block; padding-left: 100%; animation: videoAddressMarquee 15s linear infinite; white-space: nowrap; }
     @keyframes videoAddressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* OVERLAY AZAN & IQOMAH */
     .prayer-event-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
       background: #0f172a; color: #fff; display: none; flex-direction: column;
@@ -331,7 +323,6 @@
     .event-subtitle { font-size: 2rem; color: #cbd5e1; margin-bottom: 25px; }
     .event-timer { font-size: 6.5rem; font-weight: 800; color: #ffffff; background: rgba(255, 255, 255, 0.05); padding: 15px 45px; border-radius: 20px; border: 2px solid var(--accent-color); box-shadow: 0 0 30px var(--accent-glow); }
 
-    /* POPUP FOOTER FULLSCREEN */
     .fullscreen-footer-popup {
       display: none; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 35;
       background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -349,7 +340,6 @@
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px var(--accent-glow);
     }
 
-    /* WIDGET POJOK (UNTUK MODE POJOK / CORNER) */
     .corner-widgets-container { display: none; }
     
     .corner-clock-box {
@@ -369,7 +359,6 @@
       display: flex; align-items: center; gap: 16px;
     }
 
-    /* FOOTER JADWAL SHOLAT */
     .prayer-bar-wrapper {
       background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
       display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
@@ -411,7 +400,6 @@
     .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* MODE VIDEO RULES */
     #mode-video:checked ~ .display-container header { display: none !important; }
     #mode-video:checked ~ .display-container .video-container { display: block !important; }
     #mode-video:checked ~ .display-container .video-header-popup { display: flex !important; }
@@ -424,19 +412,18 @@
     #mode-video:checked ~ .display-container .prayer-time { color: #ffffff !important; }
     #mode-video:checked ~ .display-container .running-text-bar { position: absolute !important; bottom: 0; left: 0; right: 0; z-index: 30; background: rgba(15, 23, 42, 0.92) !important; }
 
-    /* FULLSCREEN MODE RULES */
     #mode-fullscreen:checked ~ .display-container header,
     #mode-fullscreen:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
+    
+    /* DEFAULT MENAMPILKAN POPUP FULLSCREEN (KECUALI DINONAKTIFKAN VIA JS) */
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
-    /* CORNER MODE RULES (MODE POJOK BARU) */
     #mode-corner:checked ~ .display-container header,
     #mode-corner:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
     #mode-corner:checked ~ .display-container .corner-widgets-container { display: block !important; }
     #mode-corner:checked ~ .display-container .bg-image { object-fit: cover; }
 
-    /* MODE SIDEBAR RULES */
     #mode-sidebar:checked ~ .display-container .prayer-bar-wrapper {
       width: 260px !important;
       height: 100% !important;
@@ -475,11 +462,16 @@
       color: #475569 !important;
       font-weight: 800 !important;
     }
-    /* COUNTDOWN DIBAWAH NAMA SHOLAT KETIKA SIDEBAR */
-    #mode-sidebar:checked ~ .display-container .prayer-item .sidebar-item-bottom {
+    #mode-sidebar:checked ~ .display-container .prayer-item .sidebar-item-top {
       display: flex !important;
       width: 100% !important;
       justify-content: space-between !important;
+      align-items: center !important;
+    }
+    #mode-sidebar:checked ~ .display-container .prayer-item .sidebar-item-bottom {
+      display: flex !important;
+      width: 100% !important;
+      justify-content: flex-start !important;
       align-items: center !important;
       margin-top: 2px;
     }
@@ -489,6 +481,7 @@
     }
     #mode-sidebar:checked ~ .display-container .prayer-countdown {
       margin-top: 0 !important;
+      font-size: 0.75rem !important;
     }
     #mode-sidebar:checked ~ .display-container .bg-image { opacity: 1 !important; object-fit: contain !important; }
   </style>
@@ -496,11 +489,11 @@
 <body>
 
   <!-- Switch Mode Display -->
-  <input type="radio" id="mode-main" name="display-mode" class="mode-switch" checked>
-  <input type="radio" id="mode-video" name="display-mode" class="mode-switch">
-  <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
-  <input type="radio" id="mode-sidebar" name="display-mode" class="mode-switch">
-  <input type="radio" id="mode-corner" name="display-mode" class="mode-switch">
+  <input type="radio" id="mode-main" name="display-mode" class="display-mode-input mode-switch" checked>
+  <input type="radio" id="mode-video" name="display-mode" class="display-mode-input mode-switch">
+  <input type="radio" id="mode-fullscreen" name="display-mode" class="display-mode-input mode-switch">
+  <input type="radio" id="mode-sidebar" name="display-mode" class="display-mode-input mode-switch">
+  <input type="radio" id="mode-corner" name="display-mode" class="display-mode-input mode-switch">
 
   <!-- SLIDE MENU PENGATURAN BERGAYA TV -->
   <div class="settings-modal-overlay" id="settings-modal-overlay">
@@ -511,7 +504,6 @@
       </div>
 
       <div class="tv-menu-body">
-        <!-- SISI KIRI: KATEGORI MENU -->
         <div class="tv-categories" id="tv-categories">
           <div class="cat-item active focused" data-cat="masjid">Informasi Masjid</div>
           <div class="cat-item" data-cat="lokasi">Lokasi & Jadwal</div>
@@ -520,10 +512,7 @@
           <div class="cat-item" data-cat="sistem">Mode & Akses</div>
         </div>
 
-        <!-- SISI KANAN: ISI PENGATURAN -->
         <div class="tv-content" id="tv-content">
-
-          <!-- KATEGORI 1: MASJID -->
           <div class="cat-content" data-cat-content="masjid">
             <div class="tv-setting-row" data-menu="masjid">
               <span class="row-label">Nama Masjid</span>
@@ -550,7 +539,6 @@
             </div>
           </div>
 
-          <!-- KATEGORI 2: LOKASI & JADWAL -->
           <div class="cat-content" data-cat-content="lokasi" style="display:none;">
             <div class="tv-setting-row" data-menu="kota">
               <span class="row-label">Lokasi Kota / Kab (KEMENAG)</span>
@@ -573,7 +561,6 @@
             </div>
           </div>
 
-          <!-- KATEGORI 3: MEDIA & BANNER -->
           <div class="cat-content" data-cat-content="media" style="display:none;">
             <div class="tv-setting-row" data-menu="mainbanner">
               <span class="row-label">URL Media Utama / Gambar</span>
@@ -616,7 +603,6 @@
             </div>
           </div>
 
-          <!-- KATEGORI 4: TAMPILAN & FONT -->
           <div class="cat-content" data-cat-content="tampilan" style="display:none;">
             <div class="tv-setting-row" data-menu="theme">
               <span class="row-label">Tema Warna Tampilan</span>
@@ -666,7 +652,6 @@
               </select>
             </div>
 
-            <!-- MENU UTAMA UKURAN FONT -->
             <div class="tv-setting-row" data-menu="fontsizes">
               <span class="row-label">Ukuran Font Tampilan</span>
               <span class="row-value" id="val-fontsizes">Atur Font</span>
@@ -722,7 +707,6 @@
             </div>
           </div>
 
-          <!-- KATEGORI 5: SISTEM -->
           <div class="cat-content" data-cat-content="sistem" style="display:none;">
             <div class="tv-setting-row" data-menu="fullscreen">
               <span class="row-label">Layar Penuh (Fullscreen)</span>
@@ -741,7 +725,6 @@
   <!-- DISPLAY CONTAINER -->
   <div class="display-container trans-fade" id="display-container">
     
-    <!-- TOMBOL KONTROL DI SISI KANAN WITH AUTO-HIDE -->
     <div class="controls-group" id="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
         <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -771,13 +754,12 @@
     <div class="main-wrapper" id="main-wrapper">
       <section class="center-banner">
         <div class="banner-inner">
-          <img src="" alt="Latar Display" class="bg-image active-slide" id="bg-image" />
+          <img src="https://images.unsplash.com/photo-1564769625615-f50b0ef093a5?q=80&w=1600&auto=format&fit=crop" alt="Latar Display" class="bg-image active-slide" id="bg-image" />
           
           <div class="video-container" id="video-container">
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
           </div>
 
-          <!-- HEADER POPUP MODE VIDEO -->
           <div class="video-header-popup">
             <div class="video-popup-clock" id="popup-clock">00<span class="colon">:</span>00</div>
             <div class="video-popup-divider"></div>
@@ -794,14 +776,12 @@
             </div>
           </div>
 
-          <!-- OVERLAY AZAN & IQOMAH -->
           <div class="prayer-event-overlay" id="prayer-event-overlay">
             <div class="event-title" id="event-title">WAKTU AZAN</div>
             <div class="event-subtitle" id="event-subtitle">MEMASUKI WAKTU SHOLAT</div>
             <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
-          <!-- POPUP FOOTER FULLSCREEN -->
           <div class="fullscreen-footer-popup" id="fullscreen-footer-popup">
             <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
             <div class="fs-popup-divider"></div>
@@ -814,15 +794,12 @@
             </div>
           </div>
 
-          <!-- WIDGET MODE POJOK / CORNER -->
           <div class="corner-widgets-container">
-            <!-- SUDUT KANAN BAWAH: JAM & TANGGAL -->
             <div class="corner-clock-box">
               <div class="corner-clock-time" id="corner-clock">00<span class="colon">:</span>00</div>
               <div class="corner-clock-gregorian" id="corner-gregorian">--</div>
               <div class="corner-clock-hijri" id="corner-hijri">-- ---------- ---- H</div>
             </div>
-            <!-- SUDUT KIRI BAWAH: SHOLAT SELANJUTNYA & COUNTDOWN -->
             <div class="corner-prayer-box">
               <div class="fs-prayer-details">
                 <div class="fs-prayer-name" id="corner-next-name">--</div>
@@ -840,46 +817,53 @@
     <div class="prayer-bar-wrapper" id="prayer-bar-wrapper">
       <footer class="prayer-bar" id="prayer-bar">
         <div class="prayer-item" id="card-imsak">
-          <div class="prayer-name">Imsak</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Imsak</div>
             <div class="prayer-time" id="time-imsak">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-subuh">
-          <div class="prayer-name">Subuh</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Subuh</div>
             <div class="prayer-time" id="time-subuh">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-terbit">
-          <div class="prayer-name">Syuruq</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Syuruq</div>
             <div class="prayer-time" id="time-terbit">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-dzuhur">
-          <div class="prayer-name">Dzuhur</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Dzuhur</div>
             <div class="prayer-time" id="time-dzuhur">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-ashar">
-          <div class="prayer-name">Ashar</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Ashar</div>
             <div class="prayer-time" id="time-ashar">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-maghrib">
-          <div class="prayer-name">Maghrib</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Maghrib</div>
             <div class="prayer-time" id="time-maghrib">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
         <div class="prayer-item" id="card-isya">
-          <div class="prayer-name">Isya'</div>
-          <div class="sidebar-item-bottom">
+          <div class="sidebar-item-top">
+            <div class="prayer-name">Isya'</div>
             <div class="prayer-time" id="time-isya">--:--</div>
           </div>
+          <div class="sidebar-item-bottom"></div>
         </div>
       </footer>
     </div>
@@ -904,7 +888,6 @@
     let slideTimerSec = 5;
     let slideTimerFsSec = 5;
 
-    /* AUTO HIDE TOMBOL KONTROL */
     let hideControlsTimer = null;
     const controlsGroup = document.getElementById('controls-group');
 
@@ -1356,7 +1339,19 @@
         updateMenuValuesDisplay();
       });
       elem.addEventListener('input', () => {
+        saveCurrentSettings();
         updateMenuValuesDisplay();
+      });
+    });
+
+    // Menangani perubahan langsung saat radio mode diklik/diganti
+    document.querySelectorAll('.display-mode-input').forEach((radio, idx) => {
+      radio.addEventListener('change', () => {
+        if (radio.checked) {
+          currentModeIdx = idx;
+          handleModeChange();
+          saveCurrentSettings();
+        }
       });
     });
 
@@ -1412,7 +1407,7 @@
     }
 
     function processMediaUrl(url) {
-      if (!url) return { type: 'image', url: '' };
+      if (!url) return { type: 'image', url: DEFAULT_ISLAMIC_SLIDES[0] };
       if (url.includes('youtube.com') || url.includes('youtu.be')) {
         return { type: 'youtube', url: convertYoutubeEmbedUrl(url) };
       }
@@ -1464,7 +1459,9 @@
     }
 
     function displayMedia(mediaObj) {
-      if (!mediaObj || !mediaObj.url) return;
+      if (!mediaObj || !mediaObj.url) {
+        mediaObj = { type: 'image', url: DEFAULT_ISLAMIC_SLIDES[0] };
+      }
       const bgImg = document.getElementById('bg-image');
       const videoContainer = document.getElementById('video-container');
       const youtubeIframe = document.getElementById('youtube-iframe');
@@ -1477,13 +1474,19 @@
       } else {
         videoContainer.style.display = 'none';
         youtubeIframe.src = '';
-        
-        bgImg.classList.remove('active-slide');
 
-        setTimeout(() => {
+        const tempImg = new Image();
+        tempImg.onload = () => {
           bgImg.src = mediaObj.url;
+          bgImg.style.opacity = '1';
           bgImg.classList.add('active-slide');
-        }, 100);
+        };
+        tempImg.onerror = () => {
+          bgImg.src = DEFAULT_ISLAMIC_SLIDES[0];
+          bgImg.style.opacity = '1';
+          bgImg.classList.add('active-slide');
+        };
+        tempImg.src = mediaObj.url;
       }
     }
 
@@ -1511,10 +1514,10 @@
       document.getElementById('val-runningtext').textContent = document.getElementById('input-running-text').value;
 
       if(document.getElementById('input-hide-running-text')) {
-        document.getElementById('val-hiderunning').textContent = document.getElementById('input-hide-running-text').value === 'true' ? "Sembunyi" : "Tampilkan";
+        document.getElementById('val-hiderunning').textContent = document.getElementById('input-hide-running-text').value === 'true' ? "Sembunyikan" : "Tampilkan";
       }
       if(document.getElementById('input-hide-fs-popup')) {
-        document.getElementById('val-hidefspopup').textContent = document.getElementById('input-hide-fs-popup').value === 'true' ? "Sembunyi" : "Tampilkan";
+        document.getElementById('val-hidefspopup').textContent = document.getElementById('input-hide-fs-popup').value === 'true' ? "Sembunyikan" : "Tampilkan";
       }
 
       if(document.getElementById('input-font-clock')) {
@@ -1536,6 +1539,7 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
+      // REALTIME RUNNING TEXT HIDE/SHOW
       const runningBar = document.getElementById('running-bar');
       if (settings.hideRunningText === 'true') {
         runningBar.style.display = 'none';
@@ -1543,13 +1547,12 @@
         runningBar.style.display = 'flex';
       }
 
+      // REALTIME FULLSCREEN POPUP HIDE/SHOW
       const fsPopup = document.getElementById('fullscreen-footer-popup');
       if (settings.hideFsPopup === 'true') {
-        fsPopup.style.opacity = '0';
-        fsPopup.style.pointerEvents = 'none';
+        fsPopup.style.display = 'none';
       } else {
-        fsPopup.style.opacity = '1';
-        fsPopup.style.pointerEvents = 'auto';
+        fsPopup.style.display = ''; 
       }
 
       const displayContainer = document.getElementById('display-container');
