@@ -37,6 +37,76 @@
     document.head.appendChild(link);
   </script>
 
+  <script>
+    const DEFAULT_SETTINGS = {
+      masjid: "Masjid Al Jihad",
+      alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
+      cityId: "1609",
+      cityName: "KOTA JAMBI",
+      iqomahTimer: 10,
+      theme: "amber",
+      mainBanner: "",
+      slidesText: "",
+      youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
+      slideTimer: 5,
+      slideTimerFs: 5,
+      hideRunningText: "false",
+      hideFsPopup: "false",
+      slideTransition: "fade",
+      fontSizeClock: "3.2",
+      fontSizeMasjid: "1.5",
+      fontSizeAlamat: "0.95",
+      fontSizeDate: "1.35",
+      fontSizePrayer: "1.7",
+      fontSizeRunning: "1.15",
+      runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan"
+    };
+
+    function getStoredSettings() {
+      const saved = localStorage.getItem('tv_jadwal_settings');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) { return DEFAULT_SETTINGS; }
+      }
+      return DEFAULT_SETTINGS;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const initialSettings = getStoredSettings();
+      applySettings(initialSettings);
+      if (initialSettings.cityId) fetchPrayerTimes(initialSettings.cityId);
+    });
+
+    function saveCurrentSettings() {
+      const settings = {
+        masjid: document.getElementById('input-masjid').value,
+        alamat: document.getElementById('input-alamat').value,
+        cityId: document.getElementById('select-kota-id').value,
+        cityName: document.getElementById('input-search-kota').value,
+        iqomahTimer: document.getElementById('input-iqomah-timer').value,
+        theme: document.getElementById('input-theme').value,
+        mainBanner: document.getElementById('input-main-banner').value,
+        slideTimer: document.getElementById('input-slide-timer') ? document.getElementById('input-slide-timer').value : 5,
+        slideTimerFs: document.getElementById('input-slide-timer-fs') ? document.getElementById('input-slide-timer-fs').value : 5,
+        slidesText: document.getElementById('input-slideshow-urls').value,
+        youtubeUrl: document.getElementById('input-youtube-url').value,
+        runningText: document.getElementById('input-running-text').value,
+        hideRunningText: document.getElementById('input-hide-running-text').value,
+        hideFsPopup: document.getElementById('input-hide-fs-popup').value,
+        slideTransition: document.getElementById('input-slide-transition').value,
+        fontSizeClock: document.getElementById('input-font-clock').value,
+        fontSizeMasjid: document.getElementById('input-font-masjid').value,
+        fontSizeAlamat: document.getElementById('input-font-alamat').value,
+        fontSizeDate: document.getElementById('input-font-date').value,
+        fontSizePrayer: document.getElementById('input-font-prayer').value,
+        fontSizeRunning: document.getElementById('input-font-running').value,
+        activeModeIdx: currentModeIdx
+      };
+      
+      localStorage.setItem('tv_jadwal_settings', JSON.stringify(settings));
+      updateMenuValuesDisplay();
+    }
+  </script>
+
   <style>
     :root {
       --accent-color: #f59e0b;
@@ -49,6 +119,17 @@
       --ashar-color: #f97316;
       --maghrib-color: #ef4444;
       --isya-color: #8b5cf6;
+
+      /* Dynamic Font Sizes Default */
+      --font-size-clock: 3.2rem;
+      --font-size-masjid: 1.5rem;
+      --font-size-alamat: 0.95rem;
+      --font-size-date: 1.35rem;
+      --font-size-prayer: 1.7rem;
+      --font-size-running: 1.15rem;
+
+      /* Slide Dynamic Transition */
+      --slide-trans-duration: 0.8s;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
@@ -58,88 +139,102 @@
       width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.78vh;
       background-color: #f1f5f9; display: flex; flex-direction: column; justify-content: space-between;
       position: relative; overflow: hidden;
+      transition: all 0.5s ease-in-out;
     }
 
     .mode-switch { display: none; }
 
-    /* TOMBOL KONTROL DI SISI KANAN */
+    /* TOMBOL KONTROL DI SISI KANAN - WITH AUTO HIDE */
     .controls-group {
-      position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 100;
-      display: flex; flex-direction: column; gap: 10px; align-items: center;
+      position: absolute; top: 50%; right: 10px; transform: translateY(-50%); z-index: 100;
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .controls-group.hidden-controls {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .btn-control {
-      width: 46px; height: 46px;
-      background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px; color: #fff; font-size: 1.2rem; display: flex;
-      justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(6px); transition: all 0.2s ease;
+      width: 32px; height: 32px;
+      background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; display: flex;
+      justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(4px); transition: all 0.2s ease;
+      opacity: 0.6;
     }
-    .btn-control.remote-focused, .btn-control:hover, .btn-control:focus {
-      background: var(--accent-color); color: #000; transform: scale(1.12); outline: none; border-color: #fff;
-      box-shadow: 0 0 15px var(--accent-glow);
+    .btn-control:hover, .btn-control.remote-focused, .btn-control:focus {
+      opacity: 1; background: var(--accent-color); color: #000; transform: scale(1.1); outline: none; border-color: #fff;
+      box-shadow: 0 0 10px var(--accent-glow);
     }
-    .btn-control svg { width: 24px; height: 24px; fill: currentColor; }
+    .btn-control svg { width: 18px; height: 18px; fill: currentColor; }
 
-    /* SLIDE MENU PENGATURAN (SLIDE DARI KANAN) */
+    /* MENU PENGATURAN MODEL TV PER KATEGORI */
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px);
-      z-index: 500; display: flex; justify-content: flex-end;
+      background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(10px);
+      z-index: 500; display: flex; justify-content: center; align-items: center;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     .settings-modal-overlay.open { opacity: 1; pointer-events: auto; }
 
-    .settings-modal {
-      width: 100%; max-width: 460px; height: 100vh;
-      background: #0f172a; border-left: 2px solid var(--accent-color);
-      padding: 24px; color: #fff;
-      box-shadow: -10px 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px;
-      transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    .tv-menu-container {
+      width: 90vw; max-width: 960px; height: 80vh; max-height: 620px;
+      background: #0f172a; border: 2px solid var(--accent-color); border-radius: 16px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.9); display: flex; flex-direction: column; overflow: hidden;
+      color: #fff; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .settings-modal-overlay.open .settings-modal { transform: translateX(0); }
+    .settings-modal-overlay.open .tv-menu-container { transform: scale(1); }
 
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; }
-    .modal-header-left { display: flex; align-items: center; gap: 12px; }
-    .modal-header h3 { font-size: 1.25rem; color: var(--accent-color); font-weight: 700; }
-    .modal-header-hint { font-size: 0.8rem; color: #94a3b8; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px; }
-    
-    .btn-close-modal {
-      background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px; color: #fff; width: 34px; height: 34px; display: flex;
-      justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease;
-    }
-    .btn-close-modal.remote-focused, .btn-close-modal:hover {
-      background: var(--accent-color); color: #000; border-color: #fff;
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
-    .btn-close-modal svg { width: 18px; height: 18px; fill: currentColor; }
-
-    .modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; flex: 1; }
-    .modal-body::-webkit-scrollbar { width: 6px; }
-    .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-    /* ITEM MENU DUA TINGKAT DENGAN INDIKATOR FOKUS */
-    .menu-item {
+    .tv-menu-header {
+      padding: 16px 24px; background: rgba(30, 41, 59, 0.7); border-bottom: 1px solid rgba(255,255,255,0.1);
       display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; background: rgba(255,255,255,0.05); border-radius: 10px;
+    }
+    .tv-menu-header h3 { font-size: 1.3rem; color: var(--accent-color); font-weight: 700; }
+    .tv-menu-hint { font-size: 0.85rem; color: #94a3b8; background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 6px; }
+
+    .tv-menu-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* SISI KIRI: LIST KATEGORI */
+    .tv-categories {
+      width: 260px; background: rgba(15, 23, 42, 0.6); border-right: 1px solid rgba(255,255,255,0.1);
+      padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
+    }
+    .cat-item {
+      padding: 12px 16px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; color: #94a3b8;
+      cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; display: flex; align-items: center; gap: 10px;
+    }
+    .cat-item.active { background: rgba(255, 255, 255, 0.08); color: #fff; }
+    .cat-item.focused { border-color: var(--accent-color); background: var(--accent-color); color: #000; box-shadow: 0 0 12px var(--accent-glow); }
+
+    /* SISI KANAN: LIST OPSI / EDIT PANEL */
+    .tv-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .tv-content::-webkit-scrollbar { width: 6px; }
+    .tv-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    .tv-setting-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; background: rgba(255,255,255,0.05); border-radius: 10px;
       border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease;
     }
-    .menu-item.nav-selected { border-color: var(--accent-color); background: rgba(245, 158, 11, 0.25); box-shadow: 0 0 12px var(--accent-glow); }
-    .menu-item.editing { border-color: #10b981; background: rgba(16, 185, 129, 0.25); }
-    .menu-item-label { font-size: 0.95rem; font-weight: 600; color: #cbd5e1; }
-    .menu-item-value { font-size: 0.9rem; color: #f8fafc; font-weight: 700; max-width: 50%; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tv-setting-row.focused { border-color: var(--accent-color); background: rgba(245, 158, 11, 0.2); box-shadow: 0 0 10px var(--accent-glow); }
+    .tv-setting-row.editing { border-color: #10b981; background: rgba(16, 185, 129, 0.25); }
+    .row-label { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; }
+    .row-value { font-size: 0.9rem; font-weight: 700; color: #f8fafc; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .menu-edit-panel {
-      display: none; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; margin-top: 4px;
+    .tv-edit-panel {
+      display: none; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: -6px; margin-bottom: 6px;
     }
-    .menu-item.editing + .menu-edit-panel { display: flex; flex-direction: column; gap: 8px; }
+    .tv-setting-row.editing + .tv-edit-panel { display: flex; flex-direction: column; gap: 8px; }
 
-    .menu-edit-panel input, .menu-edit-panel select, .menu-edit-panel textarea {
-      width: 100%; padding: 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3);
-      background: #1e293b; color: #fff; font-size: 0.9rem; outline: none;
+    .tv-edit-panel input, .tv-edit-panel select, .tv-edit-panel textarea {
+      width: 100%; padding: 10px 14px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3);
+      background: #1e293b; color: #fff; font-size: 0.95rem; outline: none;
     }
-    .menu-edit-panel input:focus, .menu-edit-panel select:focus, .menu-edit-panel textarea:focus {
+    .tv-edit-panel input:focus, .tv-edit-panel select:focus, .tv-edit-panel textarea:focus {
       border-color: #10b981; background: rgba(16, 185, 129, 0.15);
     }
 
@@ -155,36 +250,51 @@
     }
     .city-suggestion-item:hover, .city-suggestion-item.focused { background: var(--accent-color); color: #000; }
 
-    .btn-action { background: var(--accent-color); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; text-align: center; }
-    .btn-action.nav-selected, .btn-action:hover { background: var(--accent-hover); color: #fff; outline: none; box-shadow: 0 0 12px var(--accent-glow); }
+    .btn-action { background: var(--accent-color); color: #000; font-weight: 700; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+    .btn-action.focused, .btn-action:hover { background: var(--accent-hover); color: #fff; outline: none; box-shadow: 0 0 12px var(--accent-glow); }
 
     /* HEADER DISPLAY UTAMA */
     header {
       background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 0.8rem 2rem;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); z-index: 10; flex-shrink: 0;
+      transition: all 0.5s ease-in-out;
     }
-    .digital-clock { font-size: 3.2rem; font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+    .digital-clock { font-size: var(--font-size-clock); font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
     .colon { animation: blinkColon 1s infinite; display: inline-block; margin: 0 2px; }
     @keyframes blinkColon { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
     .header-center { text-align: center; max-width: 45%; overflow: hidden; }
-    .masjid-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .masjid-address { font-size: 0.95rem; color: #64748b; font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
+    .masjid-title { font-size: var(--font-size-masjid); font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .masjid-address { font-size: var(--font-size-alamat); color: #64748b; font-weight: 500; overflow: hidden; white-space: nowrap; position: relative; display: flex; }
     .address-marquee { display: inline-block; padding-left: 100%; animation: addressMarquee 18s linear infinite; white-space: nowrap; }
     @keyframes addressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
     .header-right { text-align: right; }
-    .hijri-date { font-size: 1.35rem; font-weight: 800; color: #0f172a; }
-    .gregorian-date { font-size: 0.95rem; color: #64748b; margin-top: 0.1rem; font-weight: 500; }
+    .hijri-date { font-size: var(--font-size-date); font-weight: 800; color: #0f172a; }
+    .gregorian-date { font-size: calc(var(--font-size-date) * 0.7); color: #64748b; margin-top: 0.1rem; font-weight: 500; }
     .header-divider { width: 2px; height: 35px; background: #e2e8f0; }
 
     /* MAIN CONTENT & SLIDESHOW */
-    .main-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 0; }
+    .main-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 0; transition: all 0.5s ease-in-out; }
     .center-banner { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
     .banner-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
 
-    .bg-blur { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(25px) brightness(0.65); transform: scale(1.15); z-index: 1; opacity: 1; transition: opacity 0.8s ease-in-out; }
-    .bg-image { position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity 0.8s ease-in-out; }
+    /* BACKGROUND DIUBAH AGAR JERNIH DAN TIDAK BLUR */
+    .bg-image { 
+      position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 100%; 
+      object-fit: cover; opacity: 1; filter: none !important; 
+      transition: opacity var(--slide-trans-duration) ease-in-out, transform var(--slide-trans-duration) ease-in-out; 
+    }
+
+    /* EFEK TRANSISI SLIDE */
+    .trans-fade .bg-image { opacity: 0; }
+    .trans-fade .bg-image.active-slide { opacity: 1; }
+
+    .trans-zoom .bg-image { transform: scale(1.15); opacity: 0; }
+    .trans-zoom .bg-image.active-slide { transform: scale(1); opacity: 1; }
+
+    .trans-slide .bg-image { transform: translateX(100%); opacity: 1; }
+    .trans-slide .bg-image.active-slide { transform: translateX(0); opacity: 1; }
 
     .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; display: none; background: #000; }
     .video-container iframe { width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none; }
@@ -198,19 +308,19 @@
       align-items: center; justify-content: space-between; text-align: center; gap: 15px;
     }
     .video-popup-clock { 
-      font-size: 2.5rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
+      font-size: var(--font-size-clock); font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; 
       display: flex; align-items: center; padding-right: 5px;
     }
     .video-popup-date { padding-left: 5px; text-align: center; white-space: nowrap; }
     .video-popup-divider { width: 1px; height: 35px; background: rgba(255, 255, 255, 0.25); flex-shrink: 0; }
     
     .video-popup-center { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-    .video-popup-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-    .video-popup-address { font-size: 0.85rem; color: #cbd5e1; font-weight: 500; width: 100%; overflow: hidden; white-space: nowrap; position: relative; display: flex; margin-top: 2px; }
+    .video-popup-title { font-size: var(--font-size-masjid); font-weight: 800; color: var(--accent-color); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .video-popup-address { font-size: var(--font-size-alamat); color: #cbd5e1; font-weight: 500; width: 100%; overflow: hidden; white-space: nowrap; position: relative; display: flex; margin-top: 2px; }
     .video-popup-address-marquee { display: inline-block; padding-left: 100%; animation: videoAddressMarquee 15s linear infinite; white-space: nowrap; }
     @keyframes videoAddressMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* POPUP OVERLAY AZAN & IQOMAH */
+    /* OVERLAY AZAN & IQOMAH */
     .prayer-event-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
       background: #0f172a; color: #fff; display: none; flex-direction: column;
@@ -226,23 +336,44 @@
       display: none; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 35;
       background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 20px; padding: 12px 30px; color: #ffffff; box-shadow: 0 10px 35px rgba(0,0,0,0.6);
-      align-items: center; gap: 24px;
+      align-items: center; gap: 24px; transition: opacity 0.3s ease;
     }
-    .fs-popup-clock { font-size: 2.8rem; font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
+    .fs-popup-clock { font-size: var(--font-size-clock); font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; white-space: nowrap; display: flex; align-items: center; }
     .fs-popup-divider { width: 2px; height: 38px; background: rgba(255, 255, 255, 0.2); }
     .fs-prayer-box { display: flex; align-items: center; gap: 16px; }
     .fs-prayer-details { display: flex; flex-direction: column; justify-content: center; }
     .fs-prayer-name { font-size: 0.85rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; }
-    .fs-prayer-time { font-size: 1.8rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
+    .fs-prayer-time { font-size: var(--font-size-prayer); font-weight: 800; color: #ffffff; line-height: 1.1; }
     .fs-prayer-countdown {
       font-size: 1.1rem; font-weight: 800; color: #000; background: var(--accent-color);
       padding: 6px 14px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    /* WIDGET POJOK (UNTUK MODE POJOK / CORNER) */
+    .corner-widgets-container { display: none; }
+    
+    .corner-clock-box {
+      position: absolute; bottom: 25px; right: 25px; z-index: 35;
+      background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px; padding: 12px 22px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      text-align: right; display: flex; flex-direction: column; align-items: flex-end;
+    }
+    .corner-clock-time { font-size: var(--font-size-clock); font-weight: 800; color: #ffffff; line-height: 1; letter-spacing: -1px; }
+    .corner-clock-gregorian { font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin-top: 4px; }
+    .corner-clock-hijri { font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-top: 2px; }
+
+    .corner-prayer-box {
+      position: absolute; bottom: 25px; left: 25px; z-index: 35;
+      background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px; padding: 12px 22px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      display: flex; align-items: center; gap: 16px;
     }
 
     /* FOOTER JADWAL SHOLAT */
     .prayer-bar-wrapper {
       background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
       display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); flex-shrink: 0;
+      transition: all 0.5s ease-in-out;
     }
     .prayer-bar {
       display: grid; grid-template-columns: repeat(7, 1fr); padding: 0.35rem 0.8rem; gap: 0.4rem; align-items: center;
@@ -262,7 +393,7 @@
     #card-isya::after { background-color: var(--isya-color); }
 
     .prayer-name { font-size: 0.95rem; font-weight: 700; color: #475569; margin-bottom: 0.05rem; }
-    .prayer-time { font-size: 1.7rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; line-height: 1.1; }
+    .prayer-time { font-size: var(--font-size-prayer); font-weight: 800; color: #0f172a; letter-spacing: -0.5px; line-height: 1.1; }
     
     .prayer-countdown {
       font-size: 0.7rem; font-weight: 700; color: #ffffff; margin-top: 0.15rem;
@@ -273,8 +404,9 @@
     .prayer-item.active .prayer-name, .prayer-item.active .prayer-time { color: #ffffff; }
 
     .running-text-bar {
-      background: #0f172a; color: #fbbf24; font-weight: 700; font-size: 1.15rem; padding: 0.45rem 0;
+      background: #0f172a; color: #fbbf24; font-weight: 700; font-size: var(--font-size-running); padding: 0.45rem 0;
       overflow: hidden; white-space: nowrap; position: relative; z-index: 20; border-top: 2px solid var(--accent-color); display: flex; align-items: center; width: 100%; flex-shrink: 0;
+      transition: all 0.5s ease-in-out;
     }
     .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 45s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
@@ -294,10 +426,15 @@
 
     /* FULLSCREEN MODE RULES */
     #mode-fullscreen:checked ~ .display-container header,
-    #mode-fullscreen:checked ~ .display-container .prayer-bar-wrapper,
-    #mode-fullscreen:checked ~ .display-container .running-text-bar { display: none !important; }
+    #mode-fullscreen:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
+
+    /* CORNER MODE RULES (MODE POJOK BARU) */
+    #mode-corner:checked ~ .display-container header,
+    #mode-corner:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
+    #mode-corner:checked ~ .display-container .corner-widgets-container { display: block !important; }
+    #mode-corner:checked ~ .display-container .bg-image { object-fit: cover; }
 
     /* MODE SIDEBAR RULES */
     #mode-sidebar:checked ~ .display-container .prayer-bar-wrapper {
@@ -320,29 +457,40 @@
     #mode-sidebar:checked ~ .display-container .prayer-item {
       width: 100% !important;
       display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      padding: 0.4rem 0.6rem !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: center !important;
+      padding: 0.5rem 0.8rem !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item::after {
       left: 0; top: 15%; bottom: 15%; right: auto; width: 3px; height: 70%;
     }
     #mode-sidebar:checked ~ .display-container .prayer-item.active {
       transform: translateX(4px) !important;
-      padding: 0.5rem 0.6rem !important;
+      padding: 0.6rem 0.8rem !important;
     }
     #mode-sidebar:checked ~ .display-container .prayer-name {
-      font-size: 0.9rem !important;
-      margin-bottom: 0 !important;
+      font-size: 0.95rem !important;
+      margin-bottom: 0.15rem !important;
       color: #475569 !important;
+      font-weight: 800 !important;
+    }
+    /* COUNTDOWN DIBAWAH NAMA SHOLAT KETIKA SIDEBAR */
+    #mode-sidebar:checked ~ .display-container .prayer-item .sidebar-item-bottom {
+      display: flex !important;
+      width: 100% !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-top: 2px;
     }
     #mode-sidebar:checked ~ .display-container .prayer-time {
-      font-size: 1.4rem !important;
+      font-size: calc(var(--font-size-prayer) * 0.85) !important;
       color: #0f172a !important;
     }
-    #mode-sidebar:checked ~ .display-container .bg-blur,
-    #mode-sidebar:checked ~ .display-container .bg-image { opacity: 1 !important; }
-    #mode-sidebar:checked ~ .display-container .bg-image { object-fit: contain !important; }
+    #mode-sidebar:checked ~ .display-container .prayer-countdown {
+      margin-top: 0 !important;
+    }
+    #mode-sidebar:checked ~ .display-container .bg-image { opacity: 1 !important; object-fit: contain !important; }
   </style>
 </head>
 <body>
@@ -352,142 +500,249 @@
   <input type="radio" id="mode-video" name="display-mode" class="mode-switch">
   <input type="radio" id="mode-fullscreen" name="display-mode" class="mode-switch">
   <input type="radio" id="mode-sidebar" name="display-mode" class="mode-switch">
+  <input type="radio" id="mode-corner" name="display-mode" class="mode-switch">
 
-  <!-- SLIDE MENU PENGATURAN -->
+  <!-- SLIDE MENU PENGATURAN BERGAYA TV -->
   <div class="settings-modal-overlay" id="settings-modal-overlay">
-    <div class="settings-modal">
-      <div class="modal-header">
-        <div class="modal-header-left">
-          <h3>Pengaturan Display</h3>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="modal-header-hint">Tekan Kiri (&larr;) untuk Kembali</span>
-          <button class="btn-close-modal" id="btn-close-modal" title="Tutup Pengaturan">
-            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
-        </div>
+    <div class="tv-menu-container">
+      <div class="tv-menu-header">
+        <h3>Pengaturan Display TV</h3>
+        <span class="tv-menu-hint">&larr; Kiri / Back: Kembali &bull; &rarr; Kanan: Edit Setting</span>
       </div>
 
-      <div class="modal-body" id="menu-list">
-
-        <!-- 1. MODE FULLSCREEN -->
-        <div class="menu-item" data-menu="fullscreen">
-          <span class="menu-item-label">Layar Penuh (Fullscreen)</span>
-          <span class="menu-item-value" id="val-fullscreen">Non-Aktif</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-fullscreen">
-          <button class="btn-action" id="btn-toggle-fs-modal">Beralih Fullscreen</button>
-        </div>
-
-        <!-- 2. WARNA TAMPILAN -->
-        <div class="menu-item" data-menu="theme">
-          <span class="menu-item-label">Tema Warna Tampilan</span>
-          <span class="menu-item-value" id="val-theme">Amber Gold</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-theme">
-          <select id="input-theme">
-            <option value="amber">Amber Gold (Default)</option>
-            <option value="emerald">Emerald Green</option>
-            <option value="ocean">Ocean Blue</option>
-            <option value="crimson">Crimson Red</option>
-            <option value="purple">Royal Purple</option>
-          </select>
+      <div class="tv-menu-body">
+        <!-- SISI KIRI: KATEGORI MENU -->
+        <div class="tv-categories" id="tv-categories">
+          <div class="cat-item active focused" data-cat="masjid">Informasi Masjid</div>
+          <div class="cat-item" data-cat="lokasi">Lokasi & Jadwal</div>
+          <div class="cat-item" data-cat="media">Media & Banner</div>
+          <div class="cat-item" data-cat="tampilan">Tampilan & Font</div>
+          <div class="cat-item" data-cat="sistem">Mode & Akses</div>
         </div>
 
-        <!-- 3. NAMA MASJID -->
-        <div class="menu-item" data-menu="masjid">
-          <span class="menu-item-label">Nama Masjid</span>
-          <span class="menu-item-value" id="val-masjid">Masjid Al Jihad</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-masjid">
-          <input type="text" id="input-masjid" placeholder="Nama Masjid">
-        </div>
+        <!-- SISI KANAN: ISI PENGATURAN -->
+        <div class="tv-content" id="tv-content">
 
-        <!-- 4. ALAMAT MASJID -->
-        <div class="menu-item" data-menu="alamat">
-          <span class="menu-item-label">Alamat Masjid</span>
-          <span class="menu-item-value" id="val-alamat">Jl. Hibah Ibrahim...</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-alamat">
-          <textarea id="input-alamat" rows="2" placeholder="Alamat lengkap"></textarea>
-        </div>
+          <!-- KATEGORI 1: MASJID -->
+          <div class="cat-content" data-cat-content="masjid">
+            <div class="tv-setting-row" data-menu="masjid">
+              <span class="row-label">Nama Masjid</span>
+              <span class="row-value" id="val-masjid">Masjid Al Jihad</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-masjid">
+              <input type="text" id="input-masjid" placeholder="Nama Masjid">
+            </div>
 
-        <!-- 5. LOKASI KOTA (KEMENAG) -->
-        <div class="menu-item" data-menu="kota">
-          <span class="menu-item-label">Lokasi Kota / Kab (KEMENAG)</span>
-          <span class="menu-item-value" id="val-kota">Kota Jambi</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-kota">
-          <div class="city-search-container">
-            <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Jambi)" autocomplete="off">
-            <input type="hidden" id="select-kota-id">
-            <div class="city-suggestions" id="city-suggestions"></div>
+            <div class="tv-setting-row" data-menu="alamat">
+              <span class="row-label">Alamat Masjid</span>
+              <span class="row-value" id="val-alamat">Jl. Hibah Ibrahim...</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-alamat">
+              <textarea id="input-alamat" rows="2" placeholder="Alamat lengkap"></textarea>
+            </div>
+
+            <div class="tv-setting-row" data-menu="runningtext">
+              <span class="row-label">Running Text</span>
+              <span class="row-value" id="val-runningtext">Pesan informasi</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-runningtext">
+              <textarea id="input-running-text" rows="2" placeholder="Informasi running text"></textarea>
+            </div>
           </div>
-        </div>
 
-        <!-- 6. DURASI IQOMAH -->
-        <div class="menu-item" data-menu="iqomah">
-          <span class="menu-item-label">Durasi Jeda Iqomah (Menit)</span>
-          <span class="menu-item-value" id="val-iqomah">10 Menit</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-iqomah">
-          <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
-        </div>
+          <!-- KATEGORI 2: LOKASI & JADWAL -->
+          <div class="cat-content" data-cat-content="lokasi" style="display:none;">
+            <div class="tv-setting-row" data-menu="kota">
+              <span class="row-label">Lokasi Kota / Kab (KEMENAG)</span>
+              <span class="row-value" id="val-kota">Kota Jambi</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-kota">
+              <div class="city-search-container">
+                <input type="text" id="input-search-kota" placeholder="Ketik nama kota... (mis: Jambi)" autocomplete="off">
+                <input type="hidden" id="select-kota-id">
+                <div class="city-suggestions" id="city-suggestions"></div>
+              </div>
+            </div>
 
-        <!-- 7. BANNER UTAMA -->
-        <div class="menu-item" data-menu="mainbanner">
-          <span class="menu-item-label">URL Media Utama / Gambar</span>
-          <span class="menu-item-value" id="val-mainbanner">Default Islami</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-mainbanner">
-          <input type="text" id="input-main-banner" placeholder="URL Gambar / Kosongkan untuk Default Islami">
-        </div>
+            <div class="tv-setting-row" data-menu="iqomah">
+              <span class="row-label">Durasi Jeda Iqomah (Menit)</span>
+              <span class="row-value" id="val-iqomah">10 Menit</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-iqomah">
+              <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
+            </div>
+          </div>
 
-        <!-- 8. SLIDESHOW / LINK MODE SIDEBAR & FULLSCREEN -->
-        <div class="menu-item" data-menu="slideshow">
-          <span class="menu-item-label">Link Slideshow (Sidebar/FS)</span>
-          <span class="menu-item-value" id="val-slideshow">Default Islami</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-slideshow">
-          <textarea id="input-slideshow-urls" rows="3" placeholder="Masukkan URL gambar / YouTube / Google Drive, pisahkan dengan baris baru (Enter)"></textarea>
-        </div>
+          <!-- KATEGORI 3: MEDIA & BANNER -->
+          <div class="cat-content" data-cat-content="media" style="display:none;">
+            <div class="tv-setting-row" data-menu="mainbanner">
+              <span class="row-label">URL Media Utama / Gambar</span>
+              <span class="row-value" id="val-mainbanner">Default Islami</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-mainbanner">
+              <input type="text" id="input-main-banner" placeholder="URL Gambar / Kosongkan untuk Default">
+            </div>
 
-        <!-- 9. YOUTUBE URL -->
-        <div class="menu-item" data-menu="youtube">
-          <span class="menu-item-label">URL YouTube Mode Video</span>
-          <span class="menu-item-value" id="val-youtube">YouTube Stream</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-youtube">
-          <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
-        </div>
+            <div class="tv-setting-row" data-menu="slideshow">
+              <span class="row-label">Link Slideshow (Sidebar/FS)</span>
+              <span class="row-value" id="val-slideshow">Default Islami</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-slideshow">
+              <textarea id="input-slideshow-urls" rows="3" placeholder="Masukkan URL gambar / YouTube / Google Drive, pisahkan dengan baris baru (Enter)"></textarea>
+            </div>
 
-        <!-- 10. RUNNING TEXT -->
-        <div class="menu-item" data-menu="runningtext">
-          <span class="menu-item-label">Running Text</span>
-          <span class="menu-item-value" id="val-runningtext">Pesan informasi</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-runningtext">
-          <textarea id="input-running-text" rows="2" placeholder="Informasi running text"></textarea>
-        </div>
+            <div class="tv-setting-row" data-menu="slidetimer">
+              <span class="row-label">Durasi Slide (Mode Banner)</span>
+              <span class="row-value" id="val-slidetimer">5 Detik</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-slidetimer">
+              <input type="number" id="input-slide-timer" min="1" max="300" placeholder="5">
+            </div>
 
-        <!-- 11. INSTAL TV APP -->
-        <div class="menu-item" data-menu="install">
-          <span class="menu-item-label">Instal Aplikasi Google TV</span>
-          <span class="menu-item-value" id="val-install">Instal App</span>
-        </div>
-        <div class="menu-edit-panel" id="panel-install">
-          <button class="btn-action" id="btn-install-app">Instal Ke Layar Utama Google TV</button>
-        </div>
+            <div class="tv-setting-row" data-menu="slidetimerfs">
+              <span class="row-label">Durasi Slide (Fullscreen Banner)</span>
+              <span class="row-value" id="val-slidetimerfs">5 Detik</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-slidetimerfs">
+              <input type="number" id="input-slide-timer-fs" min="1" max="300" placeholder="5">
+            </div>
 
+            <div class="tv-setting-row" data-menu="youtube">
+              <span class="row-label">URL YouTube Mode Video</span>
+              <span class="row-value" id="val-youtube">YouTube Stream</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-youtube">
+              <input type="text" id="input-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+          </div>
+
+          <!-- KATEGORI 4: TAMPILAN & FONT -->
+          <div class="cat-content" data-cat-content="tampilan" style="display:none;">
+            <div class="tv-setting-row" data-menu="theme">
+              <span class="row-label">Tema Warna Tampilan</span>
+              <span class="row-value" id="val-theme">Amber Gold</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-theme">
+              <select id="input-theme">
+                <option value="amber">Amber Gold (Default)</option>
+                <option value="emerald">Emerald Green</option>
+                <option value="ocean">Ocean Blue</option>
+                <option value="crimson">Crimson Red</option>
+                <option value="purple">Royal Purple</option>
+              </select>
+            </div>
+
+            <div class="tv-setting-row" data-menu="slidetransition">
+              <span class="row-label">Transisi Slide Gambar</span>
+              <span class="row-value" id="val-slidetransition">Fade</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-slidetransition">
+              <select id="input-slide-transition">
+                <option value="fade">Fade In/Out</option>
+                <option value="zoom">Zooming</option>
+                <option value="slide">Sliding</option>
+              </select>
+            </div>
+
+            <div class="tv-setting-row" data-menu="hiderunning">
+              <span class="row-label">Tampilkan Running Text</span>
+              <span class="row-value" id="val-hiderunning">Tampilkan</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-hiderunning">
+              <select id="input-hide-running-text">
+                <option value="false">Tampilkan di Semua Mode</option>
+                <option value="true">Sembunyikan Running Text</option>
+              </select>
+            </div>
+
+            <div class="tv-setting-row" data-menu="hidefspopup">
+              <span class="row-label">Popup Mode Fullscreen</span>
+              <span class="row-value" id="val-hidefspopup">Tampilkan</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-hidefspopup">
+              <select id="input-hide-fs-popup">
+                <option value="false">Tampilkan Popup</option>
+                <option value="true">Sembunyikan Popup</option>
+              </select>
+            </div>
+
+            <!-- MENU UTAMA UKURAN FONT -->
+            <div class="tv-setting-row" data-menu="fontsizes">
+              <span class="row-label">Ukuran Font Tampilan</span>
+              <span class="row-value" id="val-fontsizes">Atur Font</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-fontsizes" style="display:none; flex-direction:column; gap:10px;">
+              <div class="tv-setting-row sub-font-row" data-font="font-clock">
+                <span class="row-label" style="font-size:0.85rem;">Ukuran Jam (rem)</span>
+                <span class="row-value" id="val-sub-clock">3.2</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-clock">
+                <input type="number" id="input-font-clock" step="0.1" min="1" max="10" value="3.2">
+              </div>
+
+              <div class="tv-setting-row sub-font-row" data-font="font-masjid">
+                <span class="row-label" style="font-size:0.85rem;">Nama Masjid (rem)</span>
+                <span class="row-value" id="val-sub-masjid">1.5</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-masjid">
+                <input type="number" id="input-font-masjid" step="0.1" min="0.8" max="5" value="1.5">
+              </div>
+
+              <div class="tv-setting-row sub-font-row" data-font="font-alamat">
+                <span class="row-label" style="font-size:0.85rem;">Alamat Masjid (rem)</span>
+                <span class="row-value" id="val-sub-alamat">0.95</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-alamat">
+                <input type="number" id="input-font-alamat" step="0.1" min="0.5" max="3" value="0.95">
+              </div>
+
+              <div class="tv-setting-row sub-font-row" data-font="font-date">
+                <span class="row-label" style="font-size:0.85rem;">Tanggal (rem)</span>
+                <span class="row-value" id="val-sub-date">1.35</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-date">
+                <input type="number" id="input-font-date" step="0.1" min="0.5" max="3" value="1.35">
+              </div>
+
+              <div class="tv-setting-row sub-font-row" data-font="font-prayer">
+                <span class="row-label" style="font-size:0.85rem;">Jadwal Shalat (rem)</span>
+                <span class="row-value" id="val-sub-prayer">1.7</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-prayer">
+                <input type="number" id="input-font-prayer" step="0.1" min="0.8" max="4" value="1.7">
+              </div>
+
+              <div class="tv-setting-row sub-font-row" data-font="font-running">
+                <span class="row-label" style="font-size:0.85rem;">Running Text (rem)</span>
+                <span class="row-value" id="val-sub-running">1.15</span>
+              </div>
+              <div class="tv-edit-panel" id="panel-sub-font-running">
+                <input type="number" id="input-font-running" step="0.1" min="0.5" max="3" value="1.15">
+              </div>
+            </div>
+          </div>
+
+          <!-- KATEGORI 5: SISTEM -->
+          <div class="cat-content" data-cat-content="sistem" style="display:none;">
+            <div class="tv-setting-row" data-menu="fullscreen">
+              <span class="row-label">Layar Penuh (Fullscreen)</span>
+              <span class="row-value" id="val-fullscreen">Non-Aktif</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-fullscreen">
+              <button class="btn-action" id="btn-toggle-fs-modal">Beralih Fullscreen</button>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
 
   <!-- DISPLAY CONTAINER -->
-  <div class="display-container" id="display-container">
+  <div class="display-container trans-fade" id="display-container">
     
-    <!-- TOMBOL KONTROL DI SISI KANAN -->
-    <div class="controls-group">
+    <!-- TOMBOL KONTROL DI SISI KANAN WITH AUTO-HIDE -->
+    <div class="controls-group" id="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
         <svg id="icon-fs-enter" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         <svg id="icon-fs-exit" viewBox="0 0 24 24" style="display:none;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
@@ -516,8 +771,7 @@
     <div class="main-wrapper" id="main-wrapper">
       <section class="center-banner">
         <div class="banner-inner">
-          <img src="" alt="Blur Background" class="bg-blur" id="bg-blur" />
-          <img src="" alt="Latar Display" class="bg-image" id="bg-image" />
+          <img src="" alt="Latar Display" class="bg-image active-slide" id="bg-image" />
           
           <div class="video-container" id="video-container">
             <iframe id="youtube-iframe" src="" allow="autoplay; fullscreen"></iframe>
@@ -548,7 +802,7 @@
           </div>
 
           <!-- POPUP FOOTER FULLSCREEN -->
-          <div class="fullscreen-footer-popup">
+          <div class="fullscreen-footer-popup" id="fullscreen-footer-popup">
             <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
             <div class="fs-popup-divider"></div>
             <div class="fs-prayer-box">
@@ -560,6 +814,24 @@
             </div>
           </div>
 
+          <!-- WIDGET MODE POJOK / CORNER -->
+          <div class="corner-widgets-container">
+            <!-- SUDUT KANAN BAWAH: JAM & TANGGAL -->
+            <div class="corner-clock-box">
+              <div class="corner-clock-time" id="corner-clock">00<span class="colon">:</span>00</div>
+              <div class="corner-clock-gregorian" id="corner-gregorian">--</div>
+              <div class="corner-clock-hijri" id="corner-hijri">-- ---------- ---- H</div>
+            </div>
+            <!-- SUDUT KIRI BAWAH: SHOLAT SELANJUTNYA & COUNTDOWN -->
+            <div class="corner-prayer-box">
+              <div class="fs-prayer-details">
+                <div class="fs-prayer-name" id="corner-next-name">--</div>
+                <div class="fs-prayer-time" id="corner-next-time">--:--</div>
+              </div>
+              <div class="fs-prayer-countdown" id="corner-next-countdown">-00:00:00</div>
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
@@ -567,13 +839,48 @@
     <!-- BAR JADWAL SHOLAT -->
     <div class="prayer-bar-wrapper" id="prayer-bar-wrapper">
       <footer class="prayer-bar" id="prayer-bar">
-        <div class="prayer-item" id="card-imsak"><div class="prayer-name">Imsak</div><div class="prayer-time" id="time-imsak">--:--</div></div>
-        <div class="prayer-item" id="card-subuh"><div class="prayer-name">Subuh</div><div class="prayer-time" id="time-subuh">--:--</div></div>
-        <div class="prayer-item" id="card-terbit"><div class="prayer-name">Syuruq</div><div class="prayer-time" id="time-terbit">--:--</div></div>
-        <div class="prayer-item" id="card-dzuhur"><div class="prayer-name">Dzuhur</div><div class="prayer-time" id="time-dzuhur">--:--</div></div>
-        <div class="prayer-item" id="card-ashar"><div class="prayer-name">Ashar</div><div class="prayer-time" id="time-ashar">--:--</div></div>
-        <div class="prayer-item" id="card-maghrib"><div class="prayer-name">Maghrib</div><div class="prayer-time" id="time-maghrib">--:--</div></div>
-        <div class="prayer-item" id="card-isya"><div class="prayer-name">Isya'</div><div class="prayer-time" id="time-isya">--:--</div></div>
+        <div class="prayer-item" id="card-imsak">
+          <div class="prayer-name">Imsak</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-imsak">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-subuh">
+          <div class="prayer-name">Subuh</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-subuh">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-terbit">
+          <div class="prayer-name">Syuruq</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-terbit">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-dzuhur">
+          <div class="prayer-name">Dzuhur</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-dzuhur">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-ashar">
+          <div class="prayer-name">Ashar</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-ashar">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-maghrib">
+          <div class="prayer-name">Maghrib</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-maghrib">--:--</div>
+          </div>
+        </div>
+        <div class="prayer-item" id="card-isya">
+          <div class="prayer-name">Isya'</div>
+          <div class="sidebar-item-bottom">
+            <div class="prayer-time" id="time-isya">--:--</div>
+          </div>
+        </div>
       </footer>
     </div>
 
@@ -587,7 +894,7 @@
     let currentSchedule = null;
     let lastFetchedDate = null;
     let allCities = [];
-    const modes = ['mode-main', 'mode-video', 'mode-fullscreen', 'mode-sidebar'];
+    const modes = ['mode-main', 'mode-video', 'mode-fullscreen', 'mode-sidebar', 'mode-corner'];
     let currentModeIdx = 0;
 
     let slideShowTimer = null;
@@ -595,26 +902,32 @@
     let slideMediaList = [];
     let mainBannerMedia = "";
     let slideTimerSec = 5;
+    let slideTimerFsSec = 5;
+
+    /* AUTO HIDE TOMBOL KONTROL */
+    let hideControlsTimer = null;
+    const controlsGroup = document.getElementById('controls-group');
+
+    function showControlsTemporarily() {
+      if (controlsGroup) {
+        controlsGroup.classList.remove('hidden-controls');
+        clearTimeout(hideControlsTimer);
+        hideControlsTimer = setTimeout(() => {
+          if (!modalOverlay.classList.contains('open')) {
+            controlsGroup.classList.add('hidden-controls');
+          }
+        }, 3500);
+      }
+    }
+
+    window.addEventListener('mousemove', showControlsTemporarily);
+    window.addEventListener('touchstart', showControlsTemporarily);
 
     const DEFAULT_ISLAMIC_SLIDES = [
       "https://images.unsplash.com/photo-1564769625615-f50b0ef093a5?q=80&w=1600&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1600&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1590076215330-e160e209844f?q=80&w=1600&auto=format&fit=crop"
     ];
-
-    const DEFAULT_SETTINGS = {
-      masjid: "Masjid Al Jihad",
-      alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
-      cityId: "1609",
-      cityName: "KOTA JAMBI",
-      iqomahTimer: 10,
-      theme: "amber",
-      mainBanner: "",
-      slidesText: "",
-      youtubeUrl: "https://www.youtube.com/watch?v=live_stream",
-      slideTimer: 5,
-      runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan"
-    };
 
     const THEMES = {
       amber: { accent: '#f59e0b', hover: '#d97706', glow: 'rgba(245, 158, 11, 0.4)' },
@@ -637,7 +950,6 @@
     const toggleBtn = document.getElementById('btn-toggle-settings');
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const btnToggleFsModal = document.getElementById('btn-toggle-fs-modal');
-    const btnCloseModal = document.getElementById('btn-close-modal');
 
     let isMainScreenFocused = true;
     let mainFocusIdx = 0;
@@ -654,67 +966,129 @@
     }
 
     toggleBtn.addEventListener('click', () => openSettingsModal());
-    btnCloseModal.addEventListener('click', () => closeSettingsModal());
+
+    let navState = 'category';
+    let selectedCatIdx = 0;
+    let selectedItemIdx = 0;
+    let selectedSubItemIdx = 0;
+    let activeEditingRow = null;
+    let activeSubEditingRow = null;
+
+    const categoryElements = Array.from(document.querySelectorAll('.cat-item'));
 
     function openSettingsModal() {
       isMainScreenFocused = false;
       modalOverlay.classList.add('open');
-      selectedMenuIdx = 0;
-      updateMenuNavState();
+      if (controlsGroup) controlsGroup.classList.remove('hidden-controls');
+      clearTimeout(hideControlsTimer);
+      navState = 'category';
+      selectedCatIdx = 0;
+      selectedItemIdx = 0;
+      selectedSubItemIdx = 0;
+      updateTvMenuFocus();
     }
 
     function closeSettingsModal() {
       modalOverlay.classList.remove('open');
-      if (activeEditingMenu) {
-        activeEditingMenu.classList.remove('editing');
-        activeEditingMenu = null;
+      if (activeEditingRow) {
+        activeEditingRow.classList.remove('editing');
+        activeEditingRow = null;
       }
+      if (activeSubEditingRow) {
+        activeSubEditingRow.classList.remove('editing');
+        activeSubEditingRow = null;
+      }
+      const fontPanel = document.getElementById('panel-fontsizes');
+      if (fontPanel) fontPanel.style.display = 'none';
+
       closeCitySuggestions();
       isMainScreenFocused = true;
       updateMainFocusState();
+      showControlsTemporarily();
     }
 
-    let selectedMenuIdx = 0;
-    let activeEditingMenu = null;
-    const menuItems = Array.from(document.querySelectorAll('.menu-item'));
+    function getActiveCategoryRows() {
+      const activeCat = categoryElements[selectedCatIdx].dataset.cat;
+      const contentContainer = document.querySelector(`.cat-content[data-cat-content="${activeCat}"]`);
+      return Array.from(contentContainer.querySelectorAll(':scope > .tv-setting-row'));
+    }
 
-    function updateMenuNavState() {
-      menuItems.forEach((item, idx) => {
-        if (idx === selectedMenuIdx) {
-          item.classList.add('nav-selected');
-          item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    function getActiveSubFontRows() {
+      const fontPanel = document.getElementById('panel-fontsizes');
+      return Array.from(fontPanel.querySelectorAll('.sub-font-row'));
+    }
+
+    function updateTvMenuFocus() {
+      categoryElements.forEach((cat, idx) => {
+        if (idx === selectedCatIdx) {
+          cat.classList.add('active');
+          if (navState === 'category') cat.classList.add('focused');
+          else cat.classList.remove('focused');
         } else {
-          item.classList.remove('nav-selected');
+          cat.classList.remove('active', 'focused');
+        }
+      });
+
+      const activeCatKey = categoryElements[selectedCatIdx].dataset.cat;
+      document.querySelectorAll('.cat-content').forEach(content => {
+        if (content.dataset.catContent === activeCatKey) {
+          content.style.display = 'block';
+        } else {
+          content.style.display = 'none';
+        }
+      });
+
+      const currentRows = getActiveCategoryRows();
+      currentRows.forEach((row, idx) => {
+        if ((navState === 'items' || navState === 'sub-items') && idx === selectedItemIdx) {
+          row.classList.add('focused');
+          row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          row.classList.remove('focused');
+        }
+      });
+
+      const subRows = getActiveSubFontRows();
+      subRows.forEach((subRow, idx) => {
+        if (navState === 'sub-items' && idx === selectedSubItemIdx) {
+          subRow.classList.add('focused');
+          subRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          subRow.classList.remove('focused');
         }
       });
     }
 
-    menuItems.forEach((item, idx) => {
-      item.addEventListener('click', () => {
-        selectedMenuIdx = idx;
-        updateMenuNavState();
-        toggleMenuEdit(item);
+    categoryElements.forEach((cat, idx) => {
+      cat.addEventListener('click', () => {
+        selectedCatIdx = idx;
+        navState = 'items';
+        selectedItemIdx = 0;
+        updateTvMenuFocus();
       });
     });
 
-    function toggleMenuEdit(item) {
-      if (activeEditingMenu && activeEditingMenu !== item) {
-        activeEditingMenu.classList.remove('editing');
+    function toggleMenuEdit(row) {
+      if (activeEditingRow && activeEditingRow !== row) {
+        activeEditingRow.classList.remove('editing');
         closeCitySuggestions();
       }
-      if (item.classList.contains('editing')) {
-        item.classList.remove('editing');
-        activeEditingMenu = null;
+
+      if (row.classList.contains('editing')) {
+        row.classList.remove('editing');
+        activeEditingRow = null;
+        navState = 'items';
         closeCitySuggestions();
       } else {
-        item.classList.add('editing');
-        activeEditingMenu = item;
-        const panel = document.getElementById(`panel-${item.dataset.menu}`);
+        row.classList.add('editing');
+        activeEditingRow = row;
+        navState = 'editing';
+        const panel = document.getElementById(`panel-${row.dataset.menu}`);
         if (panel) {
           const input = panel.querySelector('input, select, textarea, button');
           if (input) {
             input.focus();
-            if (item.dataset.menu === 'kota') {
+            if (row.dataset.menu === 'kota') {
               input.dispatchEvent(new Event('input'));
             }
           }
@@ -722,32 +1096,26 @@
       }
     }
 
-    function saveCurrentSettings() {
-      const settings = {
-        masjid: document.getElementById('input-masjid').value,
-        alamat: document.getElementById('input-alamat').value,
-        cityId: document.getElementById('select-kota-id').value,
-        cityName: document.getElementById('input-search-kota').value,
-        iqomahTimer: document.getElementById('input-iqomah-timer').value,
-        theme: document.getElementById('input-theme').value,
-        mainBanner: document.getElementById('input-main-banner').value,
-        slidesText: document.getElementById('input-slideshow-urls').value,
-        youtubeUrl: document.getElementById('input-youtube-url').value,
-        runningText: document.getElementById('input-running-text').value
-      };
-      localStorage.setItem('display_masjid_settings', JSON.stringify(settings));
-      applySettings(settings);
-      if (settings.cityId) fetchPrayerTimes(settings.cityId);
-      updateMenuValuesDisplay();
-    }
-
-    ['input-masjid', 'input-alamat', 'select-kota-id', 'input-search-kota', 'input-iqomah-timer', 'input-theme', 'input-main-banner', 'input-slideshow-urls', 'input-youtube-url', 'input-running-text'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', saveCurrentSettings);
-        el.addEventListener('change', saveCurrentSettings);
+    function toggleSubFontEdit(subRow) {
+      if (activeSubEditingRow && activeSubEditingRow !== subRow) {
+        activeSubEditingRow.classList.remove('editing');
       }
-    });
+
+      if (subRow.classList.contains('editing')) {
+        subRow.classList.remove('editing');
+        activeSubEditingRow = null;
+        navState = 'sub-items';
+      } else {
+        subRow.classList.add('editing');
+        activeSubEditingRow = subRow;
+        navState = 'sub-editing';
+        const panel = document.getElementById(`panel-sub-${subRow.dataset.font}`);
+        if (panel) {
+          const input = panel.querySelector('input');
+          if (input) input.focus();
+        }
+      }
+    }
 
     function closeCitySuggestions() {
       const suggestionsBox = document.getElementById('city-suggestions');
@@ -768,69 +1136,46 @@
     }
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 's' || e.key === 'S' || e.key === 'Enter' || e.key === 'Select') {
-        if (modalOverlay.classList.contains('open')) {
-          if (activeEditingMenu && activeEditingMenu.dataset.menu === 'kota') {
-            const suggestionsBox = document.getElementById('city-suggestions');
-            const suggestionItems = Array.from(suggestionsBox.querySelectorAll('.city-suggestion-item'));
-            if (suggestionsBox.classList.contains('show') && suggestionItems.length > 0) {
-              if (citySuggestionIndex >= 0 && citySuggestionIndex < suggestionItems.length) {
-                suggestionItems[citySuggestionIndex].click();
-                return;
-              } else if (suggestionItems.length === 1) {
-                suggestionItems[0].click();
-                return;
-              }
-            }
-          }
-
-          if (!activeEditingMenu) {
-            if (menuItems[selectedMenuIdx].dataset.menu === 'install' || menuItems[selectedMenuIdx].dataset.menu === 'fullscreen') {
-              const panelBtn = document.getElementById(`panel-${menuItems[selectedMenuIdx].dataset.menu}`).querySelector('button');
-              if (panelBtn) panelBtn.click();
-            } else {
-              toggleMenuEdit(menuItems[selectedMenuIdx]);
-            }
-          } else {
-            activeEditingMenu.classList.remove('editing');
-            activeEditingMenu = null;
-            closeCitySuggestions();
-            updateMenuValuesDisplay();
-          }
-          return;
-        } else {
-          if (mainFocusIdx === 0) {
-            openSettingsModal();
-          } else {
-            toggleFullscreen();
-          }
-          return;
-        }
-      }
-
-      if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
-        if (modalOverlay.classList.contains('open')) {
-          if (activeEditingMenu && activeEditingMenu.dataset.menu === 'kota') {
-            const suggestionsBox = document.getElementById('city-suggestions');
-            if (suggestionsBox.classList.contains('show')) {
-              closeCitySuggestions();
-              return;
-            }
-          }
-          if (activeEditingMenu) {
-            activeEditingMenu.classList.remove('editing');
-            activeEditingMenu = null;
-            closeCitySuggestions();
-          } else {
-            closeSettingsModal();
-          }
-          return;
-        }
-      }
+      showControlsTemporarily();
+      const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
 
       if (modalOverlay.classList.contains('open')) {
-        if (activeEditingMenu) {
-          const currentPanel = document.getElementById(`panel-${activeEditingMenu.dataset.menu}`);
+
+        if (navState === 'editing' && activeEditingRow) {
+          if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
+            activeEditingRow.classList.remove('editing');
+            activeEditingRow = null;
+            navState = 'items';
+            closeCitySuggestions();
+            saveCurrentSettings();
+            updateTvMenuFocus();
+            return;
+          }
+
+          if (e.key === 'Enter' || e.key === 'Select') {
+            if (activeEditingRow.dataset.menu === 'kota') {
+              const suggestionsBox = document.getElementById('city-suggestions');
+              const suggestionItems = Array.from(suggestionsBox.querySelectorAll('.city-suggestion-item'));
+              if (suggestionsBox.classList.contains('show') && suggestionItems.length > 0) {
+                if (citySuggestionIndex >= 0 && citySuggestionIndex < suggestionItems.length) {
+                  suggestionItems[citySuggestionIndex].click();
+                  return;
+                } else if (suggestionItems.length === 1) {
+                  suggestionItems[0].click();
+                  return;
+                }
+              }
+            }
+            activeEditingRow.classList.remove('editing');
+            activeEditingRow = null;
+            navState = 'items';
+            closeCitySuggestions();
+            saveCurrentSettings();
+            updateTvMenuFocus();
+            return;
+          }
+
+          const currentPanel = document.getElementById(`panel-${activeEditingRow.dataset.menu}`);
           const selectEl = currentPanel.querySelector('select');
           const inputEl = currentPanel.querySelector('input[type="number"]');
           const citySearchEl = currentPanel.querySelector('#input-search-kota');
@@ -842,12 +1187,15 @@
             if (e.key === 'ArrowUp') selectEl.selectedIndex = (curIdx - 1 + optsLength) % optsLength;
             if (e.key === 'ArrowDown') selectEl.selectedIndex = (curIdx + 1) % optsLength;
             selectEl.dispatchEvent(new Event('change'));
+            saveCurrentSettings();
           } else if (inputEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
             e.preventDefault();
-            let val = parseInt(inputEl.value) || 10;
-            if (e.key === 'ArrowUp') inputEl.value = val + 1;
-            if (e.key === 'ArrowDown' && val > 1) inputEl.value = val - 1;
+            let step = parseFloat(inputEl.step) || 1;
+            let val = parseFloat(inputEl.value) || 0;
+            if (e.key === 'ArrowUp') inputEl.value = (val + step).toFixed(1);
+            if (e.key === 'ArrowDown' && val > step) inputEl.value = (val - step).toFixed(1);
             inputEl.dispatchEvent(new Event('input'));
+            saveCurrentSettings();
           } else if (citySearchEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
             e.preventDefault();
             const suggestionsBox = document.getElementById('city-suggestions');
@@ -864,33 +1212,152 @@
           return;
         }
 
+        if (navState === 'sub-editing' && activeSubEditingRow) {
+          if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack' || e.key === 'Enter' || e.key === 'Select') {
+            activeSubEditingRow.classList.remove('editing');
+            activeSubEditingRow = null;
+            navState = 'sub-items';
+            saveCurrentSettings();
+            updateTvMenuFocus();
+            return;
+          }
+
+          const currentPanel = document.getElementById(`panel-sub-${activeSubEditingRow.dataset.font}`);
+          const inputEl = currentPanel.querySelector('input[type="number"]');
+
+          if (inputEl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            let step = parseFloat(inputEl.step) || 0.1;
+            let val = parseFloat(inputEl.value) || 0;
+            if (e.key === 'ArrowUp') inputEl.value = (val + step).toFixed(1);
+            if (e.key === 'ArrowDown' && val > step) inputEl.value = (val - step).toFixed(1);
+            inputEl.dispatchEvent(new Event('input'));
+            saveCurrentSettings();
+          }
+          return;
+        }
+
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          selectedMenuIdx = (selectedMenuIdx - 1 + menuItems.length) % menuItems.length;
-          updateMenuNavState();
-        } else if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          selectedMenuIdx = (selectedMenuIdx + 1) % menuItems.length;
-          updateMenuNavState();
+          if (navState === 'category') {
+            selectedCatIdx = (selectedCatIdx - 1 + categoryElements.length) % categoryElements.length;
+          } else if (navState === 'items') {
+            const rows = getActiveCategoryRows();
+            selectedItemIdx = (selectedItemIdx - 1 + rows.length) % rows.length;
+          } else if (navState === 'sub-items') {
+            const subRows = getActiveSubFontRows();
+            selectedSubItemIdx = (selectedSubItemIdx - 1 + subRows.length) % subRows.length;
+          }
+          updateTvMenuFocus();
+          return;
         }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (navState === 'category') {
+            selectedCatIdx = (selectedCatIdx + 1) % categoryElements.length;
+          } else if (navState === 'items') {
+            const rows = getActiveCategoryRows();
+            selectedItemIdx = (selectedItemIdx + 1) % rows.length;
+          } else if (navState === 'sub-items') {
+            const subRows = getActiveSubFontRows();
+            selectedSubItemIdx = (selectedSubItemIdx + 1) % subRows.length;
+          }
+          updateTvMenuFocus();
+          return;
+        }
+
+        if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === 'Select') {
+          e.preventDefault();
+          if (navState === 'category') {
+            navState = 'items';
+            selectedItemIdx = 0;
+            updateTvMenuFocus();
+          } else if (navState === 'items') {
+            const rows = getActiveCategoryRows();
+            const targetRow = rows[selectedItemIdx];
+            if (targetRow.dataset.menu === 'fullscreen') {
+              const panelBtn = document.getElementById('panel-fullscreen').querySelector('button');
+              if (panelBtn) panelBtn.click();
+            } else if (targetRow.dataset.menu === 'fontsizes') {
+              const fontPanel = document.getElementById('panel-fontsizes');
+              fontPanel.style.display = 'flex';
+              navState = 'sub-items';
+              selectedSubItemIdx = 0;
+              updateTvMenuFocus();
+            } else {
+              toggleMenuEdit(targetRow);
+            }
+          } else if (navState === 'sub-items') {
+            const subRows = getActiveSubFontRows();
+            const targetSubRow = subRows[selectedSubItemIdx];
+            toggleSubFontEdit(targetSubRow);
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowLeft' || e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
+          e.preventDefault();
+          if (navState === 'sub-items') {
+            const fontPanel = document.getElementById('panel-fontsizes');
+            fontPanel.style.display = 'none';
+            navState = 'items';
+            updateTvMenuFocus();
+          } else if (navState === 'items') {
+            navState = 'category';
+            updateTvMenuFocus();
+          } else if (navState === 'category') {
+            closeSettingsModal();
+          }
+          return;
+        }
+
         return;
       }
 
-      if (isMainScreenFocused) {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          mainFocusIdx = mainFocusIdx === 0 ? 1 : 0;
-          updateMainFocusState();
-        } else if (e.key === 'ArrowRight' || e.key === 'MediaFastForward') {
-          currentModeIdx = (currentModeIdx + 1) % modes.length;
-          document.getElementById(modes[currentModeIdx]).checked = true;
-          handleModeChange();
-        } else if (e.key === 'ArrowLeft' || e.key === 'MediaRewind') {
-          currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
-          document.getElementById(modes[currentModeIdx]).checked = true;
-          handleModeChange();
+      if (!isTyping) {
+        if (e.key === 's' || e.key === 'S') {
+          openSettingsModal();
+          return;
+        }
+
+        if (e.key === 'Enter' || e.key === 'Select') {
+          if (mainFocusIdx === 0) {
+            openSettingsModal();
+          } else {
+            toggleFullscreen();
+          }
+          return;
+        }
+
+        if (isMainScreenFocused) {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            mainFocusIdx = mainFocusIdx === 0 ? 1 : 0;
+            updateMainFocusState();
+          } else if (e.key === 'ArrowRight' || e.key === 'MediaFastForward') {
+            currentModeIdx = (currentModeIdx + 1) % modes.length;
+            document.getElementById(modes[currentModeIdx]).checked = true;
+            handleModeChange();
+            saveCurrentSettings();
+          } else if (e.key === 'ArrowLeft' || e.key === 'MediaRewind') {
+            currentModeIdx = (currentModeIdx - 1 + modes.length) % modes.length;
+            document.getElementById(modes[currentModeIdx]).checked = true;
+            handleModeChange();
+            saveCurrentSettings();
+          }
         }
       }
+    });
+
+    document.querySelectorAll('.tv-edit-panel input, .tv-edit-panel select, .tv-edit-panel textarea').forEach(elem => {
+      elem.addEventListener('change', () => {
+        saveCurrentSettings();
+        updateMenuValuesDisplay();
+      });
+      elem.addEventListener('input', () => {
+        updateMenuValuesDisplay();
+      });
     });
 
     function toggleFullscreen() {
@@ -909,30 +1376,6 @@
       document.getElementById('val-fullscreen').textContent = isFS ? "Aktif" : "Non-Aktif";
       document.getElementById('icon-fs-enter').style.display = isFS ? 'none' : 'block';
       document.getElementById('icon-fs-exit').style.display = isFS ? 'block' : 'none';
-    });
-
-    let deferredPrompt;
-    const btnInstallApp = document.getElementById('btn-install-app');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      btnInstallApp.disabled = false;
-      document.getElementById('val-install').textContent = "Siap Diinstal";
-    });
-
-    btnInstallApp.addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          document.getElementById('val-install').textContent = "Terinstal";
-          btnInstallApp.disabled = true;
-        }
-        deferredPrompt = null;
-      } else {
-        alert("Aplikasi ini sudah terinstal atau gunakan menu browser TV Anda (titik tiga) -> Pilih 'Tambahkan ke Layar Utama'.");
-      }
     });
 
     function convertGoogleDriveUrl(url) {
@@ -996,7 +1439,7 @@
         if (slideShowTimer) clearInterval(slideShowTimer);
         const videoUrl = document.getElementById('input-youtube-url').value || DEFAULT_SETTINGS.youtubeUrl;
         displayMedia({ type: 'youtube', url: convertYoutubeEmbedUrl(videoUrl) });
-      } else if (activeMode === 'mode-sidebar' || activeMode === 'mode-fullscreen') {
+      } else if (activeMode === 'mode-sidebar' || activeMode === 'mode-fullscreen' || activeMode === 'mode-corner') {
         startSlideShow();
       }
     }
@@ -1009,48 +1452,39 @@
       currentSlideIdx = 0;
       displayMedia(slideMediaList[currentSlideIdx]);
 
+      const activeMode = modes[currentModeIdx];
+      const currentInterval = (activeMode === 'mode-fullscreen' || activeMode === 'mode-corner') ? slideTimerFsSec : slideTimerSec;
+
       if (slideMediaList.length > 1) {
         slideShowTimer = setInterval(() => {
           currentSlideIdx = (currentSlideIdx + 1) % slideMediaList.length;
           displayMedia(slideMediaList[currentSlideIdx]);
-        }, slideTimerSec * 1000);
+        }, currentInterval * 1000);
       }
     }
 
     function displayMedia(mediaObj) {
       if (!mediaObj || !mediaObj.url) return;
       const bgImg = document.getElementById('bg-image');
-      const bgBlur = document.getElementById('bg-blur');
       const videoContainer = document.getElementById('video-container');
       const youtubeIframe = document.getElementById('youtube-iframe');
 
       if (mediaObj.type === 'youtube') {
+        bgImg.classList.remove('active-slide');
         bgImg.style.opacity = '0';
-        bgBlur.style.opacity = '0';
         videoContainer.style.display = 'block';
         if (youtubeIframe.src !== mediaObj.url) youtubeIframe.src = mediaObj.url;
       } else {
         videoContainer.style.display = 'none';
         youtubeIframe.src = '';
-        bgImg.style.opacity = '0.3';
-        bgBlur.style.opacity = '0.3';
+        
+        bgImg.classList.remove('active-slide');
 
         setTimeout(() => {
           bgImg.src = mediaObj.url;
-          bgBlur.src = mediaObj.url;
-          bgImg.style.opacity = '1';
-          bgBlur.style.opacity = '1';
-        }, 200);
+          bgImg.classList.add('active-slide');
+        }, 100);
       }
-    }
-
-    function getStoredSettings() {
-      const saved = localStorage.getItem('display_masjid_settings');
-      if (saved) {
-        try { return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }; }
-        catch (e) { return DEFAULT_SETTINGS; }
-      }
-      return DEFAULT_SETTINGS;
     }
 
     function updateMenuValuesDisplay() {
@@ -1061,8 +1495,36 @@
       document.getElementById('val-theme').textContent = document.getElementById('input-theme').options[document.getElementById('input-theme').selectedIndex].text;
       document.getElementById('val-mainbanner').textContent = document.getElementById('input-main-banner').value ? "Kustom" : "Default Islami";
       document.getElementById('val-slideshow').textContent = document.getElementById('input-slideshow-urls').value ? "Kustom" : "Default Islami";
+      
+      if(document.getElementById('input-slide-timer')) {
+        document.getElementById('val-slidetimer').textContent = `${document.getElementById('input-slide-timer').value} Detik`;
+      }
+      if(document.getElementById('input-slide-timer-fs')) {
+        document.getElementById('val-slidetimerfs').textContent = `${document.getElementById('input-slide-timer-fs').value} Detik`;
+      }
+      if(document.getElementById('input-slide-transition')) {
+        const selTrans = document.getElementById('input-slide-transition');
+        document.getElementById('val-slidetransition').textContent = selTrans.options[selTrans.selectedIndex].text;
+      }
+
       document.getElementById('val-youtube').textContent = document.getElementById('input-youtube-url').value ? "Tersetel" : "Stream";
       document.getElementById('val-runningtext').textContent = document.getElementById('input-running-text').value;
+
+      if(document.getElementById('input-hide-running-text')) {
+        document.getElementById('val-hiderunning').textContent = document.getElementById('input-hide-running-text').value === 'true' ? "Sembunyi" : "Tampilkan";
+      }
+      if(document.getElementById('input-hide-fs-popup')) {
+        document.getElementById('val-hidefspopup').textContent = document.getElementById('input-hide-fs-popup').value === 'true' ? "Sembunyi" : "Tampilkan";
+      }
+
+      if(document.getElementById('input-font-clock')) {
+        document.getElementById('val-sub-clock').textContent = document.getElementById('input-font-clock').value;
+        document.getElementById('val-sub-masjid').textContent = document.getElementById('input-font-masjid').value;
+        document.getElementById('val-sub-alamat').textContent = document.getElementById('input-font-alamat').value;
+        document.getElementById('val-sub-date').textContent = document.getElementById('input-font-date').value;
+        document.getElementById('val-sub-prayer').textContent = document.getElementById('input-font-prayer').value;
+        document.getElementById('val-sub-running').textContent = document.getElementById('input-font-running').value;
+      }
     }
 
     function applySettings(settings) {
@@ -1074,6 +1536,34 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
+      const runningBar = document.getElementById('running-bar');
+      if (settings.hideRunningText === 'true') {
+        runningBar.style.display = 'none';
+      } else {
+        runningBar.style.display = 'flex';
+      }
+
+      const fsPopup = document.getElementById('fullscreen-footer-popup');
+      if (settings.hideFsPopup === 'true') {
+        fsPopup.style.opacity = '0';
+        fsPopup.style.pointerEvents = 'none';
+      } else {
+        fsPopup.style.opacity = '1';
+        fsPopup.style.pointerEvents = 'auto';
+      }
+
+      const displayContainer = document.getElementById('display-container');
+      displayContainer.classList.remove('trans-fade', 'trans-zoom', 'trans-slide');
+      const transType = settings.slideTransition || 'fade';
+      displayContainer.classList.add(`trans-${transType}`);
+
+      if (settings.fontSizeClock) document.documentElement.style.setProperty('--font-size-clock', `${settings.fontSizeClock}rem`);
+      if (settings.fontSizeMasjid) document.documentElement.style.setProperty('--font-size-masjid', `${settings.fontSizeMasjid}rem`);
+      if (settings.fontSizeAlamat) document.documentElement.style.setProperty('--font-size-alamat', `${settings.fontSizeAlamat}rem`);
+      if (settings.fontSizeDate) document.documentElement.style.setProperty('--font-size-date', `${settings.fontSizeDate}rem`);
+      if (settings.fontSizePrayer) document.documentElement.style.setProperty('--font-size-prayer', `${settings.fontSizePrayer}rem`);
+      if (settings.fontSizeRunning) document.documentElement.style.setProperty('--font-size-running', `${settings.fontSizeRunning}rem`);
+
       applyTheme(settings.theme || 'amber');
 
       if (settings.mainBanner && settings.mainBanner.trim() !== "") {
@@ -1083,6 +1573,7 @@
       }
 
       slideTimerSec = parseInt(settings.slideTimer) || 5;
+      slideTimerFsSec = parseInt(settings.slideTimerFs) || 5;
 
       let rawSlides = [];
       if (settings.slidesText && settings.slidesText.trim() !== "") {
@@ -1094,6 +1585,11 @@
       
       slideMediaList = rawSlides.map(processMediaUrl).filter(item => item && item.url);
 
+      if (settings.activeModeIdx !== undefined && modes[settings.activeModeIdx]) {
+        currentModeIdx = parseInt(settings.activeModeIdx);
+        document.getElementById(modes[currentModeIdx]).checked = true;
+      }
+
       handleModeChange();
 
       document.getElementById('input-masjid').value = settings.masjid;
@@ -1104,8 +1600,20 @@
       document.getElementById('input-theme').value = settings.theme || 'amber';
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-slideshow-urls').value = settings.slidesText || '';
+      if(document.getElementById('input-slide-timer')) document.getElementById('input-slide-timer').value = settings.slideTimer || 5;
+      if(document.getElementById('input-slide-timer-fs')) document.getElementById('input-slide-timer-fs').value = settings.slideTimerFs || 5;
+      if(document.getElementById('input-slide-transition')) document.getElementById('input-slide-transition').value = settings.slideTransition || 'fade';
       document.getElementById('input-youtube-url').value = settings.youtubeUrl || '';
       document.getElementById('input-running-text').value = settings.runningText;
+      if(document.getElementById('input-hide-running-text')) document.getElementById('input-hide-running-text').value = settings.hideRunningText || 'false';
+      if(document.getElementById('input-hide-fs-popup')) document.getElementById('input-hide-fs-popup').value = settings.hideFsPopup || 'false';
+
+      if(document.getElementById('input-font-clock')) document.getElementById('input-font-clock').value = settings.fontSizeClock || '3.2';
+      if(document.getElementById('input-font-masjid')) document.getElementById('input-font-masjid').value = settings.fontSizeMasjid || '1.5';
+      if(document.getElementById('input-font-alamat')) document.getElementById('input-font-alamat').value = settings.fontSizeAlamat || '0.95';
+      if(document.getElementById('input-font-date')) document.getElementById('input-font-date').value = settings.fontSizeDate || '1.35';
+      if(document.getElementById('input-font-prayer')) document.getElementById('input-font-prayer').value = settings.fontSizePrayer || '1.7';
+      if(document.getElementById('input-font-running')) document.getElementById('input-font-running').value = settings.fontSizeRunning || '1.15';
 
       updateMenuValuesDisplay();
     }
@@ -1113,14 +1621,13 @@
     function getHijriDate(date) {
       const months = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir', 'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Sya\'ban', 'Ramadhan', 'Syawal', 'Dzulqa\'dah', 'Dzulhijjah'];
       
-      // Titik acuan (Anchor): 16 Oktober 2026 Masehi = 5 Jumadil Awal 1448 H
       const anchorGregorian = new Date(2026, 9, 16).setHours(0,0,0,0);
       const targetTime = new Date(date).setHours(0,0,0,0);
       
       const diffDays = Math.round((targetTime - anchorGregorian) / (1000 * 60 * 60 * 24));
       
       let hYear = 1448;
-      let hMonthIdx = 4; // Jumadil Awal
+      let hMonthIdx = 4;
       let hDay = 5 + diffDays;
       
       while (hDay > 29) {
@@ -1154,21 +1661,23 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
       const clockHtml = `${hours}<span class="colon">:</span>${minutes}`;
       
       document.getElementById('clock').innerHTML = clockHtml;
       document.getElementById('popup-clock').innerHTML = clockHtml;
       document.getElementById('fs-clock').innerHTML = clockHtml;
+      document.getElementById('corner-clock').innerHTML = clockHtml;
 
       const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
       const dateStr = now.toLocaleDateString('id-ID', options);
       document.getElementById('gregorian-date').textContent = dateStr;
       document.getElementById('popup-gregorian').textContent = dateStr;
+      document.getElementById('corner-gregorian').textContent = dateStr;
 
       const hijriString = getHijriDate(now);
       document.getElementById('hijri-date').textContent = hijriString;
       document.getElementById('popup-hijri').textContent = hijriString;
+      document.getElementById('corner-hijri').textContent = hijriString;
 
       const currentDateString = now.toDateString();
       if (lastFetchedDate !== currentDateString) {
@@ -1185,13 +1694,13 @@
       const searchInput = document.getElementById('input-search-kota');
       const cityIdInput = document.getElementById('select-kota-id');
       const suggestionsBox = document.getElementById('city-suggestions');
-      const settings = getStoredSettings();
 
       try {
         const response = await fetch('https://api.myquran.com/v2/sholat/kota/semua');
         const data = await response.json();
         if (data.status) {
           allCities = data.data;
+          const settings = getStoredSettings();
           let defaultCity = allCities.find(c => c.id === settings.cityId) || allCities.find(c => c.lokasi.includes('JAMBI')) || allCities[0];
           if (defaultCity) {
             cityIdInput.value = defaultCity.id;
@@ -1352,18 +1861,27 @@
         let cdEl = document.createElement('div');
         cdEl.className = 'prayer-countdown';
         cdEl.textContent = countdownFormatted;
-        activeEl.appendChild(cdEl);
+        
+        const bottomBox = activeEl.querySelector('.sidebar-item-bottom');
+        if (bottomBox && modes[currentModeIdx] === 'mode-sidebar') {
+          bottomBox.appendChild(cdEl);
+        } else {
+          activeEl.appendChild(cdEl);
+        }
       }
 
       document.getElementById('fs-next-name').textContent = next.name;
       document.getElementById('fs-next-time').textContent = next.timeStr || '--:--';
       document.getElementById('fs-next-countdown').textContent = countdownFormatted;
+
+      document.getElementById('corner-next-name').textContent = next.name;
+      document.getElementById('corner-next-time').textContent = next.timeStr || '--:--';
+      document.getElementById('corner-next-countdown').textContent = countdownFormatted;
     }
 
-    const initialSettings = getStoredSettings();
-    applySettings(initialSettings);
     loadCityList();
     updateMainFocusState();
+    showControlsTemporarily();
   </script>
 </body>
 </html>
