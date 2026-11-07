@@ -415,8 +415,8 @@
     #mode-fullscreen:checked ~ .display-container header,
     #mode-fullscreen:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
     
-    /* DEFAULT MENAMPILKAN POPUP FULLSCREEN (KECUALI DINONAKTIFKAN VIA JS) */
-    #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup { display: flex !important; }
+    /* MENAMPILKAN POPUP FULLSCREEN JIKA TIDAK DISEMBUNYIKAN VIA SETTING */
+    #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup.show-fs-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
     #mode-corner:checked ~ .display-container header,
@@ -715,6 +715,19 @@
             <div class="tv-edit-panel" id="panel-fullscreen">
               <button class="btn-action" id="btn-toggle-fs-modal">Beralih Fullscreen</button>
             </div>
+
+            <!-- MENU ABOUT -->
+            <div class="tv-setting-row" data-menu="about">
+              <span class="row-label">About Aplikasi</span>
+              <span class="row-value" id="val-about">Info & Pembuat</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-about">
+              <div style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1; padding: 4px 0;">
+                <strong style="color: var(--accent-color);">Display Jadwal Sholat Digital v1.0</strong><br>
+                Fitur Utama: Jadwal sholat akurat Kemenag, hitung mundur azan & iqomah, multiple mode display (Banner, Video Stream YouTube, Fullscreen, Sidebar, Corner), kustomisasi tema warna, slideshow media & pengaturan font.<br><br>
+                <strong>Dibuat oleh: Arif Riyanto</strong>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -782,7 +795,7 @@
             <div class="event-timer" id="event-timer">00:00</div>
           </div>
 
-          <div class="fullscreen-footer-popup" id="fullscreen-footer-popup">
+          <div class="fullscreen-footer-popup show-fs-popup" id="fullscreen-footer-popup">
             <div class="fs-popup-clock" id="fs-clock">00<span class="colon">:</span>00</div>
             <div class="fs-popup-divider"></div>
             <div class="fs-prayer-box">
@@ -1550,9 +1563,9 @@
       // REALTIME FULLSCREEN POPUP HIDE/SHOW
       const fsPopup = document.getElementById('fullscreen-footer-popup');
       if (settings.hideFsPopup === 'true') {
-        fsPopup.style.display = 'none';
+        fsPopup.classList.remove('show-fs-popup');
       } else {
-        fsPopup.style.display = ''; 
+        fsPopup.classList.add('show-fs-popup');
       }
 
       const displayContainer = document.getElementById('display-container');
