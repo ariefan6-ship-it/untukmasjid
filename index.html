@@ -8,9 +8,14 @@
   <!-- PWA & Google TV Meta Tags -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#f59e0b" id="theme-color-meta">
 
-  <!-- Dynamic Web Manifest Generator for Google TV Installation -->
+  <!-- Library PeerJS (Koneksi HP <-> TV) & QRCode Generator -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Dynamic Web Manifest Generator for Google TV & Android TV Installation -->
   <script>
     const manifest = {
       "name": "Display Jadwal Sholat Digital",
@@ -24,7 +29,14 @@
         {
           "src": "https://cdn-icons-png.flaticon.com/512/2972/2972531.png",
           "sizes": "512x512",
-          "type": "image/png"
+          "type": "image/png",
+          "purpose": "any maskable"
+        },
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/2972/2972531.png",
+          "sizes": "320x180",
+          "type": "image/png",
+          "purpose": "any"
         }
       ]
     };
@@ -38,6 +50,8 @@
   </script>
 
   <script>
+    const DEFAULT_TARHIM_URL = "https://archive.org/download/ShalawatTarhimSubuh/Shalawat%20Tarhim%20Subuh.mp3";
+
     const DEFAULT_SETTINGS = {
       masjid: "Masjid Al Jihad",
       alamat: "Jl. Hibah Ibrahim RT 19 Kelurahan Rawasari, Kecamatan Alam Barajo, Kota Jambi",
@@ -59,21 +73,49 @@
       fontSizeDate: "1.35",
       fontSizePrayer: "1.7",
       fontSizeRunning: "1.15",
-      runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan"
+      runningText: "Selamat Datang di Masjid Al Jihad - Jagalah Shaf dan Rapikan Barisan",
+      tarhimEnabled: "true",
+      tarhimMinutesBefore: 5,
+      tarhimUrl: DEFAULT_TARHIM_URL,
+      tarhimPrayers: {
+        subuh: true,
+        dzuhur: true,
+        ashar: true,
+        maghrib: true,
+        isya: true
+      }
     };
 
     function getStoredSettings() {
       const saved = localStorage.getItem('tv_jadwal_settings');
       if (saved) {
-        try { return JSON.parse(saved); } catch(e) { return DEFAULT_SETTINGS; }
+        try {
+          const parsed = JSON.parse(saved);
+          return {
+            ...DEFAULT_SETTINGS,
+            ...parsed,
+            tarhimPrayers: {
+              ...DEFAULT_SETTINGS.tarhimPrayers,
+              ...(parsed.tarhimPrayers || {})
+            }
+          };
+        } catch(e) { return DEFAULT_SETTINGS; }
       }
       return DEFAULT_SETTINGS;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#remote=')) {
+        const targetTvId = hash.replace('#remote=', '').trim();
+        initMobileRemoteUI(targetTvId);
+        return;
+      }
+
       const initialSettings = getStoredSettings();
       applySettings(initialSettings);
       if (initialSettings.cityId) fetchPrayerTimes(initialSettings.cityId);
+      initTvPeerReceiver();
     });
 
     function saveCurrentSettings() {
@@ -99,12 +141,23 @@
         fontSizeDate: document.getElementById('input-font-date').value,
         fontSizePrayer: document.getElementById('input-font-prayer').value,
         fontSizeRunning: document.getElementById('input-font-running').value,
+        tarhimEnabled: document.getElementById('input-tarhim-enabled').value,
+        tarhimMinutesBefore: document.getElementById('input-tarhim-minutes').value,
+        tarhimUrl: document.getElementById('input-tarhim-url').value,
+        tarhimPrayers: {
+          subuh: document.getElementById('chk-tarhim-subuh').checked,
+          dzuhur: document.getElementById('chk-tarhim-dzuhur').checked,
+          ashar: document.getElementById('chk-tarhim-ashar').checked,
+          maghrib: document.getElementById('chk-tarhim-maghrib').checked,
+          isya: document.getElementById('chk-tarhim-isya').checked
+        },
         activeModeIdx: currentModeIdx
       };
       
       localStorage.setItem('tv_jadwal_settings', JSON.stringify(settings));
       applySettings(settings);
       updateMenuValuesDisplay();
+      broadcastSettingsToRemote();
     }
   </script>
 
@@ -170,6 +223,30 @@
     }
     .btn-control svg { width: 18px; height: 18px; fill: currentColor; }
 
+    .tv-toast {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      background: rgba(16, 185, 129, 0.95); color: #fff; font-weight: 700; font-size: 0.95rem;
+      padding: 12px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transform: translateY(-100px); opacity: 0; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tv-toast.show { transform: translateY(0); opacity: 1; }
+
+    /* INDIKATOR AUDIO TARHIM AKTIF DI LAYAR TV */
+    .tarhim-badge {
+      position: absolute; top: 16px; left: 16px; z-index: 90;
+      background: rgba(15, 23, 42, 0.88); border: 1px solid var(--accent-color);
+      color: #fff; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
+      display: none; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+    }
+    .tarhim-badge.playing { display: flex; }
+    .tarhim-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: #10b981;
+      animation: pulseTarhim 1s infinite;
+    }
+    @keyframes pulseTarhim { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.5; } }
+
     .settings-modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(10px);
@@ -225,12 +302,35 @@
     }
     .tv-setting-row.editing + .tv-edit-panel { display: flex; flex-direction: column; gap: 8px; }
 
-    .tv-edit-panel input, .tv-edit-panel select, .tv-edit-panel textarea {
+    .tv-edit-panel input[type="text"], .tv-edit-panel input[type="number"], .tv-edit-panel select, .tv-edit-panel textarea {
       width: 100%; padding: 10px 14px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3);
       background: #1e293b; color: #fff; font-size: 0.95rem; outline: none;
     }
     .tv-edit-panel input:focus, .tv-edit-panel select:focus, .tv-edit-panel textarea:focus {
       border-color: #10b981; background: rgba(16, 185, 129, 0.15);
+    }
+
+    .tarhim-prayer-checks {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px;
+    }
+    .tarhim-chk-label {
+      display: flex; align-items: center; gap: 6px; background: #1e293b;
+      padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+      font-size: 0.88rem; cursor: pointer;
+    }
+    .tarhim-chk-label input { width: 16px; height: 16px; accent-color: var(--accent-color); }
+
+    .qr-pairing-box {
+      display: flex; align-items: center; gap: 20px; padding: 12px;
+      background: rgba(255,255,255,0.04); border-radius: 10px;
+    }
+    .qr-canvas-wrap {
+      background: #ffffff; padding: 10px; border-radius: 10px; flex-shrink: 0;
+    }
+    .qr-info-text { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; }
+    .tv-code-badge {
+      display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 6px;
+      background: var(--accent-color); color: #000; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;
     }
 
     .city-search-container { position: relative; }
@@ -415,7 +515,6 @@
     #mode-fullscreen:checked ~ .display-container header,
     #mode-fullscreen:checked ~ .display-container .prayer-bar-wrapper { display: none !important; }
     
-    /* MENAMPILKAN POPUP FULLSCREEN JIKA TIDAK DISEMBUNYIKAN VIA SETTING */
     #mode-fullscreen:checked ~ .display-container .fullscreen-footer-popup.show-fs-popup { display: flex !important; }
     #mode-fullscreen:checked ~ .display-container .bg-image { object-fit: contain; }
 
@@ -484,9 +583,95 @@
       font-size: 0.75rem !important;
     }
     #mode-sidebar:checked ~ .display-container .bg-image { opacity: 1 !important; object-fit: contain !important; }
+
+    /* =======================================================
+       STYLE KHUSUS ANTARMUKA REMOTE CONTROL DI HP
+       ======================================================= */
+    body.remote-mode {
+      overflow-y: auto;
+      align-items: flex-start;
+      background: #0b1120;
+      color: #f8fafc;
+      user-select: auto;
+    }
+    .remote-app {
+      width: 100%; max-width: 540px; margin: 0 auto; padding: 14px;
+      display: flex; flex-direction: column; gap: 14px; padding-bottom: 85px;
+    }
+    .remote-header {
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.1);
+      padding: 14px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 10px; z-index: 50; box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    }
+    .remote-status-badge {
+      font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 20px;
+      background: rgba(245, 158, 11, 0.2); color: #fbbf24;
+    }
+    .remote-status-badge.connected {
+      background: rgba(16, 185, 129, 0.2); color: #34d399;
+    }
+    .rm-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+    }
+    .rm-tabs::-webkit-scrollbar { display: none; }
+    .rm-tab {
+      flex-shrink: 0; padding: 9px 14px; border-radius: 10px; background: #1e293b;
+      color: #94a3b8; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
+    .rm-tab.active {
+      background: #f59e0b; color: #000; border-color: #fff;
+    }
+    .remote-card {
+      background: #1e293b; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .remote-card h4 { font-size: 0.9rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mode-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    }
+    .rm-btn {
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0;
+      padding: 12px 10px; border-radius: 10px; font-weight: 600; font-size: 0.86rem;
+      cursor: pointer; text-align: center; transition: all 0.15s ease;
+    }
+    .rm-btn:active { transform: scale(0.96); background: #f59e0b; color: #000; }
+    .rm-btn.active-mode { background: #f59e0b; color: #000; border-color: #fff; font-weight: 800; }
+    .rm-field { display: flex; flex-direction: column; gap: 6px; }
+    .rm-field label { font-size: 0.82rem; color: #94a3b8; font-weight: 600; }
+    .rm-field input[type="text"], .rm-field input[type="number"], .rm-field textarea, .rm-field select {
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2); background: #0f172a;
+      color: #fff; font-size: 0.95rem; outline: none;
+    }
+    .rm-field input:focus, .rm-field textarea:focus, .rm-field select:focus { border-color: #f59e0b; }
+    .rm-city-list {
+      max-height: 150px; overflow-y: auto; background: #0f172a; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15); display: none;
+    }
+    .rm-city-item {
+      padding: 9px 12px; font-size: 0.86rem; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+    }
+    .rm-city-item:active { background: #f59e0b; color: #000; }
+    .rm-floating-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px); padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12);
+      z-index: 60; display: flex; justify-content: center;
+    }
+    .rm-submit {
+      width: 100%; max-width: 512px; background: #10b981; color: #000; font-weight: 800; font-size: 0.98rem;
+      padding: 14px; border: none; border-radius: 12px; cursor: pointer;
+    }
+    .rm-submit:active { transform: scale(0.98); background: #059669; color: #fff; }
   </style>
 </head>
 <body>
+
+  <!-- Audio Player Shalawat Tarhim -->
+  <audio id="tarhim-audio" preload="auto"></audio>
+
+  <!-- Toast Notifikasi TV -->
+  <div class="tv-toast" id="tv-toast">📱 Terhubung dengan Remote HP</div>
 
   <!-- Switch Mode Display -->
   <input type="radio" id="mode-main" name="display-mode" class="display-mode-input mode-switch" checked>
@@ -506,7 +691,7 @@
       <div class="tv-menu-body">
         <div class="tv-categories" id="tv-categories">
           <div class="cat-item active focused" data-cat="masjid">Informasi Masjid</div>
-          <div class="cat-item" data-cat="lokasi">Lokasi & Jadwal</div>
+          <div class="cat-item" data-cat="lokasi">Lokasi, Jadwal & Tarhim</div>
           <div class="cat-item" data-cat="media">Media & Banner</div>
           <div class="cat-item" data-cat="tampilan">Tampilan & Font</div>
           <div class="cat-item" data-cat="sistem">Mode & Akses</div>
@@ -558,6 +743,35 @@
             </div>
             <div class="tv-edit-panel" id="panel-iqomah">
               <input type="number" id="input-iqomah-timer" min="1" max="30" placeholder="10">
+            </div>
+
+            <!-- SETTING TARHIM OTOMATIS -->
+            <div class="tv-setting-row" data-menu="tarhim">
+              <span class="row-label">Shalawat Tarhim Sebelum Azan</span>
+              <span class="row-value" id="val-tarhim">Aktif (5 Menit)</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-tarhim">
+              <label style="font-size:0.82rem; color:#94a3b8;">Status Tarhim Otomatis</label>
+              <select id="input-tarhim-enabled">
+                <option value="true">Aktif (Otomatis Sebelum Azan)</option>
+                <option value="false">Non-Aktif</option>
+              </select>
+
+              <label style="font-size:0.82rem; color:#94a3b8; margin-top:4px;">Mulai Berapa Menit Sebelum Azan</label>
+              <input type="number" id="input-tarhim-minutes" min="1" max="30" value="5">
+
+              <label style="font-size:0.82rem; color:#94a3b8; margin-top:4px;">Pilih Sholat yang Dinyalakan Tarhim:</label>
+              <div class="tarhim-prayer-checks">
+                <label class="tarhim-chk-label"><input type="checkbox" id="chk-tarhim-subuh" checked> Subuh</label>
+                <label class="tarhim-chk-label"><input type="checkbox" id="chk-tarhim-dzuhur" checked> Dzuhur</label>
+                <label class="tarhim-chk-label"><input type="checkbox" id="chk-tarhim-ashar" checked> Ashar</label>
+                <label class="tarhim-chk-label"><input type="checkbox" id="chk-tarhim-maghrib" checked> Maghrib</label>
+                <label class="tarhim-chk-label"><input type="checkbox" id="chk-tarhim-isya" checked> Isya'</label>
+              </div>
+
+              <label style="font-size:0.82rem; color:#94a3b8; margin-top:4px;">URL Audio MP3 Tarhim</label>
+              <input type="text" id="input-tarhim-url" placeholder="https://.../tarhim.mp3">
+              <button type="button" class="btn-action" id="btn-test-tarhim" style="margin-top:4px;">▶ Uji Coba / Stop Audio Tarhim</button>
             </div>
           </div>
 
@@ -708,6 +922,22 @@
           </div>
 
           <div class="cat-content" data-cat-content="sistem" style="display:none;">
+            <div class="tv-setting-row" data-menu="remote">
+              <span class="row-label">Remote Kontrol HP (Scan QR)</span>
+              <span class="row-value" id="val-remote-status">Menunggu...</span>
+            </div>
+            <div class="tv-edit-panel" id="panel-remote" style="display:flex;">
+              <div class="qr-pairing-box">
+                <div class="qr-canvas-wrap" id="tv-qr-code"></div>
+                <div class="qr-info-text">
+                  <strong>Kontrol TV dari HP:</strong><br>
+                  1. Scan QR Code di samping menggunakan kamera HP.<br>
+                  2. Atau buka link aplikasi ini lalu tambahkan <code style="color:#fbbf24;" id="tv-remote-hash">#remote=...</code><br>
+                  <span class="tv-code-badge" id="tv-peer-id-display">MEMUAT KODE...</span>
+                </div>
+              </div>
+            </div>
+
             <div class="tv-setting-row" data-menu="fullscreen">
               <span class="row-label">Layar Penuh (Fullscreen)</span>
               <span class="row-value" id="val-fullscreen">Non-Aktif</span>
@@ -723,8 +953,8 @@
             </div>
             <div class="tv-edit-panel" id="panel-about">
               <div style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1; padding: 4px 0;">
-                <strong style="color: var(--accent-color);">Display Jadwal Sholat Digital v1.0</strong><br>
-                Fitur Utama: Jadwal sholat akurat Kemenag, hitung mundur azan & iqomah, multiple mode display (Banner, Video Stream YouTube, Fullscreen, Sidebar, Corner), kustomisasi tema warna, slideshow media & pengaturan font.<br><br>
+                <strong style="color: var(--accent-color);">Display Jadwal Sholat Digital v1.2</strong><br>
+                Fitur Utama: Jadwal sholat akurat Kemenag, audio Shalawat Tarhim otomatis sebelum azan, hitung mundur azan & iqomah, multiple mode display (Banner, Video Stream YouTube, Fullscreen, Sidebar, Corner), kustomisasi tema warna, slideshow media, pengaturan font & <strong>Full Remote Control HP</strong>.<br><br>
                 <strong>Dibuat oleh: Arif Riyanto</strong>
               </div>
             </div>
@@ -737,6 +967,12 @@
 
   <!-- DISPLAY CONTAINER -->
   <div class="display-container trans-fade" id="display-container">
+
+    <!-- Indikator Shalawat Tarhim Aktif -->
+    <div class="tarhim-badge" id="tarhim-badge">
+      <span class="tarhim-dot"></span>
+      <span id="tarhim-badge-text">Shalawat Tarhim...</span>
+    </div>
     
     <div class="controls-group" id="controls-group">
       <button class="btn-control" id="btn-fullscreen" title="Layar Penuh">
@@ -903,6 +1139,77 @@
 
     let hideControlsTimer = null;
     const controlsGroup = document.getElementById('controls-group');
+
+    /* =======================================================
+       LOGIKA AUDIO SHALAWAT TARHIM
+       ======================================================= */
+    const tarhimAudio = document.getElementById('tarhim-audio');
+    const tarhimBadge = document.getElementById('tarhim-badge');
+    const tarhimBadgeText = document.getElementById('tarhim-badge-text');
+    let activeTarhimKey = null; // contoh: "2026-11-20-maghrib"
+    let isManualTarhimTest = false;
+
+    function convertDirectAudioUrl(url) {
+      if (!url) return DEFAULT_TARHIM_URL;
+      if (url.includes('drive.google.com')) {
+        const matches = url.match(/\/(?:file\/)?d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (matches && matches[1]) {
+          return `https://docs.google.com/uc?export=download&id=${matches[1]}`;
+        }
+      }
+      return url;
+    }
+
+    function playTarhim(prayerLabel = '') {
+      const settings = getStoredSettings();
+      const audioSrc = convertDirectAudioUrl(settings.tarhimUrl || DEFAULT_TARHIM_URL);
+      if (tarhimAudio.src !== audioSrc) {
+        tarhimAudio.src = audioSrc;
+      }
+      tarhimAudio.loop = true;
+      tarhimAudio.play().then(() => {
+        tarhimBadge.classList.add('playing');
+        tarhimBadgeText.textContent = prayerLabel ? `Shalawat Tarhim Menjelang ${prayerLabel}` : 'Uji Coba Shalawat Tarhim';
+      }).catch(err => {
+        console.warn('Autoplay audio diblokir browser (klik layar TV sekali untuk mengizinkan audio):', err);
+        showTvToast('⚠ Klik layar TV sekali agar audio Tarhim diizinkan browser');
+      });
+    }
+
+    function stopTarhim() {
+      if (!tarhimAudio.paused || tarhimBadge.classList.contains('playing')) {
+        tarhimAudio.pause();
+        tarhimAudio.currentTime = 0;
+        tarhimBadge.classList.remove('playing');
+      }
+      isManualTarhimTest = false;
+    }
+
+    document.getElementById('btn-test-tarhim').addEventListener('click', () => {
+      if (!tarhimAudio.paused) {
+        stopTarhim();
+      } else {
+        isManualTarhimTest = true;
+        playTarhim('');
+      }
+    });
+
+    // Membuka kunci autoplay browser pada interaksi klik/tombol pertama di TV
+    ['click', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, () => {
+        if (tarhimAudio && tarhimAudio.paused && !tarhimAudio.dataset.unlocked) {
+          tarhimAudio.dataset.unlocked = 'true';
+        }
+      }, { once: true });
+    });
+
+    function showTvToast(msg) {
+      const toast = document.getElementById('tv-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
 
     function showControlsTemporarily() {
       if (controlsGroup) {
@@ -1132,6 +1439,7 @@
     }
 
     window.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('remote-mode')) return;
       showControlsTemporarily();
       const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
 
@@ -1357,7 +1665,6 @@
       });
     });
 
-    // Menangani perubahan langsung saat radio mode diklik/diganti
     document.querySelectorAll('.display-mode-input').forEach((radio, idx) => {
       radio.addEventListener('change', () => {
         if (radio.checked) {
@@ -1508,6 +1815,11 @@
       document.getElementById('val-alamat').textContent = document.getElementById('input-alamat').value;
       document.getElementById('val-kota').textContent = document.getElementById('input-search-kota').value || 'KOTA JAMBI';
       document.getElementById('val-iqomah').textContent = `${document.getElementById('input-iqomah-timer').value} Menit`;
+
+      const tEnabled = document.getElementById('input-tarhim-enabled').value === 'true';
+      const tMin = document.getElementById('input-tarhim-minutes').value;
+      document.getElementById('val-tarhim').textContent = tEnabled ? `Aktif (${tMin} Menit Sebelum)` : "Non-Aktif";
+
       document.getElementById('val-theme').textContent = document.getElementById('input-theme').options[document.getElementById('input-theme').selectedIndex].text;
       document.getElementById('val-mainbanner').textContent = document.getElementById('input-main-banner').value ? "Kustom" : "Default Islami";
       document.getElementById('val-slideshow').textContent = document.getElementById('input-slideshow-urls').value ? "Kustom" : "Default Islami";
@@ -1552,7 +1864,6 @@
 
       document.getElementById('display-running-text').textContent = settings.runningText;
 
-      // REALTIME RUNNING TEXT HIDE/SHOW
       const runningBar = document.getElementById('running-bar');
       if (settings.hideRunningText === 'true') {
         runningBar.style.display = 'none';
@@ -1560,7 +1871,6 @@
         runningBar.style.display = 'flex';
       }
 
-      // REALTIME FULLSCREEN POPUP HIDE/SHOW
       const fsPopup = document.getElementById('fullscreen-footer-popup');
       if (settings.hideFsPopup === 'true') {
         fsPopup.classList.remove('show-fs-popup');
@@ -1613,6 +1923,17 @@
       document.getElementById('input-search-kota').value = settings.cityName || 'KOTA JAMBI';
       document.getElementById('select-kota-id').value = settings.cityId || '1609';
       document.getElementById('input-iqomah-timer').value = settings.iqomahTimer || 10;
+
+      document.getElementById('input-tarhim-enabled').value = settings.tarhimEnabled || 'true';
+      document.getElementById('input-tarhim-minutes').value = settings.tarhimMinutesBefore || 5;
+      document.getElementById('input-tarhim-url').value = settings.tarhimUrl || DEFAULT_TARHIM_URL;
+      const tp = settings.tarhimPrayers || DEFAULT_SETTINGS.tarhimPrayers;
+      document.getElementById('chk-tarhim-subuh').checked = !!tp.subuh;
+      document.getElementById('chk-tarhim-dzuhur').checked = !!tp.dzuhur;
+      document.getElementById('chk-tarhim-ashar').checked = !!tp.ashar;
+      document.getElementById('chk-tarhim-maghrib').checked = !!tp.maghrib;
+      document.getElementById('chk-tarhim-isya').checked = !!tp.isya;
+
       document.getElementById('input-theme').value = settings.theme || 'amber';
       document.getElementById('input-main-banner').value = settings.mainBanner || '';
       document.getElementById('input-slideshow-urls').value = settings.slidesText || '';
@@ -1674,6 +1995,7 @@
     }
 
     function updateClock() {
+      if (document.body.classList.contains('remote-mode')) return;
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -1793,6 +2115,7 @@
     function updatePrayerCountdown(jadwal) {
       const now = new Date();
       const currentSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+      const dateStamp = now.toDateString();
 
       const timeToSec = (t) => {
         if (!t) return 0;
@@ -1801,13 +2124,13 @@
       };
 
       const times = [
-        { id: 'card-imsak', name: 'Imsak', timeStr: jadwal.imsak, sec: timeToSec(jadwal.imsak) },
-        { id: 'card-subuh', name: 'Subuh', timeStr: jadwal.subuh, sec: timeToSec(jadwal.subuh) },
-        { id: 'card-terbit', name: 'Syuruq', timeStr: jadwal.terbit, sec: timeToSec(jadwal.terbit) },
-        { id: 'card-dzuhur', name: 'Dzuhur', timeStr: jadwal.dzuhur, sec: timeToSec(jadwal.dzuhur) },
-        { id: 'card-ashar', name: 'Ashar', timeStr: jadwal.ashar, sec: timeToSec(jadwal.ashar) },
-        { id: 'card-maghrib', name: 'Maghrib', timeStr: jadwal.maghrib, sec: timeToSec(jadwal.maghrib) },
-        { id: 'card-isya', name: "Isya'", timeStr: jadwal.isya, sec: timeToSec(jadwal.isya) }
+        { key: 'imsak', id: 'card-imsak', name: 'Imsak', timeStr: jadwal.imsak, sec: timeToSec(jadwal.imsak) },
+        { key: 'subuh', id: 'card-subuh', name: 'Subuh', timeStr: jadwal.subuh, sec: timeToSec(jadwal.subuh) },
+        { key: 'terbit', id: 'card-terbit', name: 'Syuruq', timeStr: jadwal.terbit, sec: timeToSec(jadwal.terbit) },
+        { key: 'dzuhur', id: 'card-dzuhur', name: 'Dzuhur', timeStr: jadwal.dzuhur, sec: timeToSec(jadwal.dzuhur) },
+        { key: 'ashar', id: 'card-ashar', name: 'Ashar', timeStr: jadwal.ashar, sec: timeToSec(jadwal.ashar) },
+        { key: 'maghrib', id: 'card-maghrib', name: 'Maghrib', timeStr: jadwal.maghrib, sec: timeToSec(jadwal.maghrib) },
+        { key: 'isya', id: 'card-isya', name: "Isya'", timeStr: jadwal.isya, sec: timeToSec(jadwal.isya) }
       ];
 
       times.forEach(t => {
@@ -1829,10 +2152,18 @@
       
       const settings = getStoredSettings();
       const iqomahMinutes = parseInt(settings.iqomahTimer) || 10;
-      
+
+      // CEK JADWAL SHALAWAT TARHIM SEBELUM AZAN
+      const tarhimEnabled = settings.tarhimEnabled === 'true';
+      const tarhimBeforeSec = (parseInt(settings.tarhimMinutesBefore) || 5) * 60;
+      const tarhimPrayers = settings.tarhimPrayers || {};
+
       let activePrayerMatch = times.find(t => t.name !== 'Imsak' && t.name !== 'Syuruq' && currentSeconds >= t.sec && currentSeconds <= t.sec + 180);
-      
+
       if (activePrayerMatch) {
+        // Matikan audio tarhim otomatis saat waktu azan tiba
+        if (!isManualTarhimTest) stopTarhim();
+
         overlay.classList.add('active');
         eventTitle.textContent = `WAKTU AZAN`;
         eventSubtitle.textContent = `MEMASUKI WAKTU SHOLAT ${activePrayerMatch.name.toUpperCase()}`;
@@ -1842,6 +2173,29 @@
         let as = String(azanRem % 60).padStart(2, '0');
         eventTimer.textContent = `${am}:${as}`;
       } else {
+        // Cek apakah sedang dalam rentang waktu Tarhim sebelum azan
+        if (tarhimEnabled && !isManualTarhimTest) {
+          const tarhimMatch = times.find(t => {
+            if (!tarhimPrayers[t.key]) return false;
+            const startTarhimSec = t.sec - tarhimBeforeSec;
+            return currentSeconds >= startTarhimSec && currentSeconds < t.sec;
+          });
+
+          if (tarhimMatch) {
+            const keyId = `${dateStamp}-${tarhimMatch.key}`;
+            if (activeTarhimKey !== keyId) {
+              activeTarhimKey = keyId;
+              playTarhim(tarhimMatch.name);
+            }
+          } else if (activeTarhimKey) {
+            activeTarhimKey = null;
+            stopTarhim();
+          }
+        } else if (!tarhimEnabled && !isManualTarhimTest && activeTarhimKey) {
+          activeTarhimKey = null;
+          stopTarhim();
+        }
+
         let iqomahMatch = times.find(t => {
           if (t.name === 'Imsak' || t.name === 'Syuruq') return false;
           let iqomahStart = t.sec + 180;
@@ -1895,9 +2249,542 @@
       document.getElementById('corner-next-countdown').textContent = countdownFormatted;
     }
 
-    loadCityList();
-    updateMainFocusState();
-    showControlsTemporarily();
+    /* =====================================================================
+       MODUL REMOTE KONTROL HP VIA PEERJS (WEBRTC DATA CHANNEL)
+       ===================================================================== */
+    let tvPeer = null;
+    let activeRemoteConnections = [];
+
+    function getOrCreateTvId() {
+      let id = localStorage.getItem('tv_jadwal_peer_id');
+      if (!id) {
+        const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+        id = `MASJID-TV-${rand}`;
+        localStorage.setItem('tv_jadwal_peer_id', id);
+      }
+      return id;
+    }
+
+    function broadcastSettingsToRemote() {
+      if (activeRemoteConnections.length === 0) return;
+      const payload = {
+        type: 'SYNC_STATE',
+        settings: getStoredSettings(),
+        activeModeIdx: currentModeIdx,
+        tarhimPlaying: !tarhimAudio.paused
+      };
+      activeRemoteConnections.forEach(conn => {
+        if (conn.open) conn.send(payload);
+      });
+    }
+
+    function initTvPeerReceiver() {
+      if (typeof Peer === 'undefined') return;
+      const tvId = getOrCreateTvId();
+      const idBadge = document.getElementById('tv-peer-id-display');
+      const hashEl = document.getElementById('tv-remote-hash');
+      const statusEl = document.getElementById('val-remote-status');
+      const qrContainer = document.getElementById('tv-qr-code');
+
+      if (idBadge) idBadge.textContent = tvId;
+      if (hashEl) hashEl.textContent = `#remote=${tvId}`;
+
+      const baseUrl = window.location.href.split('#')[0];
+      const remoteUrl = `${baseUrl}#remote=${tvId}`;
+      if (qrContainer && typeof QRCode !== 'undefined') {
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+          text: remoteUrl,
+          width: 110,
+          height: 110,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff"
+        });
+      }
+
+      tvPeer = new Peer(tvId);
+
+      tvPeer.on('open', () => {
+        if (statusEl) statusEl.textContent = 'Siap (Menunggu HP)';
+      });
+
+      tvPeer.on('connection', (conn) => {
+        activeRemoteConnections.push(conn);
+        conn.on('open', () => {
+          if (statusEl) statusEl.textContent = 'Terhubung ke HP';
+          showTvToast('📱 Remote HP Terhubung');
+          conn.send({
+            type: 'SYNC_STATE',
+            settings: getStoredSettings(),
+            activeModeIdx: currentModeIdx,
+            tarhimPlaying: !tarhimAudio.paused
+          });
+        });
+
+        conn.on('data', (data) => {
+          handleRemoteCommandOnTv(data);
+        });
+
+        conn.on('close', () => {
+          activeRemoteConnections = activeRemoteConnections.filter(c => c !== conn);
+          if (activeRemoteConnections.length === 0 && statusEl) {
+            statusEl.textContent = 'Siap (Menunggu HP)';
+          }
+        });
+      });
+
+      tvPeer.on('error', (err) => {
+        console.warn('PeerJS TV error:', err);
+        if (statusEl) statusEl.textContent = 'Offline / Reconnecting';
+      });
+    }
+
+    function handleRemoteCommandOnTv(data) {
+      if (!data || !data.type) return;
+
+      if (data.type === 'SET_MODE') {
+        const idx = parseInt(data.modeIdx);
+        if (!isNaN(idx) && modes[idx]) {
+          currentModeIdx = idx;
+          document.getElementById(modes[currentModeIdx]).checked = true;
+          handleModeChange();
+          saveCurrentSettings();
+          showTvToast(`📺 Mode diubah dari HP`);
+        }
+      } else if (data.type === 'TOGGLE_FULLSCREEN') {
+        toggleFullscreen();
+      } else if (data.type === 'TOGGLE_SETTINGS_MODAL') {
+        if (modalOverlay.classList.contains('open')) closeSettingsModal();
+        else openSettingsModal();
+      } else if (data.type === 'TEST_TARHIM') {
+        if (!tarhimAudio.paused) {
+          stopTarhim();
+          showTvToast('⏹ Audio Tarhim Dihentikan');
+        } else {
+          isManualTarhimTest = true;
+          playTarhim('');
+          showTvToast('▶ Memutar Audio Tarhim');
+        }
+        broadcastSettingsToRemote();
+      } else if (data.type === 'UPDATE_SETTINGS') {
+        const current = getStoredSettings();
+        const merged = {
+          ...current,
+          ...data.settings,
+          tarhimPrayers: {
+            ...current.tarhimPrayers,
+            ...(data.settings.tarhimPrayers || {})
+          }
+        };
+        localStorage.setItem('tv_jadwal_settings', JSON.stringify(merged));
+        applySettings(merged);
+        if (data.settings.cityId && data.settings.cityId !== current.cityId) {
+          fetchPrayerTimes(data.settings.cityId);
+        }
+        broadcastSettingsToRemote();
+        showTvToast('✅ Semua Pengaturan Diperbarui dari HP');
+      }
+    }
+
+    /* =====================================================================
+       UI & LOGIKA HALAMAN REMOTE LENGKAP DI HP (#remote=KODE_TV)
+       ===================================================================== */
+    function initMobileRemoteUI(targetTvId) {
+      document.body.classList.add('remote-mode');
+      document.body.innerHTML = `
+        <div class="remote-app">
+          <div class="remote-header">
+            <div>
+              <div style="font-size:0.72rem; color:#94a3b8;">REMOTE DISPLAY MASJID</div>
+              <div style="font-size:1.05rem; font-weight:800; color:#fff;">${targetTvId}</div>
+            </div>
+            <div class="remote-status-badge" id="rm-conn-status">Menghubungkan...</div>
+          </div>
+
+          <div class="rm-tabs">
+            <button class="rm-tab active" data-tab="tab-mode">Mode & Akses</button>
+            <button class="rm-tab" data-tab="tab-masjid">Info Masjid</button>
+            <button class="rm-tab" data-tab="tab-jadwal">Jadwal & Tarhim</button>
+            <button class="rm-tab" data-tab="tab-media">Media & Banner</button>
+            <button class="rm-tab" data-tab="tab-tampilan">Tampilan & Font</button>
+          </div>
+
+          <!-- TAB 1: MODE & AKSES -->
+          <div class="rm-tab-pane" id="tab-mode">
+            <div class="remote-card">
+              <h4>Pilih Mode Layar TV</h4>
+              <div class="mode-grid">
+                <button class="rm-btn" data-mode="0">1. Banner Utama</button>
+                <button class="rm-btn" data-mode="1">2. Video YouTube</button>
+                <button class="rm-btn" data-mode="2">3. Fullscreen Slide</button>
+                <button class="rm-btn" data-mode="3">4. Sidebar Kiri</button>
+                <button class="rm-btn" data-mode="4" style="grid-column: span 2;">5. Corner Widget</button>
+              </div>
+              <div class="mode-grid" style="margin-top:4px;">
+                <button class="rm-btn" id="rm-btn-fs" style="background:#334155;">⛶ Fullscreen TV</button>
+                <button class="rm-btn" id="rm-btn-menu" style="background:#334155;">⚙ Menu TV</button>
+              </div>
+              <button class="rm-btn" id="rm-btn-test-tarhim" style="background:#0f766e; border-color:#14b8a6; margin-top:4px;">
+                🔊 Test / Stop Audio Tarhim di TV
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 2: INFORMASI MASJID -->
+          <div class="rm-tab-pane" id="tab-masjid" style="display:none;">
+            <div class="remote-card">
+              <h4>Informasi Masjid</h4>
+              <div class="rm-field">
+                <label>Nama Masjid</label>
+                <input type="text" id="rm-masjid" placeholder="Nama Masjid">
+              </div>
+              <div class="rm-field">
+                <label>Alamat Masjid</label>
+                <textarea id="rm-alamat" rows="2" placeholder="Alamat lengkap"></textarea>
+              </div>
+              <div class="rm-field">
+                <label>Running Text (Teks Berjalan)</label>
+                <textarea id="rm-running" rows="3" placeholder="Pesan informasi jamaah"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: LOKASI, JADWAL & SHALAWAT TARHIM -->
+          <div class="rm-tab-pane" id="tab-jadwal" style="display:none;">
+            <div class="remote-card">
+              <h4>Lokasi Kota & Iqomah</h4>
+              <div class="rm-field">
+                <label>Cari Lokasi Kota / Kab (KEMENAG)</label>
+                <input type="text" id="rm-search-kota" placeholder="Ketik nama kota..." autocomplete="off">
+                <input type="hidden" id="rm-kota-id">
+                <div class="rm-city-list" id="rm-city-list"></div>
+              </div>
+              <div class="rm-field">
+                <label>Durasi Jeda Iqomah (Menit)</label>
+                <input type="number" id="rm-iqomah" min="1" max="30" value="10">
+              </div>
+            </div>
+
+            <div class="remote-card" style="margin-top:12px;">
+              <h4>Audio Shalawat Tarhim Sebelum Azan</h4>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="rm-field">
+                  <label>Status Tarhim</label>
+                  <select id="rm-tarhim-enabled">
+                    <option value="true">Aktif</option>
+                    <option value="false">Non-Aktif</option>
+                  </select>
+                </div>
+                <div class="rm-field">
+                  <label>Menit Sebelum Azan</label>
+                  <input type="number" id="rm-tarhim-minutes" min="1" max="30" value="5">
+                </div>
+              </div>
+              <div class="rm-field">
+                <label>Nyalakan Tarhim Sebelum Azan:</label>
+                <div class="tarhim-prayer-checks">
+                  <label class="tarhim-chk-label"><input type="checkbox" id="rm-chk-subuh" checked> Subuh</label>
+                  <label class="tarhim-chk-label"><input type="checkbox" id="rm-chk-dzuhur" checked> Dzuhur</label>
+                  <label class="tarhim-chk-label"><input type="checkbox" id="rm-chk-ashar" checked> Ashar</label>
+                  <label class="tarhim-chk-label"><input type="checkbox" id="rm-chk-maghrib" checked> Maghrib</label>
+                  <label class="tarhim-chk-label"><input type="checkbox" id="rm-chk-isya" checked> Isya'</label>
+                </div>
+              </div>
+              <div class="rm-field">
+                <label>URL Audio MP3 Tarhim</label>
+                <input type="text" id="rm-tarhim-url" placeholder="https://.../tarhim.mp3">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: MEDIA & BANNER -->
+          <div class="rm-tab-pane" id="tab-media" style="display:none;">
+            <div class="remote-card">
+              <h4>Media Banner & Slideshow</h4>
+              <div class="rm-field">
+                <label>URL Media Utama / Gambar</label>
+                <input type="text" id="rm-banner" placeholder="Kosongkan untuk default">
+              </div>
+              <div class="rm-field">
+                <label>Link Slideshow Sidebar/FS (Pisahkan dengan Enter)</label>
+                <textarea id="rm-slides" rows="3" placeholder="URL Gambar / Google Drive / YouTube"></textarea>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="rm-field">
+                  <label>Durasi Slide Banner (Detik)</label>
+                  <input type="number" id="rm-slide-timer" min="1" max="300" value="5">
+                </div>
+                <div class="rm-field">
+                  <label>Durasi Slide Fullscreen (Detik)</label>
+                  <input type="number" id="rm-slide-timer-fs" min="1" max="300" value="5">
+                </div>
+              </div>
+              <div class="rm-field">
+                <label>URL YouTube Mode Video</label>
+                <input type="text" id="rm-youtube" placeholder="https://www.youtube.com/watch?v=...">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: TAMPILAN & UKURAN FONT -->
+          <div class="rm-tab-pane" id="tab-tampilan" style="display:none;">
+            <div class="remote-card">
+              <h4>Tema & Visibilitas</h4>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="rm-field">
+                  <label>Tema Warna</label>
+                  <select id="rm-theme">
+                    <option value="amber">Amber Gold</option>
+                    <option value="emerald">Emerald Green</option>
+                    <option value="ocean">Ocean Blue</option>
+                    <option value="crimson">Crimson Red</option>
+                    <option value="purple">Royal Purple</option>
+                  </select>
+                </div>
+                <div class="rm-field">
+                  <label>Transisi Slide</label>
+                  <select id="rm-slide-transition">
+                    <option value="fade">Fade In/Out</option>
+                    <option value="zoom">Zooming</option>
+                    <option value="slide">Sliding</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="rm-field">
+                  <label>Running Text</label>
+                  <select id="rm-hide-running">
+                    <option value="false">Tampilkan</option>
+                    <option value="true">Sembunyikan</option>
+                  </select>
+                </div>
+                <div class="rm-field">
+                  <label>Popup Fullscreen</label>
+                  <select id="rm-hide-fspopup">
+                    <option value="false">Tampilkan</option>
+                    <option value="true">Sembunyikan</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="remote-card" style="margin-top:12px;">
+              <h4>Ukuran Font Tampilan (rem)</h4>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="rm-field">
+                  <label>Jam Digital</label>
+                  <input type="number" id="rm-font-clock" step="0.1" min="1" max="10" value="3.2">
+                </div>
+                <div class="rm-field">
+                  <label>Nama Masjid</label>
+                  <input type="number" id="rm-font-masjid" step="0.1" min="0.8" max="5" value="1.5">
+                </div>
+                <div class="rm-field">
+                  <label>Alamat Masjid</label>
+                  <input type="number" id="rm-font-alamat" step="0.1" min="0.5" max="3" value="0.95">
+                </div>
+                <div class="rm-field">
+                  <label>Tanggal</label>
+                  <input type="number" id="rm-font-date" step="0.1" min="0.5" max="3" value="1.35">
+                </div>
+                <div class="rm-field">
+                  <label>Jadwal Shalat</label>
+                  <input type="number" id="rm-font-prayer" step="0.1" min="0.8" max="4" value="1.7">
+                </div>
+                <div class="rm-field">
+                  <label>Running Text</label>
+                  <input type="number" id="rm-font-running" step="0.1" min="0.5" max="3" value="1.15">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rm-floating-bar">
+            <button class="rm-submit" id="rm-btn-save">KIRIM & SIMPAN SEMUA KE TV</button>
+          </div>
+        </div>
+      `;
+
+      // Navigasi Tab Remote HP
+      document.querySelectorAll('.rm-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.rm-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.rm-tab-pane').forEach(p => p.style.display = 'none');
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).style.display = 'block';
+        });
+      });
+
+      // Muat Daftar Kota KEMENAG di HP untuk pencarian kota langsung dari Remote
+      let remoteCities = [];
+      fetch('https://api.myquran.com/v2/sholat/kota/semua')
+        .then(r => r.json())
+        .then(d => { if (d.status) remoteCities = d.data; })
+        .catch(() => {});
+
+      const rmKotaInput = document.getElementById('rm-search-kota');
+      const rmKotaId = document.getElementById('rm-kota-id');
+      const rmCityList = document.getElementById('rm-city-list');
+
+      rmKotaInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        rmCityList.innerHTML = '';
+        if (!q || remoteCities.length === 0) {
+          rmCityList.style.display = 'none';
+          return;
+        }
+        const matched = remoteCities.filter(c => c.lokasi.toLowerCase().includes(q)).slice(0, 10);
+        if (matched.length > 0) {
+          matched.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'rm-city-item';
+            div.textContent = c.lokasi;
+            div.addEventListener('click', () => {
+              rmKotaInput.value = c.lokasi;
+              rmKotaId.value = c.id;
+              rmCityList.style.display = 'none';
+            });
+            rmCityList.appendChild(div);
+          });
+          rmCityList.style.display = 'block';
+        } else {
+          rmCityList.style.display = 'none';
+        }
+      });
+
+      const statusBadge = document.getElementById('rm-conn-status');
+      const peer = new Peer();
+      let conn = null;
+
+      peer.on('open', () => {
+        conn = peer.connect(targetTvId, { reliable: true });
+
+        conn.on('open', () => {
+          statusBadge.textContent = '● Terhubung ke TV';
+          statusBadge.classList.add('connected');
+        });
+
+        conn.on('data', (data) => {
+          if (data.type === 'SYNC_STATE' && data.settings) {
+            const s = data.settings;
+            document.getElementById('rm-masjid').value = s.masjid || '';
+            document.getElementById('rm-alamat').value = s.alamat || '';
+            document.getElementById('rm-running').value = s.runningText || '';
+
+            document.getElementById('rm-search-kota').value = s.cityName || 'KOTA JAMBI';
+            document.getElementById('rm-kota-id').value = s.cityId || '1609';
+            document.getElementById('rm-iqomah').value = s.iqomahTimer || 10;
+
+            document.getElementById('rm-tarhim-enabled').value = s.tarhimEnabled || 'true';
+            document.getElementById('rm-tarhim-minutes').value = s.tarhimMinutesBefore || 5;
+            document.getElementById('rm-tarhim-url').value = s.tarhimUrl || DEFAULT_TARHIM_URL;
+            const tp = s.tarhimPrayers || DEFAULT_SETTINGS.tarhimPrayers;
+            document.getElementById('rm-chk-subuh').checked = !!tp.subuh;
+            document.getElementById('rm-chk-dzuhur').checked = !!tp.dzuhur;
+            document.getElementById('rm-chk-ashar').checked = !!tp.ashar;
+            document.getElementById('rm-chk-maghrib').checked = !!tp.maghrib;
+            document.getElementById('rm-chk-isya').checked = !!tp.isya;
+
+            document.getElementById('rm-banner').value = s.mainBanner || '';
+            document.getElementById('rm-slides').value = s.slidesText || '';
+            document.getElementById('rm-slide-timer').value = s.slideTimer || 5;
+            document.getElementById('rm-slide-timer-fs').value = s.slideTimerFs || 5;
+            document.getElementById('rm-youtube').value = s.youtubeUrl || '';
+
+            document.getElementById('rm-theme').value = s.theme || 'amber';
+            document.getElementById('rm-slide-transition').value = s.slideTransition || 'fade';
+            document.getElementById('rm-hide-running').value = s.hideRunningText || 'false';
+            document.getElementById('rm-hide-fspopup').value = s.hideFsPopup || 'false';
+
+            document.getElementById('rm-font-clock').value = s.fontSizeClock || '3.2';
+            document.getElementById('rm-font-masjid').value = s.fontSizeMasjid || '1.5';
+            document.getElementById('rm-font-alamat').value = s.fontSizeAlamat || '0.95';
+            document.getElementById('rm-font-date').value = s.fontSizeDate || '1.35';
+            document.getElementById('rm-font-prayer').value = s.fontSizePrayer || '1.7';
+            document.getElementById('rm-font-running').value = s.fontSizeRunning || '1.15';
+
+            document.querySelectorAll('.rm-btn[data-mode]').forEach(btn => {
+              btn.classList.toggle('active-mode', parseInt(btn.dataset.mode) === data.activeModeIdx);
+            });
+          }
+        });
+
+        conn.on('close', () => {
+          statusBadge.textContent = 'Terputus';
+          statusBadge.classList.remove('connected');
+        });
+      });
+
+      document.querySelectorAll('.rm-btn[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (conn && conn.open) {
+            conn.send({ type: 'SET_MODE', modeIdx: parseInt(btn.dataset.mode) });
+          }
+        });
+      });
+
+      document.getElementById('rm-btn-fs').addEventListener('click', () => {
+        if (conn && conn.open) conn.send({ type: 'TOGGLE_FULLSCREEN' });
+      });
+
+      document.getElementById('rm-btn-menu').addEventListener('click', () => {
+        if (conn && conn.open) conn.send({ type: 'TOGGLE_SETTINGS_MODAL' });
+      });
+
+      document.getElementById('rm-btn-test-tarhim').addEventListener('click', () => {
+        if (conn && conn.open) conn.send({ type: 'TEST_TARHIM' });
+      });
+
+      document.getElementById('rm-btn-save').addEventListener('click', () => {
+        if (!conn || !conn.open) {
+          alert('Belum terhubung ke TV. Pastikan TV menyala dan terhubung internet.');
+          return;
+        }
+        const updatedSettings = {
+          masjid: document.getElementById('rm-masjid').value,
+          alamat: document.getElementById('rm-alamat').value,
+          runningText: document.getElementById('rm-running').value,
+          cityName: document.getElementById('rm-search-kota').value,
+          cityId: document.getElementById('rm-kota-id').value,
+          iqomahTimer: document.getElementById('rm-iqomah').value,
+          tarhimEnabled: document.getElementById('rm-tarhim-enabled').value,
+          tarhimMinutesBefore: document.getElementById('rm-tarhim-minutes').value,
+          tarhimUrl: document.getElementById('rm-tarhim-url').value,
+          tarhimPrayers: {
+            subuh: document.getElementById('rm-chk-subuh').checked,
+            dzuhur: document.getElementById('rm-chk-dzuhur').checked,
+            ashar: document.getElementById('rm-chk-ashar').checked,
+            maghrib: document.getElementById('rm-chk-maghrib').checked,
+            isya: document.getElementById('rm-chk-isya').checked
+          },
+          mainBanner: document.getElementById('rm-banner').value,
+          slidesText: document.getElementById('rm-slides').value,
+          slideTimer: document.getElementById('rm-slide-timer').value,
+          slideTimerFs: document.getElementById('rm-slide-timer-fs').value,
+          youtubeUrl: document.getElementById('rm-youtube').value,
+          theme: document.getElementById('rm-theme').value,
+          slideTransition: document.getElementById('rm-slide-transition').value,
+          hideRunningText: document.getElementById('rm-hide-running').value,
+          hideFsPopup: document.getElementById('rm-hide-fspopup').value,
+          fontSizeClock: document.getElementById('rm-font-clock').value,
+          fontSizeMasjid: document.getElementById('rm-font-masjid').value,
+          fontSizeAlamat: document.getElementById('rm-font-alamat').value,
+          fontSizeDate: document.getElementById('rm-font-date').value,
+          fontSizePrayer: document.getElementById('rm-font-prayer').value,
+          fontSizeRunning: document.getElementById('rm-font-running').value
+        };
+        conn.send({ type: 'UPDATE_SETTINGS', settings: updatedSettings });
+        const saveBtn = document.getElementById('rm-btn-save');
+        saveBtn.textContent = '✓ SEMUA PENGATURAN TERSIMPAN DI TV!';
+        setTimeout(() => { saveBtn.textContent = 'KIRIM & SIMPAN SEMUA KE TV'; }, 2200);
+      });
+    }
+
+    if (!window.location.hash.startsWith('#remote=')) {
+      loadCityList();
+      updateMainFocusState();
+      showControlsTemporarily();
+    }
   </script>
 </body>
 </html>
